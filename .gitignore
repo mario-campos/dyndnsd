@@ -16,3 +16,13 @@ Makefile.in
 /install-sh
 /missing
 /stamp-h1
+
+# build artifacts
+
+a.out
+dyndnsd
+
+# lex and yacc artifacts
+lex.yy.c
+y.tab.[ch]
+y.output
