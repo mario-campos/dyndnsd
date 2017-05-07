@@ -8,9 +8,9 @@
 #include <ifaddrs.h>
 #include <stdbool.h>
 #include <sys/socket.h>
-#include "y.tab.h"
 
 extern FILE *yyin;
+extern int yyparse();
 
 const char const *usage = "usage: dyndnsd [-dhnv] [-f file]";
 
