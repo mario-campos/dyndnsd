@@ -1,3 +1,8 @@
+%{
+extern int yylex();
+extern int yyerror();
+%}
+
 %token INTERFACE
 %token DOMAIN
 %token HTTP_AUTH
