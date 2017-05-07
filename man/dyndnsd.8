@@ -1,0 +1,51 @@
+.Dd $Mdocdate$
+.Dt DYNDNSD 8
+.Os
+.Sh NAME
+.Nm dyndnsd
+.Nd Dynamic DNS Daemon
+.Sh SYNOPSIS
+.Nm 
+.Op Fl n 
+.Op Fl f Ar file
+.Nm 
+.Fl v
+.Nm
+.Fl h
+.Sh DESCRIPTION
+The
+.Nm
+daemon watches interfaces for IPv4 address changes. When a watched interface obtains a new IPv4 address,
+.Nm
+will make an HTTP(S) call, as defined in the configuration file, to update the specified DNS provider with the new IPv4 address.
+
+.Nm
+polls approximately every 60 seconds.
+
+Options:
+.Bl -tag -width Ds
+.It Fl f Ar file
+Use
+.Em file
+as the configuration file. If this option is not passed,
+.Nm
+will default to
+.Pa /etc/dyndnsd.conf
+.It Fl h
+Print usage.
+.It Fl n
+Validate configuration file, then terminate.
+.It Fl v
+Print version number.
+.El
+.Sh FILES
+.Bl -tag
+.It Pa /etc/dyndnsd.conf
+This is the default configuration file.
+.El
+.Sh EXIT STATUS
+.Ex
+.Sh SEE ALSO
+.Xr dyndnsd.conf 5
+.Sh AUTHORS
+.An Mario Campos Aq Mt mario@mariocampos.io

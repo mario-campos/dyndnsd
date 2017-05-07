@@ -1,0 +1,60 @@
+.Dd $Mdocdate$
+.Dt DYNDNSD.CONF 5
+.Os
+.Sh NAME
+.Nm dyndnsd.conf
+.Nd Dynamic DNS Daemon configuration file
+.Sh DESCRIPTION
+The 
+.Nm
+configuration defines the network interfaces to watch, the domain names to update, and the HTTP-based API of the DNS provider.
+
+The configuration consists of three elements:
+.Sy interface
+definitions,
+.Sy domain
+definitions, and parameters.
+
+Comments begin with 
+.Sq #
+and continue to the end of the line.
+
+User input must be double-quoted if it contains whitespace ([ \\n\\t]). Otherwise, it's optional.
+.Ss interface Em string
+.Ss domain Em string
+.Ss http-url Em string
+.Ss http-auth Em string string
+.Ss http-header Em string string
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /etc/dyndnsd.conf
+This is the default configuration file.
+.El
+.Sh EXAMPLES
+The configuration below defines one network interface to watch and one domain name to update:
+.Bd -literal -offset Ds
+interface em0 {
+    http-url https://namecheap.com
+    domain example.com
+}
+.Ed
+
+The following example illustrates a slightly-more complicated configuration:
+
+.Bd -literal -offset Ds
+interface em0 {
+    domain www.example.com {
+        http-url https://easydns.com/api/dyndns.php
+        http-auth user2 secret
+    }
+
+    domain www.example.org {
+        http-url https://namecheap.com/api
+        http-auth foo bar
+    }
+}
+.Ed
+.Sh SEE ALSO
+.Xr dyndnsd 8
+.Sh AUTHORS
+.An Mario Campos Aq Mt mario@mariocampos.io
