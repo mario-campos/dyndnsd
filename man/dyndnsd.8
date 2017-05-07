@@ -15,9 +15,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon watches interfaces for IPv4 address changes. When a watched interface obtains a new IPv4 address,
+daemon watches network interfaces for IPv4 address changes. When a watched interface obtains a different IPv4 address (via DHCP for example),
 .Nm
-will make an HTTP(S) call, as defined in the configuration file, to update the specified DNS provider with the new IPv4 address.
+will make an HTTP(S) GET request to the configured DNS provider, in order to update the A record of specified domain name with the new IPv4 address.
 
 .Nm
 polls approximately every 60 seconds.
@@ -34,7 +34,7 @@ will default to
 .It Fl h
 Print usage.
 .It Fl n
-Validate configuration file, then terminate.
+Validate the configuration file, then terminate.
 .It Fl v
 Print version number.
 .El
