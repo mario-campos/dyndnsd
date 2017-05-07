@@ -9,6 +9,7 @@ NEWS
 
 # http://www.gnu.org/software/autoconf
 
+config.h
 /autom4te.cache
 /autoscan.log
 /autoscan-*.log
