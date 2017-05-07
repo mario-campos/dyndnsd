@@ -1,3 +1,4 @@
+#include "config.h"
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -12,7 +13,9 @@
 extern FILE *yyin;
 extern int yyparse();
 
-const char const *usage = "usage: dyndnsd [-dhnv] [-f file]";
+const char const *usage = "usage: " PACKAGE " [-dn] [-f file]\n"
+			  "       " PACKAGE " -v\n"
+			  "       " PACKAGE " -h";
 
 static uint8_t
 min(uint8_t a, uint8_t b) {
@@ -42,7 +45,7 @@ main(int argc, char *argv[]) {
             puts(usage);
             exit(EXIT_SUCCESS);
         case 'v':
-            puts("0.0.1");
+            puts(VERSION);
             exit(EXIT_SUCCESS);
         case 'f':
             yyin = fopen(optarg, "r");
