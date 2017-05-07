@@ -1,6 +1,11 @@
 # http://www.gnu.org/software/automake
 
+Makefile
 Makefile.in
+COPYING
+README
+INSTALL
+NEWS
 
 # http://www.gnu.org/software/autoconf
 
@@ -9,20 +14,28 @@ Makefile.in
 /autoscan-*.log
 /aclocal.m4
 /compile
-/config.h.in
+config.h.in
+/config.log
+/config.status
 /configure
 /configure.scan
 /depcomp
+.deps
+.dirstamp
 /install-sh
 /missing
-/stamp-h1
+stamp-h1
 
 # build artifacts
 
+*.o
 a.out
 dyndnsd
 
 # lex and yacc artifacts
-lex.yy.c
-y.tab.[ch]
+
+src/parse.h
+src/parse.c
+src/tokenize.c
 y.output
+ylwrap
