@@ -36,7 +36,7 @@ find_sa(struct ifaddrs **ifap, char *ifname) {
 int
 main(int argc, char *argv[]) {
     int opt;
-    bool lint_mode = false;
+    bool optn = false;
     char *conf = PACKAGE_ETC_FILE;
 
     while ((opt = getopt(argc, argv, "hnvf:")) != -1) {
@@ -52,7 +52,7 @@ main(int argc, char *argv[]) {
             conf = optarg;
             break;
         case 'n':
-            lint_mode = true;
+            optn = true;
             break;
         }
     }
@@ -63,7 +63,7 @@ main(int argc, char *argv[]) {
     int parse_status = yyparse();
     fclose(yyin);
 
-    if (lint_mode) exit(parse_status);
+    if (optn) exit(parse_status);
 
     /*
     if (-1 == daemon(0, 0))
