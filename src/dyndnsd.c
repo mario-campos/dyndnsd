@@ -37,6 +37,7 @@ int
 main(int argc, char *argv[]) {
     int opt;
     bool lint_mode = false;
+    char *conf = PACKAGE_ETC_FILE;
 
     while ((opt = getopt(argc, argv, "hnvf:")) != -1) {
         switch (opt) {
@@ -48,7 +49,7 @@ main(int argc, char *argv[]) {
             puts(VERSION);
             exit(EXIT_SUCCESS);
         case 'f':
-            yyin = fopen(optarg, "r");
+            conf = optarg;
             break;
         case 'n':
             lint_mode = true;
@@ -56,7 +57,11 @@ main(int argc, char *argv[]) {
         }
     }
 
+    if (!(yyin = fopen(conf, "r")))
+        err(EXIT_FAILURE, "fopen(\"%s\")", conf);
+
     int parse_status = yyparse();
+    fclose(yyin);
 
     if (lint_mode) exit(parse_status);
 
