@@ -66,25 +66,25 @@ main(int argc, char *argv[]) {
     if (optn) exit(parse_status);
 
     /*
-    if (-1 == daemon(0, 0))
+    if (daemon(0, 0) == -1)
         err(EXIT_FAILURE, "daemon(3)");
 
     //TODO: set up libcurl
 
     openlog(NULL, LOG_PID, LOG_DAEMON);
 
-    if (-1 == pledge("stdio", NULL))
+    if (pledge("stdio", NULL) == -1)
         syslog(LOG_ERR, "pledge(2): %m");
     */
 
     struct ifaddrs **ifap0, **ifap1;
     struct sockaddr *sa0, *sa1;
 
-    if (-1 == getifaddrs(ifap0))
+    if (getifaddrs(ifap0) == -1)
         syslog(LOG_ERR, "getifaddrs(3): %m");
 
     while (true) {
-        if (-1 == getifaddrs(ifap1)) {
+        if (getifaddrs(ifap1) == -1) {
             syslog(LOG_ERR, "getifaddrs(3): %m");
             goto sleep;
         }
@@ -95,7 +95,7 @@ main(int argc, char *argv[]) {
         sa1 = find_sa(ifap1, "em0");
 
         // if different, call libcurl
-        if (0 != memcmp(sa0, sa1, min(sa0->sa_len, sa1->sa_len))) {
+        if (memcmp(sa0, sa1, min(sa0->sa_len, sa1->sa_len)) != 0) {
 
         }
 
