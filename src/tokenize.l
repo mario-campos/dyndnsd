@@ -1,5 +1,6 @@
 %{
 #include "parse.h"
+void unquote(const char *s);
 %}
 
 %option noyywrap
@@ -20,10 +21,16 @@ unquoted_string		[^ \n\t]+
 "}"			return '}';
 {comment}		;
 {whitespace}		;
-{quoted_string}		{ yytext[yyleng-1] = '\0'; yytext++; yyleng -= 2; return STRING; }
+{quoted_string}		{ unquote(yytext); return STRING; }
 {unquoted_string}	return STRING;
 
 %%
+
+void unquote(const char *s) {
+    yytext[--yyleng] = '\0';
+    yytext++;
+    yyleng--;
+}
 
 void yyerror(const char *s) {
     fprintf(stderr, "%s\n", s);
