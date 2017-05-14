@@ -14,9 +14,7 @@ unquoted_string		[^ \n\t]+
 
 "interface"		return INTERFACE;
 "domain"		return DOMAIN;
-"http-url" 		return HTTP_URL;
-"http-auth"		return HTTP_AUTH;
-"http-header"		return HTTP_HEADER;
+"http-get" 		return HTTP_GET;
 "{"			return '{';
 "}"			return '}';
 {comment}		;

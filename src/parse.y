@@ -5,9 +5,7 @@ extern int yyerror();
 
 %token INTERFACE
 %token DOMAIN
-%token HTTP_AUTH
-%token HTTP_URL
-%token HTTP_HEADER
+%token HTTP_GET
 %token STRING
 
 %%
@@ -31,16 +29,9 @@ statements1
 	;
 
 domain	: DOMAIN STRING
-	| DOMAIN STRING '{' parameters '}'
-	;
-
-parameters
-	: parameter
-	| parameters parameter
+	| DOMAIN STRING '{' parameter '}'
 	;
 
 parameter 
-	: HTTP_URL STRING
-	| HTTP_AUTH STRING STRING
-	| HTTP_HEADER STRING STRING
+	: HTTP_GET STRING
 	;
