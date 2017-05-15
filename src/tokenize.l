@@ -19,7 +19,7 @@ unquoted_string		[^ \n\t]+
 "}"			return '}';
 {comment}		;
 {whitespace}		;
-{quoted_string}		{ unquote(yytext); return STRING; }
+{quoted_string}		{ unquote(yytext); yylval.str = yytext; return STRING; }
 {unquoted_string}	return STRING;
 
 %%
