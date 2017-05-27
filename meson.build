@@ -1,8 +1,8 @@
 project('dyndnsd', 'c')
 
 cdata = configuration_data()
-cdata.set('PACKAGE', '"dyndnsd"')
-cdata.set('PACKAGE_ETC_FILE', '"/etc/dyndnsd.conf"')
+cdata.set('EXENAME', '"dyndnsd"')
+cdata.set('ETCFILE', '"/etc/dyndnsd.conf"')
 cdata.set('VERSION', '"0.0.0"')
 configure_file(output : 'config.h', configuration : cdata)
 

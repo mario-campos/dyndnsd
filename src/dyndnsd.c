@@ -13,9 +13,9 @@
 extern FILE *yyin;
 extern int yyparse();
 
-const char const *usage = "usage: " PACKAGE " [-dn] [-f file]\n"
-			  "       " PACKAGE " -v\n"
-			  "       " PACKAGE " -h";
+const char const *usage = "usage: " EXENAME " [-dn] [-f file]\n"
+			  "       " EXENAME " -v\n"
+			  "       " EXENAME " -h";
 
 static uint8_t
 min(uint8_t a, uint8_t b) {
@@ -37,7 +37,7 @@ int
 main(int argc, char *argv[]) {
     int opt;
     bool optn = false;
-    char *conf = PACKAGE_ETC_FILE;
+    char *conf = ETCFILE;
 
     while ((opt = getopt(argc, argv, "hnvf:")) != -1) {
         switch (opt) {
