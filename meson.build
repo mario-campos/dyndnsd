@@ -1,4 +1,4 @@
-project('dyndnsd', 'c')
+project('dyndnsd', 'c', version : '0.0.0')
 
 cdata = configuration_data()
 cdata.set('EXENAME', '"dyndnsd"')
