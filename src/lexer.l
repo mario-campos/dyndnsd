@@ -31,6 +31,6 @@ void unquote(const char *s) {
     yyleng--;
 }
 
-void yyerror(const char *s) {
+void yyerror(struct ast *ast, const char *s) {
     fprintf(stderr, "%s\n", s);
 }

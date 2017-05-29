@@ -61,7 +61,8 @@ main(int argc, char *argv[]) {
     if (!(yyin = fopen(conf, "r")))
         err(EXIT_FAILURE, "fopen(\"%s\")", conf);
 
-    int parse_status = yyparse();
+    struct ast *ast;
+    int parse_status = yyparse(&ast);
     fclose(yyin);
 
     if (optn) exit(parse_status);

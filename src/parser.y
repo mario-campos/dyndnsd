@@ -23,6 +23,8 @@ extern int yyerror();
 %type <ast_domain> domains domain
 %type <ast_param> parameter
 
+%parse-param {struct ast *ast}
+
 %%
 
 configuration
