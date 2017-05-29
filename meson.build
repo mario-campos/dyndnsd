@@ -1,4 +1,4 @@
-project('dyndnsd', 'c', version : '0.0.0')
+project('dyndnsd', 'C', version : '0.0.0', default_options : ['c_std=c99'])
 
 cdata = configuration_data()
 cdata.set('EXENAME', '"dyndnsd"')
@@ -9,8 +9,9 @@ configure_file(output : 'config.h', configuration : cdata)
 lex_src = custom_target('lex', input : 'src/lexer.l', output : 'lexer.c',
                         command : ['lex', '-o', 'lexer.c', '@INPUT@'])
 
-yacc_src = custom_target('yacc', input : 'src/parser.y', output: ['parser.c', 'parser.h'],
-                         command : ['yacc', '-d', '-o', 'parser.c', '@INPUT@'])
+bison_src = custom_target('bison', input : 'src/parser.y', output: ['parser.c', 'parser.h'],
+                         command : ['bison', '-d', '-o', 'parser.c', '@INPUT@'])
 
-executable('dyndnsd', 'src/dyndnsd.c', lex_src, yacc_src,
-           include_directories : include_directories('src'))
+sources = ['src/dyndnsd.c', 'src/ast.c', lex_src, bison_src]
+
+executable('dyndnsd', sources, include_directories : include_directories('src'))

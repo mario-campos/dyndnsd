@@ -1,4 +1,3 @@
-#include "config.h"
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -9,6 +8,8 @@
 #include <ifaddrs.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include "ast.h"
+#include "config.h"
 
 extern FILE *yyin;
 extern int yyparse();
