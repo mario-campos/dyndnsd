@@ -28,8 +28,8 @@ extern int yyerror();
 %%
 
 configuration
-	: interfaces					{ $$ = new_ast($1, NULL); }
-	| parameter interfaces				{ $$ = new_ast($2, $1); }
+	: interfaces					{ ast = new_ast($1, NULL); }
+	| parameter interfaces				{ ast = new_ast($2, $1); }
 	;
 
 interfaces
