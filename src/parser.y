@@ -6,11 +6,11 @@ extern int yyerror();
 %}
 
 %union {
-	char *str;
-	struct ast *ast;
-	struct ast_interface *ast_iface;
+	char              *str;
+	struct ast        *ast;
+	struct ast_iface  *ast_iface;
 	struct ast_domain *ast_domain;
-	struct ast_parameter *ast_param;
+	struct ast_param  *ast_param;
 }
 
 %token INTERFACE

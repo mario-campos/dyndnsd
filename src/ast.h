@@ -2,23 +2,23 @@
 
 #include <stdbool.h>
 
-typedef struct ast_parameter {
-    int ptype;
-    const char *value;
-    struct ast_parameter *next;
+typedef struct ast_param {
+    int               ptype;
+    const char       *value;
+    struct ast_param *next;
 } ast_param_t;
 
 typedef struct ast_domain {
-    const char *name;
-    ast_param_t *parameters;
+    const char        *name;
+    ast_param_t       *parameters;
     struct ast_domain *next;
 } ast_domain_t;
 
-typedef struct ast_interface {
-    const char *name;
-    ast_domain_t *domains;
-    ast_param_t *parameters;
-    struct ast_interface *next;
+typedef struct ast_iface {
+    const char       *name;
+    ast_domain_t     *domains;
+    ast_param_t      *parameters;
+    struct ast_iface *next;
 } ast_iface_t;
 
 typedef struct ast {
