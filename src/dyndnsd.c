@@ -18,13 +18,8 @@ const char const *usage = "usage: " EXENAME " [-dn] [-f file]\n"
 			  "       " EXENAME " -v\n"
 			  "       " EXENAME " -h";
 
-static uint8_t
-min(uint8_t a, uint8_t b) {
-    return a < b ? a : b;
-}
-
 static struct sockaddr *
-find_sa(struct ifaddrs **ifap, char *ifname) {
+find_sa(struct ifaddrs **ifap, const char *ifname) {
     struct ifaddrs *ifa = *ifap;
     while (ifa) {
         if (strncmp(ifa->ifa_name, ifname, strlen(ifname)) == 0)
@@ -80,7 +75,6 @@ main(int argc, char *argv[]) {
     */
 
     struct ifaddrs **ifap0, **ifap1;
-    struct sockaddr *sa0, *sa1;
 
     if (getifaddrs(ifap0) == -1)
         syslog(LOG_ERR, "getifaddrs(3): %m");
@@ -91,14 +85,14 @@ main(int argc, char *argv[]) {
             goto sleep;
         }
 
-        // loop over tracked interfaces
+        for (ast_iface_t *aif = ast->interfaces; aif->next; aif = aif->next) {
+            struct sockaddr *sa0 = find_sa(ifap0, aif->name);
+            struct sockaddr *sa1 = find_sa(ifap1, aif->name);
 
-        sa0 = find_sa(ifap0, "em0");
-        sa1 = find_sa(ifap1, "em0");
+            // if different, call libcurl
+            if (memcmp(sa0, sa1, sa0->sa_len) != 0) {
 
-        // if different, call libcurl
-        if (memcmp(sa0, sa1, min(sa0->sa_len, sa1->sa_len)) != 0) {
-
+            }
         }
 
         freeifaddrs(*ifap0);
