@@ -3,6 +3,7 @@
 void unquote(const char *s);
 %}
 
+%option nounput
 %option noyywrap
 
 comment			"#"[^\n]*
