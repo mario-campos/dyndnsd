@@ -20,12 +20,11 @@ unquoted_string		[^ \n\t]+
 "}"			return '}';
 {comment}		;
 {whitespace}		;
-{quoted_string}		{ char *s = strdup(yytext); s[yyleng-1] = '\0'; s++; yylval.str = s; return STRING; }
-{unquoted_string}	{ yylval.str = strdup(yytext); return STRING; }
+{quoted_string}		{ yylval.str = strndup(yytext+1, yyleng-2); return STRING; }
+{unquoted_string}	{ yylval.str = strndup(yytext, yyleng); return STRING; }
 
 %%
 
 void yyerror(struct ast **ast, const char *s) {
     fprintf(stderr, "%s\n", s);
 }
-
