@@ -1,6 +1,6 @@
 %{
+#include <string.h>
 #include "parser.h"
-void unquote(const char *s);
 %}
 
 %option nounput
@@ -20,16 +20,10 @@ unquoted_string		[^ \n\t]+
 "}"			return '}';
 {comment}		;
 {whitespace}		;
-{quoted_string}		{ unquote(yytext); yylval.str = yytext; return STRING; }
-{unquoted_string}	return STRING;
+{quoted_string}		{ char *s = strdup(yytext); s[yyleng-1] = '\0'; s++; yylval.str = s; return STRING; }
+{unquoted_string}	{ yylval.str = strdup(yytext); return STRING; }
 
 %%
-
-void unquote(const char *s) {
-    yytext[--yyleng] = '\0';
-    yytext++;
-    yyleng--;
-}
 
 void yyerror(struct ast *ast, const char *s) {
     fprintf(stderr, "%s\n", s);
