@@ -25,6 +25,7 @@ unquoted_string		[^ \n\t]+
 
 %%
 
-void yyerror(struct ast *ast, const char *s) {
+void yyerror(struct ast **ast, const char *s) {
     fprintf(stderr, "%s\n", s);
 }
+

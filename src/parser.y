@@ -23,13 +23,13 @@ extern int yyerror();
 %type <ast_domain> domains domain
 %type <ast_param> parameter
 
-%parse-param {struct ast *ast}
+%parse-param {struct ast **ast}
 
 %%
 
 configuration
-	: interfaces					{ ast = new_ast($1, NULL); }
-	| parameter interfaces				{ ast = new_ast($2, $1); }
+	: interfaces					{ *ast = new_ast($1, NULL); }
+	| parameter interfaces				{ *ast = new_ast($2, $1); }
 	;
 
 interfaces
