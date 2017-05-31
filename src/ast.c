@@ -54,7 +54,8 @@ new_ast_param(int ptype, const char *value) {
 
 bool
 valid_ast(ast_t *ast) {
-    hcreate(HASH_TABLE_SIZE);
+    if(!hcreate(HASH_TABLE_SIZE))
+        err(EXIT_FAILURE, "hcreate(3)");
 
     for (ast_iface_t *aif = ast->interfaces; aif; aif = aif->next) {
         // ensure interface exists
@@ -65,14 +66,16 @@ valid_ast(ast_t *ast) {
         char *key = strdup(aif->name);
         if (hsearch((ENTRY){key, NULL}, FIND))
             return false;
-        hsearch((ENTRY){key, NULL}, ENTER);
+        if(!hsearch((ENTRY){key, NULL}, ENTER))
+            err(EXIT_FAILURE, "hsearch(3)");
 
         for (ast_domain_t *ad = aif->domains; ad; ad = ad->next) {
             // ensure domain name isn't repeated
             key = strdup(ad->name);
             if (hsearch((ENTRY){key, NULL}, FIND))
                 return false;
-            hsearch((ENTRY){key, NULL}, ENTER);
+            if(!hsearch((ENTRY){key, NULL}, ENTER))
+                err(EXIT_FAILURE, "hsearch(3)");
         }
     }
 
