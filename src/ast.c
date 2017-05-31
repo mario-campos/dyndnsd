@@ -14,7 +14,7 @@ new_ast(ast_iface_t *i, ast_param_t *p) {
 }
 
 ast_iface_t *
-new_interface(const char *name, ast_domain_t *d, ast_param_t *p) {
+new_ast_iface(const char *name, ast_domain_t *d, ast_param_t *p) {
     ast_iface_t *ast_iface;
     if ((ast_iface = calloc(sizeof(ast_iface_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
@@ -25,7 +25,7 @@ new_interface(const char *name, ast_domain_t *d, ast_param_t *p) {
 }
 
 ast_domain_t *
-new_domain(const char *name, ast_param_t *p) {
+new_ast_domain(const char *name, ast_param_t *p) {
     ast_domain_t *ast_domain;
     if ((ast_domain = calloc(sizeof(ast_domain_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
@@ -35,7 +35,7 @@ new_domain(const char *name, ast_param_t *p) {
 }
 
 ast_param_t *
-new_parameter(int ptype, const char *value) {
+new_ast_param(int ptype, const char *value) {
     ast_param_t *ast_param;
     if ((ast_param = calloc(sizeof(ast_param_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");

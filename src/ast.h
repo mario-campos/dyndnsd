@@ -30,13 +30,13 @@ ast_t *
 new_ast(ast_iface_t *i, ast_param_t *p);
 
 ast_iface_t *
-new_interface(const char *name, ast_domain_t *d, ast_param_t *p);
+new_ast_iface(const char *name, ast_domain_t *d, ast_param_t *p);
 
 ast_domain_t *
-new_domain(const char *name, ast_param_t *p);
+new_ast_domain(const char *name, ast_param_t *p);
 
 ast_param_t *
-new_parameter(int parameter_type, const char *value);
+new_ast_param(int parameter_type, const char *value);
 
 bool
 valid_ast(ast_t *ast);
