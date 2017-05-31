@@ -1,7 +1,15 @@
 #include <err.h>
+#include <search.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
 #include "ast.h"
+
+#define HASH_TABLE_SIZE 10
+#define BITS(x) (sizeof(x) * 8)
 
 ast_t *
 new_ast(ast_iface_t *i, ast_param_t *p) {
@@ -46,20 +54,28 @@ new_ast_param(int ptype, const char *value) {
 
 bool
 valid_ast(ast_t *ast) {
-    // validate top-level parameters
+    hcreate(HASH_TABLE_SIZE);
 
-    // validate interface
+    for (ast_iface_t *aif = ast->interfaces; aif; aif = aif->next) {
+        // ensure interface exists
+        if (!if_nametoindex(aif->name))
+            return false;
 
-    // --> validate interface parameters
+        // ensure interface isn't repeated
+        char *key = strdup(aif->name);
+        if (hsearch((ENTRY){key, NULL}, FIND))
+            return false;
+        hsearch((ENTRY){key, NULL}, ENTER);
 
-    // --> validate interface domain
+        for (ast_domain_t *ad = aif->domains; ad; ad = ad->next) {
+            // ensure domain name isn't repeated
+            key = strdup(ad->name);
+            if (hsearch((ENTRY){key, NULL}, FIND))
+                return false;
+            hsearch((ENTRY){key, NULL}, ENTER);
+        }
+    }
 
-    // -----> validate domain parameters
-
-    // -----> loop domain parameters
-
-    // --> loop interface domains
-
-    // validate interfaces
+    hdestroy();
     return true;
 }
