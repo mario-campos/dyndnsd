@@ -5,7 +5,6 @@
 typedef struct ast_param {
     int               ptype;
     const char       *value;
-    struct ast_param *next;
 } ast_param_t;
 
 typedef struct ast_domain {
