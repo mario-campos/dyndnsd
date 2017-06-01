@@ -8,6 +8,7 @@
 #include <ifaddrs.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <curl/curl.h>
 #include "ast.h"
 #include "config.h"
 
@@ -62,11 +63,11 @@ main(int argc, char *argv[]) {
 
     if (optn) exit(parse_status);
 
+    curl_global_init(CURL_GLOBAL_ALL);
+
     /*
     if (daemon(0, 0) == -1)
         err(EXIT_FAILURE, "daemon(3)");
-
-    //TODO: set up libcurl
 
     openlog(NULL, LOG_PID, LOG_DAEMON);
 
