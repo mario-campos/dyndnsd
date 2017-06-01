@@ -54,10 +54,14 @@ new_ast_param(int ptype, const char *value) {
 
 bool
 valid_ast(ast_t *ast) {
+    const bool has_global_param = ast->parameters != NULL;
+
     if(!hcreate(HASH_TABLE_SIZE))
         err(EXIT_FAILURE, "hcreate(3)");
 
     for (ast_iface_t *aif = ast->interfaces; aif; aif = aif->next) {
+        const bool has_iface_param = aif->parameters != NULL;
+
         if (!if_nametoindex(aif->name))
             return false;
 
@@ -68,6 +72,13 @@ valid_ast(ast_t *ast) {
             err(EXIT_FAILURE, "hsearch(3)");
 
         for (ast_domain_t *ad = aif->domains; ad; ad = ad->next) {
+            const bool has_local_param = ad->parameters != NULL;
+            if (!has_global_param &&
+                !has_iface_param  &&
+                !has_local_param) {
+                return false;
+            }
+
             key = strdup(ad->name);
             if (hsearch((ENTRY){key, NULL}, FIND))
                 return false;
