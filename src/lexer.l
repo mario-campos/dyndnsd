@@ -5,6 +5,7 @@
 
 %option nounput
 %option noyywrap
+%option yylineno
 
 comment			"#"[^\n]*
 whitespace		[ \t\n]+
@@ -26,5 +27,5 @@ unquoted_string		[^ \n\t]+
 %%
 
 void yyerror(struct ast **ast, const char *s) {
-    fprintf(stderr, "%s\n", s);
+    fprintf(stderr, "%s (line %d)\n", s, yylineno);
 }
