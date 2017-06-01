@@ -62,9 +62,11 @@ valid_ast(ast_t *ast) {
     for (ast_iface_t *aif = ast->interfaces; aif; aif = aif->next) {
         const bool has_iface_param = aif->parameters != NULL;
 
+        // check that the specified interface exists
         if (!if_nametoindex(aif->name))
             return false;
 
+        // check for duplicate interface declarations
         char *key = strdup(aif->name);
         if (hsearch((ENTRY){key, NULL}, FIND))
             return false;
@@ -73,12 +75,15 @@ valid_ast(ast_t *ast) {
 
         for (ast_domain_t *ad = aif->domains; ad; ad = ad->next) {
             const bool has_local_param = ad->parameters != NULL;
+
+            // check for missing required parameters
             if (!has_global_param &&
                 !has_iface_param  &&
                 !has_local_param) {
                 return false;
             }
 
+            // check for duplicate domain names
             key = strdup(ad->name);
             if (hsearch((ENTRY){key, NULL}, FIND))
                 return false;
