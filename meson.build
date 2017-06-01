@@ -10,7 +10,7 @@ lex_src = custom_target('lex', input : 'src/lexer.l', output : 'lexer.c',
                         command : ['lex', '-o', 'lexer.c', '@INPUT@'])
 
 bison_src = custom_target('bison', input : 'src/parser.y', output: ['parser.c', 'parser.h'],
-                         command : ['bison', '-d', '-o', 'parser.c', '@INPUT@'])
+                          command : ['bison', '-d', '-o', 'parser.c', '@INPUT@'])
 
 sources = ['src/dyndnsd.c', 'src/ast.c', lex_src, bison_src]
 
