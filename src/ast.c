@@ -58,11 +58,9 @@ valid_ast(ast_t *ast) {
         err(EXIT_FAILURE, "hcreate(3)");
 
     for (ast_iface_t *aif = ast->interfaces; aif; aif = aif->next) {
-        // ensure interface exists
         if (!if_nametoindex(aif->name))
             return false;
 
-        // ensure interface isn't repeated
         char *key = strdup(aif->name);
         if (hsearch((ENTRY){key, NULL}, FIND))
             return false;
@@ -70,7 +68,6 @@ valid_ast(ast_t *ast) {
             err(EXIT_FAILURE, "hsearch(3)");
 
         for (ast_domain_t *ad = aif->domains; ad; ad = ad->next) {
-            // ensure domain name isn't repeated
             key = strdup(ad->name);
             if (hsearch((ENTRY){key, NULL}, FIND))
                 return false;
