@@ -61,6 +61,8 @@ main(int argc, char *argv[]) {
     int parse_status = yyparse(&ast);
     fclose(yyin);
 
+    if (!valid_ast(ast)) exit(EXIT_FAILURE);
+
     if (optn) exit(parse_status);
 
     curl_global_init(CURL_GLOBAL_ALL);

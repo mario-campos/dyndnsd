@@ -1,4 +1,5 @@
 #include <err.h>
+#include <stdio.h>
 #include <search.h>
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +55,7 @@ new_ast_param(int ptype, const char *value) {
 
 bool
 valid_ast(ast_t *ast) {
+    bool valid = true;
     const bool has_global_param = ast->parameters != NULL;
 
     if(!hcreate(HASH_TABLE_SIZE))
@@ -63,13 +65,17 @@ valid_ast(ast_t *ast) {
         const bool has_iface_param = aif->parameters != NULL;
 
         // check that the specified interface exists
-        if (!if_nametoindex(aif->name))
-            return false;
+        if (!if_nametoindex(aif->name)) {
+            valid = false;
+            fprintf(stderr, "error: interface \"%s\" not found\n", aif->name);
+        }
 
         // check for duplicate interface declarations
         char *key = strdup(aif->name);
-        if (hsearch((ENTRY){key, NULL}, FIND))
-            return false;
+        if (hsearch((ENTRY){key, NULL}, FIND)) {
+            valid = false;
+            fprintf(stderr, "error: duplicate interface \"%s\" detected\n", aif->name);
+        }
         if(!hsearch((ENTRY){key, NULL}, ENTER))
             err(EXIT_FAILURE, "hsearch(3)");
 
@@ -80,18 +86,21 @@ valid_ast(ast_t *ast) {
             if (!has_global_param &&
                 !has_iface_param  &&
                 !has_local_param) {
-                return false;
+                valid = false;
+                fprintf(stderr, "error: no `http-get` statement in scope of domain \"%s\"\n", ad->name);
             }
 
             // check for duplicate domain names
             key = strdup(ad->name);
-            if (hsearch((ENTRY){key, NULL}, FIND))
-                return false;
+            if (hsearch((ENTRY){key, NULL}, FIND)) {
+                valid = false;
+                fprintf(stderr, "error: duplicate domain \"%s\" detected\n", ad->name);
+            }
             if(!hsearch((ENTRY){key, NULL}, ENTER))
                 err(EXIT_FAILURE, "hsearch(3)");
         }
     }
 
     hdestroy();
-    return true;
+    return valid;
 }
