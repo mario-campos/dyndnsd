@@ -13,56 +13,55 @@
 #define BITS(x) (sizeof(x) * 8)
 
 ast_t *
-new_ast(ast_iface_t *i, ast_param_t *p) {
+new_ast(ast_iface_t *i, ast_url_t *u) {
     ast_t *ast;
     if ((ast = calloc(sizeof(ast_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
     ast->interfaces = i;
-    ast->parameters = p;
+    ast->url = u;
     return ast;
 }
 
 ast_iface_t *
-new_ast_iface(const char *name, ast_domain_t *d, ast_param_t *p) {
+new_ast_iface(const char *name, ast_domain_t *d, ast_url_t *u) {
     ast_iface_t *ast_iface;
     if ((ast_iface = calloc(sizeof(ast_iface_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
     ast_iface->name = name;
     ast_iface->domains = d;
-    ast_iface->parameters = p;
+    ast_iface->url = u;
     return ast_iface;
 }
 
 ast_domain_t *
-new_ast_domain(const char *name, ast_param_t *p) {
+new_ast_domain(const char *name, ast_url_t *u) {
     ast_domain_t *ast_domain;
     if ((ast_domain = calloc(sizeof(ast_domain_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
     ast_domain->name = name;
-    ast_domain->parameters = p;
+    ast_domain->url = u;
     return ast_domain;
 }
 
-ast_param_t *
-new_ast_param(int ptype, const char *value) {
-    ast_param_t *ast_param;
-    if ((ast_param = calloc(sizeof(ast_param_t), 1)) == NULL)
+ast_url_t *
+new_ast_url(const char *value) {
+    ast_url_t *ast_url;
+    if ((ast_url = calloc(sizeof(ast_url_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
-    ast_param->ptype = ptype;
-    ast_param->value = value;
-    return ast_param;
+    ast_url->value = value;
+    return ast_url;
 }
 
 bool
 valid_ast(ast_t *ast) {
     bool valid = true;
-    const bool has_global_param = ast->parameters != NULL;
+    const bool has_local0_url = ast->url != NULL;
 
     if(!hcreate(HASH_TABLE_SIZE))
         err(EXIT_FAILURE, "hcreate(3)");
 
     for (ast_iface_t *aif = ast->interfaces; aif; aif = aif->next) {
-        const bool has_iface_param = aif->parameters != NULL;
+        const bool has_local1_url = aif->url != NULL;
 
         // check that the specified interface exists
         if (!if_nametoindex(aif->name)) {
@@ -80,12 +79,12 @@ valid_ast(ast_t *ast) {
             err(EXIT_FAILURE, "hsearch(3)");
 
         for (ast_domain_t *ad = aif->domains; ad; ad = ad->next) {
-            const bool has_local_param = ad->parameters != NULL;
+            const bool has_local2_url = ad->url != NULL;
 
-            // check for missing required parameters
-            if (!has_global_param &&
-                !has_iface_param  &&
-                !has_local_param) {
+            // check for missing required URL statement
+            if (!has_local0_url &&
+                !has_local1_url &&
+                !has_local2_url) {
                 valid = false;
                 fprintf(stderr, "error: no `http-get` statement in scope of domain \"%s\"\n", ad->name);
             }
