@@ -116,8 +116,6 @@ main(int argc, char *argv[]) {
 
             httpget(curl, url);
 
-            // TODO: log successful call
-
 	    free(url);
 	    freeparams(p);
         }
