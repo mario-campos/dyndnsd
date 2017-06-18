@@ -10,7 +10,6 @@ extern int yyerror();
 	struct ast        *ast;
 	struct ast_iface  *ast_iface;
 	struct ast_domain *ast_domain;
-	struct ast_url    *ast_url;
 }
 
 %token INTERFACE
@@ -21,7 +20,7 @@ extern int yyerror();
 %type <ast> configuration
 %type <ast_iface> interfaces interface
 %type <ast_domain> domains domain
-%type <ast_url> url 
+%type <str> url 
 
 %locations
 %parse-param {struct ast **ast}
@@ -51,5 +50,5 @@ domain	: DOMAIN STRING					{ $$ = new_ast_domain($2, NULL); }
 	| DOMAIN STRING '{' url '}'		        { $$ = new_ast_domain($2, $4); }
 	;
 
-url     : HTTP_GET STRING				{ $$ = new_ast_url($2); }
+url     : HTTP_GET STRING				{ $$ = $2; }
 	;

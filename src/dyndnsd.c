@@ -109,10 +109,10 @@ main(int argc, char *argv[]) {
             if (!inaddreq(sa_old->sin_addr, sa_new->sin_addr))
                 continue;
 
-            param_t *p = getparams(aif->url->value);
+            param_t *p = getparams(aif->url);
             setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
             setparam(p, "hostname", aif->domains->name);
-            char *url = mkurl(aif->url->value, p);
+            char *url = mkurl(aif->url, p);
 
             httpget(curl, url);
 

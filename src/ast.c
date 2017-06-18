@@ -11,7 +11,7 @@
 #define BITS(x) (sizeof(x) * 8)
 
 ast_t *
-new_ast(ast_iface_t *i, ast_url_t *u) {
+new_ast(ast_iface_t *i, const char *u) {
     ast_t *ast;
     if ((ast = calloc(sizeof(ast_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
@@ -21,7 +21,7 @@ new_ast(ast_iface_t *i, ast_url_t *u) {
 }
 
 ast_iface_t *
-new_ast_iface(const char *name, ast_domain_t *d, ast_url_t *u) {
+new_ast_iface(const char *name, ast_domain_t *d, const char *u) {
     ast_iface_t *ast_iface;
     if ((ast_iface = calloc(sizeof(ast_iface_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
@@ -32,22 +32,13 @@ new_ast_iface(const char *name, ast_domain_t *d, ast_url_t *u) {
 }
 
 ast_domain_t *
-new_ast_domain(const char *name, ast_url_t *u) {
+new_ast_domain(const char *name, const char *u) {
     ast_domain_t *ast_domain;
     if ((ast_domain = calloc(sizeof(ast_domain_t), 1)) == NULL)
         err(EXIT_FAILURE, "calloc(3)");
     ast_domain->name = name;
     ast_domain->url = u;
     return ast_domain;
-}
-
-ast_url_t *
-new_ast_url(const char *value) {
-    ast_url_t *ast_url;
-    if ((ast_url = calloc(sizeof(ast_url_t), 1)) == NULL)
-        err(EXIT_FAILURE, "calloc(3)");
-    ast_url->value = value;
-    return ast_url;
 }
 
 bool
