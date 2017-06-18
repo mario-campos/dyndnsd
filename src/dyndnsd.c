@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <ifaddrs.h>
-#include <stdbool.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <curl/curl.h>

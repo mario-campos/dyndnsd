@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
-
 typedef struct param {
     const char *field;
     const char *value;
