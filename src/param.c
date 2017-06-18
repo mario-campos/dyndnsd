@@ -4,7 +4,7 @@
 #include "param.h"
 
 param_t *
-parse_params(const char *url) {
+getparams(const char *url) {
     char *r, *s;
     r = s = strdup(url);
 
@@ -27,25 +27,19 @@ parse_params(const char *url) {
     return p;
 }
 
-bool
-has_param(param_t *p, const char *field) {
-    for (; p; p = p->next)
-	if (!strcmp(p->field, field))
-	    return true;
-    return false;
-}
-
 void
-add_param(param_t *p, const char *field, const char *value) {
-    for (; p; p = p->next)
+setparam(param_t *p, const char *field, const char *value) {
+    for (; p; p = p->next) {
+	if (!strcmp(p->field, field)) return;
 	if (!p->next) break;
+    }
     p->next = calloc(1, sizeof(param_t));
     p->next->field = strdup(field);
     p->next->value = strdup(value);
 }
 
 void
-free_params(param_t *p) {
+freeparams(param_t *p) {
     for (param_t *q; p; p = q) {
 	q = p->next;
         free((char *)p->field);
@@ -55,7 +49,7 @@ free_params(param_t *p) {
 }
 
 char *
-build_url(const char *url, param_t *p) {
+mkurl(const char *url, param_t *p) {
     char *r, *s;
 
     r = s = strdup(url);

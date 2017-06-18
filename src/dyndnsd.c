@@ -1,15 +1,18 @@
 #include <err.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <ifaddrs.h>
 #include <stdbool.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <curl/curl.h>
+
 #include "ast.h"
+#include "param.h"
 #include "config.h"
 
 extern FILE *yyin;
@@ -19,12 +22,25 @@ const char const *usage = "usage: " EXENAME " [-dn] [-f file]\n"
 			  "       " EXENAME " -v\n"
 			  "       " EXENAME " -h";
 
-static struct sockaddr *
-find_sa(struct ifaddrs **ifap, const char *ifname) {
-    struct ifaddrs *ifa = *ifap;
+static bool
+inaddreq(struct in_addr a, struct in_addr b) {
+    return memcmp(&a, &b, sizeof(struct in_addr)) == 0;
+}
+
+static void
+httpget(CURL *curl, const char *url) {
+    CURLcode err;
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    if ((err = curl_easy_perform(curl)))
+        syslog(LOG_ERR, "curl_easy_perform(3): %s", curl_easy_strerror(err));
+}
+
+static struct sockaddr_in *
+find_sa(struct ifaddrs *ifap, const char *ifname) {
+    struct ifaddrs *ifa = ifap;
     while (ifa) {
-        if (strncmp(ifa->ifa_name, ifname, strlen(ifname)) == 0)
-            return ifa->ifa_addr;
+        if (!strcmp(ifa->ifa_name, ifname))
+            return (struct sockaddr_in *)ifa->ifa_addr;
         ifa = ifa->ifa_next;
     } 
     return NULL;
@@ -34,8 +50,7 @@ int
 main(int argc, char *argv[]) {
     int opt;
     bool optn = false;
-    char *conf = ETCFILE;
-
+    char *optf = ETCFILE;
     while ((opt = getopt(argc, argv, "hnvf:")) != -1) {
         switch (opt) {
         default:
@@ -46,7 +61,7 @@ main(int argc, char *argv[]) {
             puts(VERSION);
             exit(EXIT_SUCCESS);
         case 'f':
-            conf = optarg;
+            optf = optarg;
             break;
         case 'n':
             optn = true;
@@ -54,18 +69,20 @@ main(int argc, char *argv[]) {
         }
     }
 
-    if (!(yyin = fopen(conf, "r")))
-        err(EXIT_FAILURE, "fopen(\"%s\")", conf);
+    if (!(yyin = fopen(optf, "r")))
+        err(EXIT_FAILURE, "fopen(\"%s\")", optf);
 
     struct ast *ast;
-    int parse_status = yyparse(&ast);
+    int parse_err = yyparse(&ast);
     fclose(yyin);
 
-    if (!valid_ast(ast)) exit(EXIT_FAILURE);
+    if (!valid_ast(ast) || optn)
+        exit(parse_err);
 
-    if (optn) exit(parse_status);
-
+    CURL *curl;
     curl_global_init(CURL_GLOBAL_ALL);
+    if (!(curl = curl_easy_init()))
+        err(EXIT_FAILURE, "curl_easy_init(3): failed to initialize libcurl");
 
     /*
     if (daemon(0, 0) == -1)
@@ -77,30 +94,40 @@ main(int argc, char *argv[]) {
         syslog(LOG_ERR, "pledge(2): %m");
     */
 
-    struct ifaddrs **ifap0, **ifap1;
-
-    if (getifaddrs(ifap0) == -1)
-        syslog(LOG_ERR, "getifaddrs(3): %m");
+    struct ifaddrs *ifap_old, *ifap_new;
+    getifaddrs(&ifap_old);
 
     while (true) {
-        if (getifaddrs(ifap1) == -1) {
+        if (getifaddrs(&ifap_new) == -1) {
             syslog(LOG_ERR, "getifaddrs(3): %m");
             goto sleep;
         }
 
         for (ast_iface_t *aif = ast->interfaces; aif->next; aif = aif->next) {
-            struct sockaddr *sa0 = find_sa(ifap0, aif->name);
-            struct sockaddr *sa1 = find_sa(ifap1, aif->name);
+            struct sockaddr_in *sa_old = find_sa(ifap_old, aif->name);
+            struct sockaddr_in *sa_new = find_sa(ifap_new, aif->name);
 
-            // if different, call libcurl
-            if (memcmp(sa0, sa1, sa0->sa_len) != 0) {
+            if (!inaddreq(sa_old->sin_addr, sa_new->sin_addr))
+                continue;
 
-            }
+            param_t *p = getparams(aif->url->value);
+            setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
+            setparam(p, "hostname", aif->domains->name);
+            char *url = mkurl(aif->url->value, p);
+
+            httpget(curl, url);
+
+            // TODO: log successful call
+
+	    free(url);
+	    freeparams(p);
         }
 
-        freeifaddrs(*ifap0);
-        ifap0 = ifap1;
+        freeifaddrs(ifap_old);
+        ifap_old = ifap_new;
 sleep:
         sleep(60);
     }
+
+    curl_easy_cleanup(curl);
 }
