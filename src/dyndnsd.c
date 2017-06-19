@@ -48,9 +48,9 @@ find_sa(struct ifaddrs *ifap, const char *ifname) {
 int
 main(int argc, char *argv[]) {
     int opt;
-    bool optn = false;
+    bool optn = false, optd = false;
     char *optf = ETCFILE;
-    while ((opt = getopt(argc, argv, "hnvf:")) != -1) {
+    while ((opt = getopt(argc, argv, "hdnvf:")) != -1) {
         switch (opt) {
         default:
         case 'h':
@@ -64,6 +64,9 @@ main(int argc, char *argv[]) {
             break;
         case 'n':
             optn = true;
+            break;
+        case 'd':
+            optd = true;
             break;
         }
     }
@@ -83,12 +86,12 @@ main(int argc, char *argv[]) {
     if (!(curl = curl_easy_init()))
         err(EXIT_FAILURE, "curl_easy_init(3): failed to initialize libcurl");
 
+    if (!optd)
+        daemon(0, 0);
+
+    openlog(NULL, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
+
     /*
-    if (daemon(0, 0) == -1)
-        err(EXIT_FAILURE, "daemon(3)");
-
-    openlog(NULL, LOG_PID, LOG_DAEMON);
-
     if (pledge("stdio", NULL) == -1)
         syslog(LOG_ERR, "pledge(2): %m");
     */
