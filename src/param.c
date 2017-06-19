@@ -46,7 +46,7 @@ param_t *
 setparam(param_t *p, const char *field, const char *value) {
     for (param_t *q = p; q; q = q->next) {
 	if (!strcmp(q->field, field)) {
-            free((char *)q->value);
+            free(q->value);
 	    q->value = strdup(value);
 	    return p;
         }
@@ -58,8 +58,8 @@ void
 freeparams(param_t *p) {
     for (param_t *q; p; p = q) {
 	q = p->next;
-        free((char *)p->field);
-	free((char *)p->value);
+        free(p->field);
+	free(p->value);
         free(p);
     }
 }
