@@ -9,7 +9,7 @@ typedef struct param {
 param_t *
 getparams(const char *url);
 
-void
+param_t *
 setparam(param_t *p, const char *field, const char *value);
 
 void

@@ -110,8 +110,8 @@ main(int argc, char *argv[]) {
                 continue;
 
             param_t *p = getparams(aif->url);
-            setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
-            setparam(p, "hostname", aif->domains->name);
+            p = setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
+            p = setparam(p, "hostname", aif->domains->name);
             char *url = mkurl(aif->url, p);
 
             httpget(curl, url);

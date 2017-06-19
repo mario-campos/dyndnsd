@@ -26,15 +26,32 @@ getparams(const char *url) {
     return p;
 }
 
-void
-setparam(param_t *p, const char *field, const char *value) {
-    for (; p; p = p->next) {
-	if (!strcmp(p->field, field)) return;
-	if (!p->next) break;
+static param_t * 
+addparam(param_t *p, const char *field, const char *value) {
+    if (!p) {
+        p = calloc(1, sizeof(param_t));
+        p->field = strdup(field);
+        p->value = strdup(value);
+    } else {
+        param_t *q;
+        for (q = p; q->next; q = q->next);
+        q->next = calloc(1, sizeof(param_t));
+        q->next->field = strdup(field);
+        q->next->value = strdup(value);
     }
-    p->next = calloc(1, sizeof(param_t));
-    p->next->field = strdup(field);
-    p->next->value = strdup(value);
+    return p;
+}
+
+param_t *
+setparam(param_t *p, const char *field, const char *value) {
+    for (param_t *q = p; q; q = q->next) {
+	if (!strcmp(q->field, field)) {
+            free((char *)q->value);
+	    q->value = strdup(value);
+	    return p;
+        }
+    }
+    return addparam(p, field, value);
 }
 
 void
