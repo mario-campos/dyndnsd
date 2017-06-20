@@ -110,11 +110,6 @@ main(int argc, char *argv[]) {
 
     openlog(NULL, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
 
-    /*
-    if (pledge("stdio", NULL) == -1)
-        syslog(LOG_ERR, "pledge(2): %m");
-    */
-
     struct ifaddrs *ifap_old, *ifap_new;
     getifaddrs(&ifap_old);
 
