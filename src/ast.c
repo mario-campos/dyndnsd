@@ -16,7 +16,7 @@ struct ast *
 new_ast(struct ast_iface *i, const char *u) {
     struct ast *ast;
     if ((ast = calloc(sizeof(struct ast), 1)) == NULL)
-        err(EXIT_FAILURE, "calloc(3)");
+        err(1, "calloc(3)");
     ast->interfaces = i;
     ast->url = u;
     return ast;
@@ -26,7 +26,7 @@ struct ast_iface *
 new_ast_iface(const char *name, struct ast_domain *d, const char *u) {
     struct ast_iface *ast_iface;
     if ((ast_iface = calloc(sizeof(struct ast_iface), 1)) == NULL)
-        err(EXIT_FAILURE, "calloc(3)");
+        err(1, "calloc(3)");
     ast_iface->name = name;
     ast_iface->domains = d;
     ast_iface->url = u;
@@ -37,7 +37,7 @@ struct ast_domain *
 new_ast_domain(const char *name, const char *u) {
     struct ast_domain *ast_domain;
     if ((ast_domain = calloc(sizeof(struct ast_domain), 1)) == NULL)
-        err(EXIT_FAILURE, "calloc(3)");
+        err(1, "calloc(3)");
     ast_domain->name = name;
     ast_domain->url = u;
     return ast_domain;
@@ -49,7 +49,7 @@ valid_ast(struct ast *ast) {
     const bool has_local0_url = ast->url != NULL;
 
     if(!hcreate(HASH_TABLE_SIZE))
-        err(EXIT_FAILURE, "hcreate(3)");
+        err(1, "hcreate(3)");
 
     for (struct ast_iface *aif = ast->interfaces; aif; aif = aif->next) {
         const bool has_local1_url = aif->url != NULL;
@@ -67,7 +67,7 @@ valid_ast(struct ast *ast) {
             fprintf(stderr, "error: duplicate interface \"%s\" detected\n", aif->name);
         }
         if(!hsearch((ENTRY){key, NULL}, ENTER))
-            err(EXIT_FAILURE, "hsearch(3)");
+            err(1, "hsearch(3)");
 
         for (struct ast_domain *ad = aif->domains; ad; ad = ad->next) {
             const bool has_local2_url = ad->url != NULL;
@@ -87,7 +87,7 @@ valid_ast(struct ast *ast) {
                 fprintf(stderr, "error: duplicate domain \"%s\" detected\n", ad->name);
             }
             if(!hsearch((ENTRY){key, NULL}, ENTER))
-                err(EXIT_FAILURE, "hsearch(3)");
+                err(1, "hsearch(3)");
         }
     }
 

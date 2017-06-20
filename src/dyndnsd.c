@@ -63,7 +63,7 @@ main(int argc, char *argv[]) {
             break;
         case 'h':
             puts(usage);
-            exit(EXIT_SUCCESS);
+            exit(0);
         case 'f':
             optf = optarg;
             break;
@@ -72,15 +72,15 @@ main(int argc, char *argv[]) {
             break;
         case 'v':
             puts(VERSION);
-            exit(EXIT_SUCCESS);
+            exit(0);
         default:
             puts(usage);
-            exit(EXIT_SUCCESS);
+            exit(0);
         }
     }
 
     if (!(yyin = fopen(optf, "r")))
-        err(EXIT_FAILURE, "fopen(\"%s\")", optf);
+        err(1, "fopen(\"%s\")", optf);
 
     struct ast *ast;
     int parse_err = yyparse(&ast);
@@ -92,7 +92,7 @@ main(int argc, char *argv[]) {
     CURL *curl;
     curl_global_init(CURL_GLOBAL_ALL);
     if (!(curl = curl_easy_init()))
-        err(EXIT_FAILURE, "curl_easy_init(3): failed to initialize libcurl");
+        err(1, "curl_easy_init(3): failed to initialize libcurl");
 
     if (!optd)
         daemon(0, 0);
