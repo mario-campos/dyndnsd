@@ -14,8 +14,8 @@
 
 struct ast *
 new_ast(struct ast_iface *i, const char *u) {
-    struct ast *ast;
-    if ((ast = calloc(sizeof(struct ast), 1)) == NULL)
+    struct ast *ast = calloc(sizeof(struct ast), 1);
+    if (ast == NULL)
         err(1, "calloc(3)");
     ast->interfaces = i;
     ast->url = u;
@@ -24,8 +24,8 @@ new_ast(struct ast_iface *i, const char *u) {
 
 struct ast_iface *
 new_ast_iface(const char *name, struct ast_domain *d, const char *u) {
-    struct ast_iface *ast_iface;
-    if ((ast_iface = calloc(sizeof(struct ast_iface), 1)) == NULL)
+    struct ast_iface *ast_iface = calloc(sizeof(struct ast_iface), 1);
+    if (ast_iface == NULL)
         err(1, "calloc(3)");
     ast_iface->name = name;
     ast_iface->domains = d;
@@ -35,8 +35,8 @@ new_ast_iface(const char *name, struct ast_domain *d, const char *u) {
 
 struct ast_domain *
 new_ast_domain(const char *name, const char *u) {
-    struct ast_domain *ast_domain;
-    if ((ast_domain = calloc(sizeof(struct ast_domain), 1)) == NULL)
+    struct ast_domain *ast_domain = calloc(sizeof(struct ast_domain), 1);
+    if (ast_domain == NULL)
         err(1, "calloc(3)");
     ast_domain->name = name;
     ast_domain->url = u;

@@ -46,9 +46,9 @@ inaddreq(struct in_addr a, struct in_addr b) {
 
 static void
 httpget(CURL *curl, const char *url) {
-    CURLcode err;
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    if ((err = curl_easy_perform(curl)))
+    CURLcode err = curl_easy_perform(curl);
+    if (err)
         syslog(LOG_ERR, "curl_easy_perform(3): %s", curl_easy_strerror(err));
 }
 
@@ -89,7 +89,8 @@ main(int argc, char *argv[]) {
         }
     }
 
-    if ((yyin = fopen(optf, "r")) == NULL)
+    yyin = fopen(optf, "r");
+    if (yyin == NULL)
         err(1, "fopen(\"%s\")", optf);
 
     struct ast *ast;
@@ -99,9 +100,9 @@ main(int argc, char *argv[]) {
     if (!valid_ast(ast) || optn)
         exit(parse_err);
 
-    CURL *curl;
     curl_global_init(CURL_GLOBAL_ALL);
-    if ((curl = curl_easy_init()) == NULL)
+    CURL *curl = curl_easy_init();
+    if (curl == NULL)
         err(1, "curl_easy_init(3): failed to initialize libcurl");
 
     if (!optd)
