@@ -53,8 +53,7 @@ httpget(CURL *curl, const char *url) {
 }
 
 static struct sockaddr_in *
-find_sa(struct ifaddrs *ifap, const char *ifname) {
-    struct ifaddrs *ifa = ifap;
+find_sa(struct ifaddrs *ifa, const char *ifname) {
     while (ifa) {
         if (strcmp(ifa->ifa_name, ifname) == 0)
             return (struct sockaddr_in *)ifa->ifa_addr;
@@ -66,8 +65,13 @@ find_sa(struct ifaddrs *ifap, const char *ifname) {
 int
 main(int argc, char *argv[]) {
     int opt;
-    bool optn = false, optd = false;
-    char *optf = _PATH_DYNDNSD_CONF;
+    bool optd, optn;
+    char *optf;
+
+    optn = false;
+    optd = false;
+    optf = _PATH_DYNDNSD_CONF;
+
     while ((opt = getopt(argc, argv, "hdnvf:")) != -1) {
         switch (opt) {
         case 'd':
@@ -100,6 +104,7 @@ main(int argc, char *argv[]) {
     if (!valid_ast(ast) || optn)
         exit(parse_err);
 
+    /* initialize libcurl */
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *curl = curl_easy_init();
     if (curl == NULL)
@@ -120,13 +125,15 @@ main(int argc, char *argv[]) {
         }
 
         for (struct ast_iface *aif = ast->interfaces; aif->next; aif = aif->next) {
-            struct sockaddr_in *sa_old = find_sa(ifap_old, aif->name);
-            struct sockaddr_in *sa_new = find_sa(ifap_new, aif->name);
+            struct sockaddr_in *sa_old, *sa_new;
+            sa_old = find_sa(ifap_old, aif->name);
+            sa_new = find_sa(ifap_new, aif->name);
 
             if (!inaddreq(sa_old->sin_addr, sa_new->sin_addr))
                 continue;
 
-            struct param *p = getparams(aif->url);
+            struct param *p;
+	    p = getparams(aif->url);
             p = setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
             p = setparam(p, "hostname", aif->domains->name);
             char *url = mkurl(aif->url, p);

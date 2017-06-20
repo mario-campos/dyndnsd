@@ -8,7 +8,9 @@ addparam(struct param *, const char *, const char *);
 
 struct param *
 getparams(const char *url) {
-    char *r, *s;
+    struct param *p;
+    char *r, *s, *field, *value;
+
     r = s = strdup(url);
 
     if (strsep(&s, "?"), s == NULL) {
@@ -16,11 +18,11 @@ getparams(const char *url) {
         return NULL;
     }
 
-    struct param *p = calloc(1, sizeof(struct param));
+    p = calloc(1, sizeof(struct param));
 
     for (struct param *q = p; s; q = q->next) {
-        char *value = strsep(&s, "&");
-	char *field = strsep(&value, "=");
+        value = strsep(&s, "&");
+	field = strsep(&value, "=");
 	q->field = strdup(field);
 	q->value = strdup(value);
 	if (s)
