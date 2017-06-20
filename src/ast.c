@@ -48,8 +48,7 @@ valid_ast(struct ast *ast) {
     bool valid = true;
     const bool has_local0_url = ast->url != NULL;
 
-    if(hcreate(HASH_TABLE_SIZE) == 0)
-        err(1, "hcreate(3)");
+    hcreate(HASH_TABLE_SIZE);
 
     for (struct ast_iface *aif = ast->interfaces; aif; aif = aif->next) {
         const bool has_local1_url = aif->url != NULL;
@@ -66,8 +65,7 @@ valid_ast(struct ast *ast) {
             valid = false;
             fprintf(stderr, "error: duplicate interface \"%s\" detected\n", aif->name);
         }
-        if(hsearch((ENTRY){key, NULL}, ENTER) == NULL)
-            err(1, "hsearch(3)");
+        hsearch((ENTRY){key, NULL}, ENTER);
 
         for (struct ast_domain *ad = aif->domains; ad; ad = ad->next) {
             const bool has_local2_url = ad->url != NULL;
@@ -86,8 +84,7 @@ valid_ast(struct ast *ast) {
                 valid = false;
                 fprintf(stderr, "error: duplicate domain \"%s\" detected\n", ad->name);
             }
-            if(hsearch((ENTRY){key, NULL}, ENTER) == NULL)
-                err(1, "hsearch(3)");
+            hsearch((ENTRY){key, NULL}, ENTER);
         }
     }
 
