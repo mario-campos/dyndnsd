@@ -20,10 +20,17 @@
 extern FILE *yyin;
 extern int yyparse();
 
-static void			 usage();
-static bool 			 inaddreq(struct in_addr, struct in_addr);
-static void			 httpget(CURL *, const char *);
-static struct sockaddr_in 	*find_sa(struct ifaddrs *, const char *);
+static void
+usage();
+
+static bool
+inaddreq(struct in_addr, struct in_addr);
+
+static void
+httpget(CURL *, const char *);
+
+static struct sockaddr_in *
+find_sa(struct ifaddrs *, const char *);
 
 static void
 usage() {

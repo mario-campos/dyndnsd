@@ -20,7 +20,14 @@ struct ast {
     const char		*url;
 };
 
-struct ast		*new_ast(struct ast_iface *, const char *);
-struct ast_iface	*new_ast_iface(const char *, struct ast_domain *, const char *);
-struct ast_domain	*new_ast_domain(const char *, const char *);
-bool		 	 valid_ast(struct ast *);
+struct ast *
+new_ast(struct ast_iface *, const char *);
+
+struct ast_iface *
+new_ast_iface(const char *, struct ast_domain *, const char *);
+
+struct ast_domain *
+new_ast_domain(const char *, const char *);
+
+bool
+valid_ast(struct ast *);

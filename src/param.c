@@ -3,7 +3,8 @@
 
 #include "param.h"
 
-static struct param 	*addparam(struct param *, const char *, const char *);
+static struct param *
+addparam(struct param *, const char *, const char *);
 
 struct param *
 getparams(const char *url) {
