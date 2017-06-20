@@ -3,9 +3,9 @@
 
 #include "param.h"
 
-static param_t 	*addparam(param_t *, const char *, const char *);
+static struct param 	*addparam(struct param *, const char *, const char *);
 
-param_t *
+struct param *
 getparams(const char *url) {
     char *r, *s;
     r = s = strdup(url);
@@ -15,39 +15,39 @@ getparams(const char *url) {
         return NULL;
     }
 
-    param_t *p = calloc(1, sizeof(param_t));
+    struct param *p = calloc(1, sizeof(struct param));
 
-    for (param_t *q = p; s; q = q->next) {
+    for (struct param *q = p; s; q = q->next) {
         char *value = strsep(&s, "&");
 	char *field = strsep(&value, "=");
 	q->field = strdup(field);
 	q->value = strdup(value);
-	if (s) q->next = calloc(1, sizeof(param_t));
+	if (s) q->next = calloc(1, sizeof(struct param));
     }
 
     free(r);
     return p;
 }
 
-static param_t * 
-addparam(param_t *p, const char *field, const char *value) {
+static struct param * 
+addparam(struct param *p, const char *field, const char *value) {
     if (!p) {
-        p = calloc(1, sizeof(param_t));
+        p = calloc(1, sizeof(struct param));
         p->field = strdup(field);
         p->value = strdup(value);
     } else {
-        param_t *q;
+        struct param *q;
         for (q = p; q->next; q = q->next);
-        q->next = calloc(1, sizeof(param_t));
+        q->next = calloc(1, sizeof(struct param));
         q->next->field = strdup(field);
         q->next->value = strdup(value);
     }
     return p;
 }
 
-param_t *
-setparam(param_t *p, const char *field, const char *value) {
-    for (param_t *q = p; q; q = q->next) {
+struct param *
+setparam(struct param *p, const char *field, const char *value) {
+    for (struct param *q = p; q; q = q->next) {
 	if (!strcmp(q->field, field)) {
             free(q->value);
 	    q->value = strdup(value);
@@ -58,8 +58,8 @@ setparam(param_t *p, const char *field, const char *value) {
 }
 
 void
-freeparams(param_t *p) {
-    for (param_t *q; p; p = q) {
+freeparams(struct param *p) {
+    for (struct param *q; p; p = q) {
 	q = p->next;
         free(p->field);
 	free(p->value);
@@ -68,7 +68,7 @@ freeparams(param_t *p) {
 }
 
 char *
-mkurl(const char *url, param_t *p) {
+mkurl(const char *url, struct param *p) {
     char *r, *s;
 
     r = s = strdup(url);

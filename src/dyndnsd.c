@@ -111,14 +111,14 @@ main(int argc, char *argv[]) {
             goto sleep;
         }
 
-        for (ast_iface_t *aif = ast->interfaces; aif->next; aif = aif->next) {
+        for (struct ast_iface *aif = ast->interfaces; aif->next; aif = aif->next) {
             struct sockaddr_in *sa_old = find_sa(ifap_old, aif->name);
             struct sockaddr_in *sa_new = find_sa(ifap_new, aif->name);
 
             if (!inaddreq(sa_old->sin_addr, sa_new->sin_addr))
                 continue;
 
-            param_t *p = getparams(aif->url);
+            struct param *p = getparams(aif->url);
             p = setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
             p = setparam(p, "hostname", aif->domains->name);
             char *url = mkurl(aif->url, p);
