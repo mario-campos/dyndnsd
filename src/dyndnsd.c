@@ -58,12 +58,11 @@ main(int argc, char *argv[]) {
     char *optf = ETCFILE;
     while ((opt = getopt(argc, argv, "hdnvf:")) != -1) {
         switch (opt) {
-        default:
+        case 'd':
+            optd = true;
+            break;
         case 'h':
             puts(usage);
-            exit(EXIT_SUCCESS);
-        case 'v':
-            puts(VERSION);
             exit(EXIT_SUCCESS);
         case 'f':
             optf = optarg;
@@ -71,9 +70,12 @@ main(int argc, char *argv[]) {
         case 'n':
             optn = true;
             break;
-        case 'd':
-            optd = true;
-            break;
+        case 'v':
+            puts(VERSION);
+            exit(EXIT_SUCCESS);
+        default:
+            puts(usage);
+            exit(EXIT_SUCCESS);
         }
     }
 
