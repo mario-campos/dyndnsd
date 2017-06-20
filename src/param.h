@@ -1,9 +1,9 @@
 #pragma once
 
 struct param {
-    const char   *field;
+    char	 *field;
     struct param *next;
-    const char   *value;
+    char	 *value;
 };
 
 struct param *
