@@ -23,12 +23,25 @@ extern int yyparse();
 static void
 usage();
 
+/*
+ * Determine whether two IPv4 address structures
+ * are equal.
+ */
 static bool
 inaddreq(struct in_addr, struct in_addr);
 
+/*
+ * Set up the curl request, execute, and log
+ * and errors.
+ */
 static void
 httpget(CURL *, const char *);
 
+/*
+ * Search the list of interface structures for
+ * by the given interface name and return a
+ * pointer to it.
+ */
 static struct sockaddr_in *
 find_sa(struct ifaddrs *, const char *);
 
@@ -62,6 +75,12 @@ find_sa(struct ifaddrs *ifa, const char *ifname) {
     return NULL;
 }
 
+/*
+ * Check network interfaces for IPv4 address changes
+ * every minute. When an interface receives a new IP
+ * address, send an HTTP request to update a DNS
+ * hosting provider.
+ */
 int
 main(int argc, char *argv[]) {
     int opt;
