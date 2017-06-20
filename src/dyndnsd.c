@@ -44,7 +44,7 @@ static struct sockaddr_in *
 find_sa(struct ifaddrs *ifap, const char *ifname) {
     struct ifaddrs *ifa = ifap;
     while (ifa) {
-        if (!strcmp(ifa->ifa_name, ifname))
+        if (strcmp(ifa->ifa_name, ifname) == 0)
             return (struct sockaddr_in *)ifa->ifa_addr;
         ifa = ifa->ifa_next;
     } 
@@ -79,7 +79,7 @@ main(int argc, char *argv[]) {
         }
     }
 
-    if (!(yyin = fopen(optf, "r")))
+    if ((yyin = fopen(optf, "r")) == NULL)
         err(1, "fopen(\"%s\")", optf);
 
     struct ast *ast;
@@ -91,7 +91,7 @@ main(int argc, char *argv[]) {
 
     CURL *curl;
     curl_global_init(CURL_GLOBAL_ALL);
-    if (!(curl = curl_easy_init()))
+    if ((curl = curl_easy_init()) == NULL)
         err(1, "curl_easy_init(3): failed to initialize libcurl");
 
     if (!optd)

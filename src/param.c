@@ -10,7 +10,7 @@ getparams(const char *url) {
     char *r, *s;
     r = s = strdup(url);
 
-    if (strsep(&s, "?"), !s) {
+    if (strsep(&s, "?"), s == NULL) {
 	free(r);
         return NULL;
     }
@@ -31,7 +31,7 @@ getparams(const char *url) {
 
 static struct param * 
 addparam(struct param *p, const char *field, const char *value) {
-    if (!p) {
+    if (p == NULL) {
         p = calloc(1, sizeof(struct param));
         p->field = strdup(field);
         p->value = strdup(value);
@@ -48,7 +48,7 @@ addparam(struct param *p, const char *field, const char *value) {
 struct param *
 setparam(struct param *p, const char *field, const char *value) {
     for (struct param *q = p; q; q = q->next) {
-	if (!strcmp(q->field, field)) {
+	if (strcmp(q->field, field) == 0) {
             free(q->value);
 	    q->value = strdup(value);
 	    return p;
