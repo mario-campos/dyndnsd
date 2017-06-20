@@ -1,18 +1,20 @@
-#include <err.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
+#include <err.h>
+#include <ifaddrs.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
 #include <curl/curl.h>
 
 #include "ast.h"
-#include "param.h"
 #include "config.h"
+#include "param.h"
 
 extern FILE *yyin;
 extern int yyparse();

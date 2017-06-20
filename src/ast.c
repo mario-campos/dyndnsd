@@ -1,10 +1,12 @@
-#include <err.h>
-#include <stdio.h>
-#include <search.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <net/if.h>
+
+#include <err.h>
+#include <search.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "ast.h"
 
 #define HASH_TABLE_SIZE 10
