@@ -83,7 +83,7 @@ find_sa(struct ifaddrs *ifa, const char *ifname) {
  */
 int
 main(int argc, char *argv[]) {
-    int opt;
+    int opt, err;
     bool optd, optn;
     char *optf;
 
@@ -117,11 +117,11 @@ main(int argc, char *argv[]) {
         err(1, "fopen(\"%s\")", optf);
 
     struct ast *ast;
-    int parse_err = yyparse(&ast);
+    err = yyparse(&ast);
     fclose(yyin);
 
     if (!valid_ast(ast) || optn)
-        exit(parse_err);
+        exit(err);
 
     /* initialize libcurl */
     curl_global_init(CURL_GLOBAL_ALL);
