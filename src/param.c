@@ -3,6 +3,8 @@
 
 #include "param.h"
 
+static param_t 	*addparam(param_t *, const char *, const char *);
+
 param_t *
 getparams(const char *url) {
     char *r, *s;

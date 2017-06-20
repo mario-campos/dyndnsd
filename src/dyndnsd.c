@@ -19,6 +19,10 @@
 extern FILE *yyin;
 extern int yyparse();
 
+static bool 			 inaddreq(struct in_addr, struct in_addr);
+static void			 httpget(CURL *, const char *);
+static struct sockaddr_in 	*find_sa(struct ifaddrs *, const char *);
+
 const char const *usage = "usage: " EXENAME " [-dn] [-f file]\n"
 			  "       " EXENAME " -v\n"
 			  "       " EXENAME " -h";

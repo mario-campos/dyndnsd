@@ -20,14 +20,7 @@ typedef struct ast {
     ast_iface_t *interfaces;
 } ast_t;
 
-ast_t *
-new_ast(ast_iface_t *i, const char *u);
-
-ast_iface_t *
-new_ast_iface(const char *name, ast_domain_t *d, const char *u);
-
-ast_domain_t *
-new_ast_domain(const char *name, const char *u);
-
-bool
-valid_ast(ast_t *ast);
+ast_t		*new_ast(ast_iface_t *, const char *);
+ast_iface_t	*new_ast_iface(const char *, ast_domain_t *, const char *);
+ast_domain_t	*new_ast_domain(const char *, const char *);
+bool		 valid_ast(ast_t *);

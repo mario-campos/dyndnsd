@@ -1,6 +1,7 @@
 %{
 #include <string.h>
 #include "parser.h"
+void yyerror(struct ast **, const char *);
 %}
 
 %option nounput
