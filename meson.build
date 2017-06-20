@@ -1,7 +1,6 @@
 project('dyndnsd', 'C', version : '0.0.0', default_options : ['c_std=c99'])
 
 cdata = configuration_data()
-cdata.set('EXENAME', '"dyndnsd"')
 cdata.set('ETCFILE', '"/etc/dyndnsd.conf"')
 cdata.set('VERSION', '"@0@"'.format(meson.project_version()))
 configure_file(output : 'config.h', configuration : cdata)

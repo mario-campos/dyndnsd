@@ -19,13 +19,17 @@
 extern FILE *yyin;
 extern int yyparse();
 
+static void			 usage();
 static bool 			 inaddreq(struct in_addr, struct in_addr);
 static void			 httpget(CURL *, const char *);
 static struct sockaddr_in 	*find_sa(struct ifaddrs *, const char *);
 
-const char const *usage = "usage: " EXENAME " [-dn] [-f file]\n"
-			  "       " EXENAME " -v\n"
-			  "       " EXENAME " -h";
+static void
+usage() {
+    extern char *__progname;
+    fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
+    exit(0);
+}
 
 static bool
 inaddreq(struct in_addr a, struct in_addr b) {
@@ -62,8 +66,7 @@ main(int argc, char *argv[]) {
             optd = true;
             break;
         case 'h':
-            puts(usage);
-            exit(0);
+	    usage();
         case 'f':
             optf = optarg;
             break;
@@ -74,8 +77,7 @@ main(int argc, char *argv[]) {
             puts(VERSION);
             exit(0);
         default:
-            puts(usage);
-            exit(0);
+	    usage();
         }
     }
 
