@@ -15,6 +15,7 @@
 #include "ast.h"
 #include "config.h"
 #include "param.h"
+#include "pathnames.h"
 
 extern FILE *yyin;
 extern int yyparse();
@@ -59,7 +60,7 @@ int
 main(int argc, char *argv[]) {
     int opt;
     bool optn = false, optd = false;
-    char *optf = ETCFILE;
+    char *optf = _PATH_DYNDNSD_CONF;
     while ((opt = getopt(argc, argv, "hdnvf:")) != -1) {
         switch (opt) {
         case 'd':

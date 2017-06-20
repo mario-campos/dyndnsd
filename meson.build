@@ -1,9 +1,13 @@
 project('dyndnsd', 'C', version : '0.0.0', default_options : ['c_std=c99'])
 
-cdata = configuration_data()
-cdata.set('ETCFILE', '"/etc/dyndnsd.conf"')
-cdata.set('VERSION', '"@0@"'.format(meson.project_version()))
-configure_file(output : 'config.h', configuration : cdata)
+config = configuration_data()
+config.set('VERSION', '"@0@"'.format(meson.project_version()))
+configure_file(output : 'config.h', configuration : config)
+
+pathnames = configuration_data()
+pathnames.set('ETCDIR', '"/etc"')
+pathnames.set('_PATH_DYNDNSD_CONF', 'ETCDIR "/dyndnsd.conf"')
+configure_file(output : 'pathnames.h', configuration : pathnames)
 
 lex_src = custom_target('lex', input : 'src/lexer.l', output : 'lexer.c',
                         command : ['lex', '-o', 'lexer.c', '@INPUT@'])
