@@ -23,7 +23,8 @@ getparams(const char *url) {
 	char *field = strsep(&value, "=");
 	q->field = strdup(field);
 	q->value = strdup(value);
-	if (s) q->next = calloc(1, sizeof(struct param));
+	if (s)
+	    q->next = calloc(1, sizeof(struct param));
     }
 
     free(r);
@@ -81,7 +82,8 @@ mkurl(const char *url, struct param *p) {
 	strlcat(buf, p->field, sizeof(buf));
 	strlcat(buf, "=", sizeof(buf));
 	strlcat(buf, p->value, sizeof(buf));
-	if (p->next) strlcat(buf, "&", sizeof(buf));
+	if (p->next)
+	    strlcat(buf, "&", sizeof(buf));
     }
 
     free(r);
