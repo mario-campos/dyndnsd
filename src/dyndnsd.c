@@ -93,7 +93,7 @@ main(int argc, char *argv[]) {
     if (!valid_ast(ast) || optn)
         exit(error);
 
-    /* initialize libcurl */
+    // initialize libcurl
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *curl = curl_easy_init();
     if (curl == NULL)
