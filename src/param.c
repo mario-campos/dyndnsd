@@ -9,22 +9,6 @@
 static struct param *
 addparam(struct param *, const char *, const char *);
 
-static struct param * 
-addparam(struct param *p, const char *field, const char *value) {
-    if (p == NULL) {
-        p = calloc(1, sizeof(struct param));
-        p->field = strdup(field);
-        p->value = strdup(value);
-    } else {
-        struct param *q;
-        for (q = p; q->next; q = q->next);
-        q->next = calloc(1, sizeof(struct param));
-        q->next->field = strdup(field);
-        q->next->value = strdup(value);
-    }
-    return p;
-}
-
 struct param *
 getparams(const char *url) {
     struct param *p;
@@ -93,4 +77,20 @@ mkurl(const char *url, struct param *p) {
 
     free(r);
     return strdup(buf);
+}
+
+static struct param * 
+addparam(struct param *p, const char *field, const char *value) {
+    if (p == NULL) {
+        p = calloc(1, sizeof(struct param));
+        p->field = strdup(field);
+        p->value = strdup(value);
+    } else {
+        struct param *q;
+        for (q = p; q->next; q = q->next);
+        q->next = calloc(1, sizeof(struct param));
+        q->next->field = strdup(field);
+        q->next->value = strdup(value);
+    }
+    return p;
 }

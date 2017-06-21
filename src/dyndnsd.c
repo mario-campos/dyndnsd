@@ -45,36 +45,6 @@ httpget(CURL *, const char *);
 static struct sockaddr_in *
 find_sa(struct ifaddrs *, const char *);
 
-static void
-usage() {
-    extern char *__progname;
-    fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
-    exit(0);
-}
-
-static bool
-inaddreq(struct in_addr a, struct in_addr b) {
-    return memcmp(&a, &b, sizeof(struct in_addr)) == 0;
-}
-
-static void
-httpget(CURL *curl, const char *url) {
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    CURLcode err = curl_easy_perform(curl);
-    if (err)
-        syslog(LOG_ERR, "curl_easy_perform(3): %s", curl_easy_strerror(err));
-}
-
-static struct sockaddr_in *
-find_sa(struct ifaddrs *ifa, const char *ifname) {
-    while (ifa) {
-        if (strcmp(ifa->ifa_name, ifname) == 0)
-            return (struct sockaddr_in *)ifa->ifa_addr;
-        ifa = ifa->ifa_next;
-    } 
-    return NULL;
-}
-
 /*
  * Check network interfaces for IPv4 address changes
  * every minute. When an interface receives a new IP
@@ -170,4 +140,34 @@ sleep:
     }
 
     curl_easy_cleanup(curl);
+}
+
+static void
+usage() {
+    extern char *__progname;
+    fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
+    exit(0);
+}
+
+static bool
+inaddreq(struct in_addr a, struct in_addr b) {
+    return memcmp(&a, &b, sizeof(struct in_addr)) == 0;
+}
+
+static void
+httpget(CURL *curl, const char *url) {
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    CURLcode err = curl_easy_perform(curl);
+    if (err)
+        syslog(LOG_ERR, "curl_easy_perform(3): %s", curl_easy_strerror(err));
+}
+
+static struct sockaddr_in *
+find_sa(struct ifaddrs *ifa, const char *ifname) {
+    while (ifa) {
+        if (strcmp(ifa->ifa_name, ifname) == 0)
+            return (struct sockaddr_in *)ifa->ifa_addr;
+        ifa = ifa->ifa_next;
+    }
+    return NULL;
 }
