@@ -20,7 +20,7 @@
 extern FILE *yyin;
 extern int yyparse();
 
-static void
+static void __dead
 usage();
 
 /*
@@ -142,7 +142,7 @@ sleep:
     curl_easy_cleanup(curl);
 }
 
-static void
+static void __dead
 usage() {
     extern char *__progname;
     fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
