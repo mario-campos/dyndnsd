@@ -3,9 +3,6 @@
 
 #include "param.h"
 
-/*
- * Append a new query parameter to the end of the list.
- */
 static struct param *addparam(struct param *, const char *, const char *);
 
 struct param *
