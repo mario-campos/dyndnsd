@@ -20,30 +20,26 @@
 extern FILE *yyin;
 extern int yyparse();
 
-static void __dead
-usage();
+static void __dead usage(void);
 
 /*
  * Determine whether two IPv4 address structures
  * are equal.
  */
-static bool
-inaddreq(struct in_addr, struct in_addr);
+static bool inaddreq(struct in_addr, struct in_addr);
 
 /*
  * Set up the curl request, execute, and log
  * and errors.
  */
-static void
-httpget(CURL *, const char *);
+static void httpget(CURL *, const char *);
 
 /*
  * Search the list of interface structures for
  * by the given interface name and return a
  * pointer to it.
  */
-static struct sockaddr_in *
-find_sa(struct ifaddrs *, const char *);
+static struct sockaddr_in *find_sa(struct ifaddrs *, const char *);
 
 /*
  * Check network interfaces for IPv4 address changes
@@ -143,7 +139,7 @@ sleep:
 }
 
 static void __dead
-usage() {
+usage(void) {
     extern char *__progname;
     fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
     exit(0);
