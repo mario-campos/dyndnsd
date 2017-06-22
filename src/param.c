@@ -12,7 +12,7 @@ getparams(const char *url) {
 
     r = s = strdup(url);
 
-    if (strsep(&s, "?"), s == NULL) {
+    if (strsep(&s, "?"), NULL == s) {
 	free(r);
         return NULL;
     }
@@ -35,7 +35,7 @@ getparams(const char *url) {
 struct param *
 setparam(struct param *p, const char *field, const char *value) {
     for (struct param *q = p; q; q = q->next) {
-	if (strcmp(q->field, field) == 0) {
+	if (0 == strcmp(q->field, field)) {
             free(q->value);
 	    q->value = strdup(value);
 	    return p;
@@ -77,7 +77,7 @@ mkurl(const char *url, struct param *p) {
 
 static struct param * 
 addparam(struct param *p, const char *field, const char *value) {
-    if (p == NULL) {
+    if (NULL == p) {
         p = calloc(1, sizeof(struct param));
         p->field = strdup(field);
         p->value = strdup(value);

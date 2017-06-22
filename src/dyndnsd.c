@@ -35,7 +35,7 @@ main(int argc, char *argv[]) {
     optd = false;
     optf = _PATH_DYNDNSD_CONF;
 
-    while ((opt = getopt(argc, argv, "hdnvf:")) != -1) {
+    while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
         switch (opt) {
         case 'd':
             optd = true;
@@ -57,7 +57,7 @@ main(int argc, char *argv[]) {
     }
 
     yyin = fopen(optf, "r");
-    if (yyin == NULL)
+    if (NULL == yyin)
         err(1, "fopen(\"%s\")", optf);
 
     struct ast *ast;
@@ -70,7 +70,7 @@ main(int argc, char *argv[]) {
     // initialize libcurl
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *curl = curl_easy_init();
-    if (curl == NULL)
+    if (NULL == curl)
         err(1, "curl_easy_init(3): failed to initialize libcurl");
 
     if (!optd)
@@ -83,7 +83,7 @@ main(int argc, char *argv[]) {
     getifaddrs(&ifap_old);
 
     while (true) {
-        if (getifaddrs(&ifap_new) == -1) {
+        if (-1 == getifaddrs(&ifap_new)) {
             syslog(LOG_ERR, "getifaddrs(3): %m");
             goto sleep;
         }
@@ -150,7 +150,7 @@ httpget(CURL *curl, const char *url) {
 static struct sockaddr_in *
 find_sa(struct ifaddrs *ifa, const char *ifname) {
     while (ifa) {
-        if (strcmp(ifa->ifa_name, ifname) == 0)
+        if (0 == strcmp(ifa->ifa_name, ifname))
             return (struct sockaddr_in *)ifa->ifa_addr;
         ifa = ifa->ifa_next;
     }
