@@ -77,7 +77,7 @@ main(int argc, char *argv[]) {
         daemon(0, 0);
 
     openlog(NULL, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
-    syslog(LOG_INFO, "Starting dyndnsd-%s", VERSION);
+    syslog(LOG_INFO, "starting dyndnsd-%s...", VERSION);
 
     struct ifaddrs *ifap_old, *ifap_new;
     getifaddrs(&ifap_old);
