@@ -46,12 +46,12 @@ new_ast_domain(const char *name, const char *u) {
 bool
 valid_ast(struct ast *ast) {
     bool valid = true;
-    const bool has_local0_url = ast->url != NULL;
+    bool has_local0_url = ast->url != NULL;
 
     hcreate(HASH_TABLE_SIZE);
 
     for (struct ast_iface *aif = ast->interfaces; aif; aif = aif->next) {
-        const bool has_local1_url = aif->url != NULL;
+        bool has_local1_url = aif->url != NULL;
 
         // check that the specified interface exists
         if (if_nametoindex(aif->name) == 0) {
@@ -68,7 +68,7 @@ valid_ast(struct ast *ast) {
         hsearch((ENTRY){key, NULL}, ENTER);
 
         for (struct ast_domain *ad = aif->domains; ad; ad = ad->next) {
-            const bool has_local2_url = ad->url != NULL;
+            bool has_local2_url = ad->url != NULL;
 
             // check for missing required URL statement
             if (!has_local0_url &&
