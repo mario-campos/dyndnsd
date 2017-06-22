@@ -108,7 +108,7 @@ main(int argc, char *argv[]) {
             if (httpget(curl, url)) {
                 long status;
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-		syslog(LOG_INFO, "%s %s %s %d", aif->name, ipaddr, url, status);
+		syslog(LOG_INFO, "%s %s %s %ld", aif->name, ipaddr, url, status);
 	    }
 
 	    free(url);
