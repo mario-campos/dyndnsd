@@ -22,7 +22,7 @@ extern int yyparse();
 
 static void __dead usage(void);
 static bool inaddreq(struct in_addr, struct in_addr);
-static void httpget(CURL *, const char *);
+static bool httpget(CURL *, const char *);
 static struct sockaddr_in *find_sa(struct ifaddrs *, const char *);
 
 int
@@ -88,6 +88,7 @@ main(int argc, char *argv[]) {
         }
 
         for (struct ast_iface *aif = ast->interfaces; aif->next; aif = aif->next) {
+            char *ipaddr;
             struct sockaddr_in *sa_old, *sa_new;
             sa_old = find_sa(ifap_old, aif->name);
             sa_new = find_sa(ifap_new, aif->name);
@@ -95,13 +96,19 @@ main(int argc, char *argv[]) {
             if (!inaddreq(sa_old->sin_addr, sa_new->sin_addr))
                 continue;
 
+	    ipaddr = inet_ntoa(sa_new->sin_addr);
+
             struct param *p;
 	    p = getparams(aif->url);
-            p = setparam(p, "myip", inet_ntoa(sa_new->sin_addr));
+            p = setparam(p, "myip", ipaddr);
             p = setparam(p, "hostname", aif->domains->name);
             char *url = mkurl(aif->url, p);
 
-            httpget(curl, url);
+            if (httpget(curl, url)) {
+                long status;
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+		syslog(LOG_INFO, "%s %s %s %d", aif->name, ipaddr, url, status);
+	    }
 
 	    free(url);
 	    freeparams(p);
@@ -128,12 +135,15 @@ inaddreq(struct in_addr a, struct in_addr b) {
     return memcmp(&a, &b, sizeof(struct in_addr)) == 0;
 }
 
-static void
+static bool
 httpget(CURL *curl, const char *url) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
     CURLcode err = curl_easy_perform(curl);
-    if (err)
+    if (err) {
         syslog(LOG_ERR, "curl_easy_perform(3): %s", curl_easy_strerror(err));
+        return false;
+    }
+    return true;
 }
 
 static struct sockaddr_in *
