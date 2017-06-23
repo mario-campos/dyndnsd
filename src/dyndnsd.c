@@ -17,6 +17,7 @@
 #include "param.h"
 #include "pathnames.h"
 
+extern char    *__progname;
 extern FILE    *yyin;
 extern int 	yyparse();
 
@@ -77,7 +78,7 @@ main(int argc, char *argv[])
 	if (!optd)
 		daemon(0, 0);
 
-	openlog(NULL, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
+	openlog(__progname, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting dyndnsd-%s...", VERSION);
 
 	struct ifaddrs *ifap_old, *ifap_new;
@@ -128,7 +129,6 @@ sleep:
 static __dead void
 usage(void)
 {
-	extern char *__progname;
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
 	exit(0);
 }
