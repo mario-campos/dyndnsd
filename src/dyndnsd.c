@@ -20,7 +20,7 @@
 extern FILE    *yyin;
 extern int 	yyparse();
 
-static void __dead usage(void);
+static __dead void usage(void);
 static bool 	inaddreq(struct in_addr, struct in_addr);
 static bool 	httpget(CURL *, const char *);
 static struct sockaddr_in *find_sa(struct ifaddrs *, const char *);
@@ -125,7 +125,7 @@ sleep:
 	curl_easy_cleanup(curl);
 }
 
-static void __dead
+static __dead void
 usage(void)
 {
 	extern char *__progname;
