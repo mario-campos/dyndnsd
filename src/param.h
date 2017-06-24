@@ -13,20 +13,20 @@ struct pnode {
 /*
  * Parse the HTTP query parameters.
  */
-struct plist   *getparams(const char *);
+struct plist *getparams(const char *);
 
 /*
  * Define a query parameter, new or existing.
  */
-void 		setparam (struct plist *, const char *, const char *);
+void setparam(struct plist *, const char *, const char *);
 
 /*
  * Construct a new URL from an old URL and the new
  * query parameters.
  */
-char           *mkurl(const char *, struct plist *);
+char *mkurl(const char *, struct plist *);
 
 /*
  * Deallocate query parameters.
  */
-void 		freeparams(struct plist *);
+void freeparams(struct plist *);
