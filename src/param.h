@@ -1,28 +1,32 @@
 #pragma once
 
-struct param {
-	char           *field;
-	struct param   *next;
-	char           *value;
+#include <sys/queue.h>
+
+SLIST_HEAD(plist, pnode);
+
+struct pnode {
+	char *field;
+	char *value;
+	SLIST_ENTRY(pnode) next;
 };
 
 /*
  * Parse the HTTP query parameters.
  */
-struct param   *getparams(const char *);
+struct plist   *getparams(const char *);
 
 /*
  * Define a query parameter, new or existing.
  */
-struct param   *setparam(struct param *, const char *, const char *);
+void 		setparam (struct plist *, const char *, const char *);
 
 /*
  * Construct a new URL from an old URL and the new
  * query parameters.
  */
-char           *mkurl(const char *, struct param *);
+char           *mkurl(const char *, struct plist *);
 
 /*
  * Deallocate query parameters.
  */
-void 		freeparams(struct param *);
+void 		freeparams(struct plist *);

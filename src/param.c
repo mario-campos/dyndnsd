@@ -1,14 +1,17 @@
+#include <sys/queue.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "param.h"
 
-static struct param *addparam(struct param *, const char *, const char *);
+static void 	addparam(struct plist *, const char *, const char *);
 
-struct param *
+struct plist *
 getparams(const char *url)
 {
-	struct param   *p;
+	struct pnode   *p;
+	struct plist   *list;
 	char           *r, *s, *field, *value;
 
 	r = s = strdup(url);
@@ -18,39 +21,42 @@ getparams(const char *url)
 		return NULL;
 	}
 
-	p = calloc(1, sizeof(struct param));
+	SLIST_INIT(list);
 
-	for (struct param *q = p; s; q = q->next) {
+	while (s) {
 		value = strsep(&s, "&");
 		field = strsep(&value, "=");
-		q->field = strdup(field);
-		q->value = strdup(value);
+		p = calloc(1, sizeof(struct pnode));
+		p->field = strdup(field);
+		p->value = strdup(value);
 		if (s)
-			q->next = calloc(1, sizeof(struct param));
+			SLIST_INSERT_HEAD(list, p, next);
 	}
 
 	free(r);
-	return p;
-}
-
-struct param *
-setparam(struct param *p, const char *field, const char *value)
-{
-	for (struct param *q = p; q; q = q->next) {
-		if (0 == strcmp(q->field, field)) {
-			free(q->value);
-			q->value = strdup(value);
-			return p;
-		}
-	}
-	return addparam(p, field, value);
+	return list;
 }
 
 void
-freeparams(struct param *p)
+setparam(struct plist *list, const char *field, const char *value)
 {
-	for (struct param *q; p; p = q) {
-		q = p->next;
+	struct pnode *p;
+	if (SLIST_EMPTY(list))
+		return addparam(list, field, value);
+	SLIST_FOREACH(p, list, next) {
+		if (0 == strcmp(p->field, field)) {
+			free(p->value);
+			p->value = strdup(value);
+		}
+	}
+}
+
+void
+freeparams(struct plist *list)
+{
+	while (!SLIST_EMPTY(list)) {
+		struct pnode *p = SLIST_FIRST(list);
+		SLIST_REMOVE_HEAD(list, next);
 		free(p->field);
 		free(p->value);
 		free(p);
@@ -58,20 +64,21 @@ freeparams(struct param *p)
 }
 
 char *
-mkurl(const char *url, struct param *p)
+mkurl(const char *url, struct plist *list)
 {
-	char *r, *s;
+	struct pnode   *p;
+	char           *r, *s;
 
 	r = s = strdup(url);
 	s = strsep(&s, "?");
 	char buf[strlen(s) + 2048];
 	strlcpy(buf, s, sizeof(buf));
 	strlcat(buf, "?", sizeof(buf));
-	for (; p; p = p->next) {
+	SLIST_FOREACH(p, list, next) {
 		strlcat(buf, p->field, sizeof(buf));
 		strlcat(buf, "=", sizeof(buf));
 		strlcat(buf, p->value, sizeof(buf));
-		if (p->next)
+		if (SLIST_NEXT(p, next))
 			strlcat(buf, "&", sizeof(buf));
 	}
 
@@ -79,19 +86,11 @@ mkurl(const char *url, struct param *p)
 	return strdup(buf);
 }
 
-static struct param *
-addparam(struct param *p, const char *field, const char *value)
+static void
+addparam(struct plist *list, const char *field, const char *value)
 {
-	if (NULL == p) {
-		p = calloc(1, sizeof(struct param));
-		p->field = strdup(field);
-		p->value = strdup(value);
-	} else {
-		struct param *q;
-		for (q = p; q->next; q = q->next);
-		q->next = calloc(1, sizeof(struct param));
-		q->next->field = strdup(field);
-		q->next->value = strdup(value);
-	}
-	return p;
+	struct pnode *p = calloc(1, sizeof(struct pnode));
+	p->field = strdup(field);
+	p->value = strdup(value);
+	SLIST_INSERT_HEAD(list, p, next);
 }
