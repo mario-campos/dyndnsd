@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "param.h"
+#include "plist.h"
 
 static void addparam(struct plist *, const char *, const char *);
 

@@ -14,7 +14,7 @@
 
 #include "ast.h"
 #include "config.h"
-#include "param.h"
+#include "plist.h"
 #include "pathnames.h"
 
 extern char    *__progname;
