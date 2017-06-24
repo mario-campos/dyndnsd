@@ -5,7 +5,7 @@
 
 #include "param.h"
 
-static void 	addparam(struct plist *, const char *, const char *);
+static void addparam(struct plist *, const char *, const char *);
 
 struct plist *
 getparams(const char *url)
