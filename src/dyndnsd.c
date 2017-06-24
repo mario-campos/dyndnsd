@@ -101,11 +101,10 @@ main(int argc, char *argv[])
 
 			ipaddr = inet_ntoa(sa_new->sin_addr);
 
-			struct param *p;
-			p = getparams(aif->url);
-			p = setparam(p, "myip", ipaddr);
-			p = setparam(p, "hostname", aif->domains->name);
-			char *url = mkurl(aif->url, p);
+			struct plist *params = getparams(aif->url);
+			setparam(params, "myip", ipaddr);
+			setparam(params, "hostname", aif->domains->name);
+			char *url = mkurl(aif->url, params);
 
 			if (httpget(curl, url)) {
 				long status;
@@ -114,7 +113,7 @@ main(int argc, char *argv[])
 			}
 
 			free(url);
-			freeparams(p);
+			freeparams(params);
 		}
 
 		freeifaddrs(ifap_old);
