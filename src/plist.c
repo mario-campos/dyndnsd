@@ -39,14 +39,14 @@ void
 setparam(struct plist *list, const char *field, const char *value)
 {
 	struct pnode *p;
-	if (SLIST_EMPTY(list))
-		return addparam(list, field, value);
 	SLIST_FOREACH(p, list, next) {
 		if (0 == strcmp(p->field, field)) {
 			free(p->value);
 			p->value = strdup(value);
+			return;
 		}
 	}
+	addparam(list, field, value);
 }
 
 void
