@@ -15,24 +15,23 @@ getparams(const char *url)
 	char           *r, *s, *field, *value;
 
 	r = s = strdup(url);
-
-	if (strsep(&s, "?"), NULL == s) {
-		free(r);
-		return NULL;
-	}
-
+	list = malloc(sizeof(struct plist));
 	SLIST_INIT(list);
+
+	if (strsep(&s, "?"), NULL == s)
+		goto end;
 
 	while (s) {
 		value = strsep(&s, "&");
 		field = strsep(&value, "=");
+
 		p = calloc(1, sizeof(struct pnode));
 		p->field = strdup(field);
 		p->value = strdup(value);
-		if (s)
-			SLIST_INSERT_HEAD(list, p, next);
+		SLIST_INSERT_HEAD(list, p, next);
 	}
 
+end:
 	free(r);
 	return list;
 }
