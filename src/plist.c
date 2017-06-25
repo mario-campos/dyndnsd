@@ -25,7 +25,7 @@ getparams(const char *url)
 		value = strsep(&s, "&");
 		field = strsep(&value, "=");
 
-		p = calloc(1, sizeof(struct pnode));
+		p = malloc(sizeof(struct pnode));
 		p->field = strdup(field);
 		p->value = strdup(value);
 		SLIST_INSERT_HEAD(list, p, next);
@@ -88,7 +88,7 @@ mkurl(const char *url, struct plist *list)
 static void
 addparam(struct plist *list, const char *field, const char *value)
 {
-	struct pnode *p = calloc(1, sizeof(struct pnode));
+	struct pnode *p = malloc(sizeof(struct pnode));
 	p->field = strdup(field);
 	p->value = strdup(value);
 	SLIST_INSERT_HEAD(list, p, next);
