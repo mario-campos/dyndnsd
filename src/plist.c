@@ -10,7 +10,6 @@ static void addparam(struct plist *, const char *, const char *);
 struct plist *
 getparams(const char *url)
 {
-	struct pnode   *p;
 	struct plist   *list;
 	char           *r, *s, *field, *value;
 
@@ -25,7 +24,7 @@ getparams(const char *url)
 		value = strsep(&s, "&");
 		field = strsep(&value, "=");
 
-		p = malloc(sizeof(struct pnode));
+		struct pnode *p = malloc(sizeof(struct pnode));
 		p->field = strdup(field);
 		p->value = strdup(value);
 		SLIST_INSERT_HEAD(list, p, next);
