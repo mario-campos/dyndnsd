@@ -19,4 +19,5 @@ sources = ['src/dyndnsd.c', 'src/ast.c', 'src/plist.c', lex_src, bison_src]
 includes = [include_directories('src'), include_directories('/usr/local/include')]
 
 executable('dyndnsd', sources, include_directories : includes,
-           dependencies : dependency('libcurl'))
+           dependencies : dependency('libcurl'),
+           c_args : ['-Wall', '-Wextra', '-pedantic'])
