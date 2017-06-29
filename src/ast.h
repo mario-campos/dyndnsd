@@ -24,21 +24,21 @@ struct ast {
 /*
  * Allocate a new Abstract Syntax Tree (AST).
  */
-struct ast     *new_ast(struct ast_iface *, const char *);
+struct ast     *ast_new(struct ast_iface *, const char *);
 
 /*
  * Allocate a new AST node for interfaces.
  */
-struct ast_iface *new_ast_iface(const char *, struct ast_domain *, const char *);
+struct ast_iface *ast_new_iface(const char *, struct ast_domain *, const char *);
 
 /*
  * Allocate a new AST node for domain names.
  */
-struct ast_domain *new_ast_domain(const char *, const char *);
+struct ast_domain *ast_new_domain(const char *, const char *);
 
 /*
  * Check the AST for illogical configurations.
  */
-bool 		valid_ast(struct ast *);
+bool 		ast_is_valid(struct ast *);
 
 #endif /* AST_H */

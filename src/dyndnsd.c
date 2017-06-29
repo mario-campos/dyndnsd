@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 	error = yyparse(&ast);
 	fclose(yyin);
 
-	if (!valid_ast(ast) || optn)
+	if (!ast_is_valid(ast) || optn)
 		exit(error);
 
 	/* initialize libcurl */
@@ -101,10 +101,10 @@ main(int argc, char *argv[])
 
 			ipaddr = inet_ntoa(sa_new->sin_addr);
 
-			struct plist *params = getparams(aif->url);
-			setparam(params, "myip", ipaddr);
-			setparam(params, "hostname", aif->domains->name);
-			char *url = mkurl(aif->url, params);
+			struct plist *params = plist_parse(aif->url);
+			plist_setparam(params, "myip", ipaddr);
+			plist_setparam(params, "hostname", aif->domains->name);
+			char *url = plist_mkurl(aif->url, params);
 
 			if (httpget(curl, url)) {
 				long status;
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 			}
 
 			free(url);
-			freeparams(params);
+			plist_free(params);
 		}
 
 		freeifaddrs(ifap_old);

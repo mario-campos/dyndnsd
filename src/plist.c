@@ -8,7 +8,7 @@
 static void addparam(struct plist *, const char *, const char *);
 
 struct plist *
-getparams(const char *url)
+plist_parse(const char *url)
 {
 	struct plist   *list;
 	char           *r, *s, *field, *value;
@@ -36,7 +36,7 @@ end:
 }
 
 void
-setparam(struct plist *list, const char *field, const char *value)
+plist_setparam(struct plist *list, const char *field, const char *value)
 {
 	struct pnode *p;
 	SLIST_FOREACH(p, list, next) {
@@ -50,7 +50,7 @@ setparam(struct plist *list, const char *field, const char *value)
 }
 
 void
-freeparams(struct plist *list)
+plist_free(struct plist *list)
 {
 	while (!SLIST_EMPTY(list)) {
 		struct pnode *p = SLIST_FIRST(list);
@@ -62,7 +62,7 @@ freeparams(struct plist *list)
 }
 
 char *
-mkurl(const char *url, struct plist *list)
+plist_mkurl(const char *url, struct plist *list)
 {
 	struct pnode   *p;
 	char           *r, *s;

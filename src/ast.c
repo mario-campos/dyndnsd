@@ -12,7 +12,7 @@
 #define HASH_TABLE_SIZE 10
 
 struct ast *
-new_ast(struct ast_iface *i, const char *u)
+ast_new(struct ast_iface *i, const char *u)
 {
 	struct ast *ast = calloc(1, sizeof(struct ast));
 	if (NULL == ast)
@@ -23,7 +23,7 @@ new_ast(struct ast_iface *i, const char *u)
 }
 
 struct ast_iface *
-new_ast_iface(const char *name, struct ast_domain *d, const char *u)
+ast_new_iface(const char *name, struct ast_domain *d, const char *u)
 {
 	struct ast_iface *ast_iface = calloc(1, sizeof(struct ast_iface));
 	if (NULL == ast_iface)
@@ -35,7 +35,7 @@ new_ast_iface(const char *name, struct ast_domain *d, const char *u)
 }
 
 struct ast_domain *
-new_ast_domain(const char *name, const char *u)
+ast_new_domain(const char *name, const char *u)
 {
 	struct ast_domain *ast_domain = calloc(1, sizeof(struct ast_domain));
 	if (NULL == ast_domain)
@@ -46,7 +46,7 @@ new_ast_domain(const char *name, const char *u)
 }
 
 bool
-valid_ast(struct ast *ast)
+ast_is_valid(struct ast *ast)
 {
 	bool valid = true;
 	bool has_local0_url = ast->url != NULL;

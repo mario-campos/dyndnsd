@@ -14,22 +14,22 @@ struct pnode {
 /*
  * Parse the HTTP query parameters.
  */
-struct plist *getparams(const char *);
+struct plist *plist_parse(const char *);
 
 /*
  * Define a query parameter, new or existing.
  */
-void setparam(struct plist *, const char *, const char *);
+void plist_setparam(struct plist *, const char *, const char *);
 
 /*
  * Construct a new URL from an old URL and the new
  * query parameters.
  */
-char *mkurl(const char *, struct plist *);
+char *plist_mkurl(const char *, struct plist *);
 
 /*
  * Deallocate query parameters.
  */
-void freeparams(struct plist *);
+void plist_free(struct plist *);
 
 #endif /* PLIST_H */
