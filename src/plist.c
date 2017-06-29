@@ -62,7 +62,7 @@ plist_free(struct plist *list)
 }
 
 char *
-plist_mkurl(const char *url, struct plist *list)
+plist_mkurl(const char *url, const struct plist *list)
 {
 	struct pnode   *p;
 	char           *r, *s;

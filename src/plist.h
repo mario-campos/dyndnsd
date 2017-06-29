@@ -25,7 +25,7 @@ void plist_setparam(struct plist *, const char *, const char *);
  * Construct a new URL from an old URL and the new
  * query parameters.
  */
-char *plist_mkurl(const char *, struct plist *);
+char *plist_mkurl(const char *, const struct plist *);
 
 /*
  * Deallocate query parameters.

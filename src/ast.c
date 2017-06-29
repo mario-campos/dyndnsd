@@ -12,7 +12,7 @@
 #define HASH_TABLE_SIZE 10
 
 struct ast *
-ast_new(struct ast_iface *i, const char *u)
+ast_new(const struct ast_iface *i, const char *u)
 {
 	struct ast *ast = calloc(1, sizeof(struct ast));
 	if (NULL == ast)
@@ -23,7 +23,7 @@ ast_new(struct ast_iface *i, const char *u)
 }
 
 struct ast_iface *
-ast_new_iface(const char *name, struct ast_domain *d, const char *u)
+ast_new_iface(const char *name, const struct ast_domain *d, const char *u)
 {
 	struct ast_iface *ast_iface = calloc(1, sizeof(struct ast_iface));
 	if (NULL == ast_iface)
@@ -53,7 +53,7 @@ ast_is_valid(struct ast *ast)
 
 	hcreate(HASH_TABLE_SIZE);
 
-	for (struct ast_iface *aif = ast->interfaces; aif; aif = aif->next) {
+	for (const struct ast_iface *aif = ast->interfaces; aif; aif = aif->next) {
 		bool has_local1_url = aif->url != NULL;
 
 		/* check that the specified interface exists */
@@ -70,7 +70,7 @@ ast_is_valid(struct ast *ast)
 		}
 		hsearch((ENTRY) {key, NULL}, ENTER);
 
-		for (struct ast_domain * ad = aif->domains; ad; ad = ad->next) {
+		for (const struct ast_domain * ad = aif->domains; ad; ad = ad->next) {
 			bool has_local2_url = ad->url != NULL;
 
 			/* check fo rmissing required URL statement */

@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 			goto sleep;
 		}
 
-		for (struct ast_iface *aif = ast->interfaces; aif->next; aif = aif->next) {
+		for (const struct ast_iface *aif = ast->interfaces; aif->next; aif = aif->next) {
 			char *ipaddr;
 			struct sockaddr_in *sa_old, *sa_new;
 			sa_old = find_sa(ifap_old, aif->name);
