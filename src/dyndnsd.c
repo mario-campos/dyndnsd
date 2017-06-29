@@ -16,6 +16,7 @@
 #include "config.h"
 #include "plist.h"
 #include "pathnames.h"
+#include "route.h"
 
 extern char    *__progname;
 extern FILE    *yyin;
@@ -61,6 +62,8 @@ main(int argc, char *argv[])
 	yyin = fopen(optf, "r");
 	if (NULL == yyin)
 		err(1, "fopen(\"%s\")", optf);
+
+	rt_socket();
 
 	struct ast *ast;
 	error = yyparse(&ast);
