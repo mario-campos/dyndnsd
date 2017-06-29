@@ -24,7 +24,7 @@ struct ast {
 /*
  * Allocate a new Abstract Syntax Tree (AST).
  */
-struct ast     *ast_new(const struct ast_iface *, const char *);
+struct ast *ast_new(const struct ast_iface *, const char *);
 
 /*
  * Allocate a new AST node for interfaces.
@@ -39,6 +39,6 @@ struct ast_domain *ast_new_domain(const char *, const char *);
 /*
  * Check the AST for illogical configurations.
  */
-bool 		ast_is_valid(struct ast *);
+bool ast_is_valid(struct ast *);
 
 #endif /* AST_H */
