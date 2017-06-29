@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AST_H
+#define AST_H
 
 #include <stdbool.h>
 
@@ -39,3 +40,5 @@ struct ast_domain *new_ast_domain(const char *, const char *);
  * Check the AST for illogical configurations.
  */
 bool 		valid_ast(struct ast *);
+
+#endif /* AST_H */

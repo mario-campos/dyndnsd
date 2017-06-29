@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLIST_H
+#define PLIST_H
 
 #include <sys/queue.h>
 
@@ -30,3 +31,5 @@ char *mkurl(const char *, struct plist *);
  * Deallocate query parameters.
  */
 void freeparams(struct plist *);
+
+#endif /* PLIST_H */
