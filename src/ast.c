@@ -13,7 +13,7 @@
 #define HASH_TABLE_SIZE 10
 
 struct ast *
-ast_new(struct ast_ifaces *ifaces, const char *url)
+ast_new(const struct ast_ifaces *ifaces, const char *url)
 {
 	struct ast *ast = malloc(sizeof(struct ast));
 	if (NULL == ast)
@@ -24,7 +24,7 @@ ast_new(struct ast_ifaces *ifaces, const char *url)
 }
 
 struct ast_ifaces *
-ast_new_iface(const char *name, struct ast_domains *domains, const char *url)
+ast_new_iface(const char *name, const struct ast_domains *domains, const char *url)
 {
 	struct ast_ifaces *list = malloc(sizeof(struct ast_ifaces));
 	if (NULL == list)
