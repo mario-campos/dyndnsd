@@ -93,7 +93,8 @@ main(int argc, char *argv[])
 			goto sleep;
 		}
 
-		for (const struct ast_iface *aif = ast->interfaces; aif->next; aif = aif->next) {
+		struct ast_iface *aif;
+		SLIST_FOREACH(aif, ast->interfaces, next) {
 			char *ipaddr;
 			struct sockaddr_in *sa_old, *sa_new;
 			sa_old = find_sa(ifap_old, aif->name);
@@ -106,7 +107,7 @@ main(int argc, char *argv[])
 
 			struct plist *params = plist_parse(aif->url);
 			plist_setparam(params, "myip", ipaddr);
-			plist_setparam(params, "hostname", aif->domains->name);
+			plist_setparam(params, "hostname", SLIST_FIRST(aif->domains)->name);
 			char *url = plist_mkurl(aif->url, params);
 
 			if (httpget(curl, url)) {

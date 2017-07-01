@@ -6,10 +6,10 @@ extern int yyerror();
 %}
 
 %union {
-	char              *str;
-	struct ast        *ast;
-	struct ast_iface  *ast_iface;
-	struct ast_domain *ast_domain;
+	char               *str;
+	struct ast         *ast;
+	struct ast_ifaces  *ast_ifaces;
+	struct ast_domains *ast_domains;
 }
 
 %token INTERFACE
@@ -18,8 +18,8 @@ extern int yyerror();
 %token <str> STRING
 
 %type <ast> configuration
-%type <ast_iface> interfaces interface
-%type <ast_domain> domains domain
+%type <ast_ifaces> interfaces interface
+%type <ast_domains> domains domain
 %type <str> url 
 
 %locations
@@ -34,7 +34,7 @@ configuration
 
 interfaces
 	: interface
-	| interfaces interface				{ $$ = $2; $$->next = $1; }
+	| interfaces interface				{ $$ = ast_merge_ifaces($2, $1); }
 	;
 
 interface
@@ -43,7 +43,7 @@ interface
 	;
 
 domains : domain	
-	| domains domain				{ $$ = $2; $$->next = $1; }
+	| domains domain				{ $$ = ast_merge_domains($2, $1); }
 	;
 
 domain	: DOMAIN STRING					{ $$ = ast_new_domain($2, NULL); }

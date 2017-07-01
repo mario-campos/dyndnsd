@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+
 #include <net/if.h>
 
 #include <err.h>
@@ -12,50 +13,91 @@
 #define HASH_TABLE_SIZE 10
 
 struct ast *
-ast_new(const struct ast_iface *i, const char *u)
+ast_new(struct ast_ifaces *ifaces, const char *url)
 {
 	struct ast *ast = malloc(sizeof(struct ast));
 	if (NULL == ast)
 		err(1, "malloc(3)");
-	ast->interfaces = i;
-	ast->url = u;
+	ast->interfaces = ifaces;
+	ast->url = url;
 	return ast;
 }
 
-struct ast_iface *
-ast_new_iface(const char *name, const struct ast_domain *d, const char *u)
+struct ast_ifaces *
+ast_new_iface(const char *name, struct ast_domains *domains, const char *url)
 {
-	struct ast_iface *ast_iface = malloc(sizeof(struct ast_iface));
-	if (NULL == ast_iface)
+	struct ast_ifaces *list = malloc(sizeof(struct ast_ifaces));
+	if (NULL == list)
 		err(1, "malloc(3)");
-	ast_iface->name = name;
-	ast_iface->domains = d;
-	ast_iface->url = u;
-	ast_iface->next = NULL;
-	return ast_iface;
+	SLIST_INIT(list);
+
+	struct ast_iface *iface = malloc(sizeof(struct ast_iface));
+	if (NULL == iface)
+		err(1, "malloc(3)");
+	iface->name = name;
+	iface->domains = domains;
+	iface->url = url;
+
+	SLIST_INSERT_HEAD(list, iface, next);
+
+	return list;
 }
 
-struct ast_domain *
-ast_new_domain(const char *name, const char *u)
+struct ast_domains *
+ast_new_domain(const char *name, const char *url)
 {
-	struct ast_domain *ast_domain = malloc(sizeof(struct ast_domain));
-	if (NULL == ast_domain)
+	struct ast_domains *list = malloc(sizeof(struct ast_domains));
+	if (NULL == list)
 		err(1, "malloc(3)");
-	ast_domain->name = name;
-	ast_domain->url = u;
-	ast_domain->next = NULL;
-	return ast_domain;
+	SLIST_INIT(list);
+
+	struct ast_domain *domain = malloc(sizeof(struct ast_domain));
+	if (NULL == domain)
+		err(1, "malloc(3)");
+	domain->name = name;
+	domain->url = url;
+
+	SLIST_INSERT_HEAD(list, domain, next);
+
+	return list;
+}
+
+struct ast_ifaces *
+ast_merge_ifaces(struct ast_ifaces *lista, struct ast_ifaces *listb)
+{
+	while (!SLIST_EMPTY(listb)) {
+		struct ast_iface *iface = SLIST_FIRST(listb);
+		SLIST_REMOVE_HEAD(listb, next);
+		SLIST_INSERT_HEAD(lista, iface, next);
+	}
+	free(listb);
+	return lista;
+}
+
+struct ast_domains *
+ast_merge_domains(struct ast_domains *lista, struct ast_domains *listb)
+{
+	while (!SLIST_EMPTY(listb)) {
+		struct ast_domain *domain = SLIST_FIRST(listb);
+		SLIST_REMOVE_HEAD(listb, next);
+		SLIST_INSERT_HEAD(lista, domain, next);
+	}
+	free(listb);
+	return lista;
 }
 
 bool
 ast_is_valid(struct ast *ast)
 {
+	struct ast_iface *aif;
+	struct ast_domain *ad;
+
 	bool valid = true;
 	bool has_local0_url = ast->url != NULL;
 
 	hcreate(HASH_TABLE_SIZE);
 
-	for (const struct ast_iface *aif = ast->interfaces; aif; aif = aif->next) {
+	SLIST_FOREACH(aif, ast->interfaces, next) {
 		bool has_local1_url = aif->url != NULL;
 
 		/* check that the specified interface exists */
@@ -72,7 +114,7 @@ ast_is_valid(struct ast *ast)
 		}
 		hsearch((ENTRY) {key, NULL}, ENTER);
 
-		for (const struct ast_domain * ad = aif->domains; ad; ad = ad->next) {
+		SLIST_FOREACH(ad, aif->domains, next) {
 			bool has_local2_url = ad->url != NULL;
 
 			/* check fo rmissing required URL statement */
