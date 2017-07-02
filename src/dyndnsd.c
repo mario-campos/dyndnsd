@@ -14,7 +14,6 @@
 
 #include "ast.h"
 #include "config.h"
-#include "plist.h"
 #include "pathnames.h"
 #include "route.h"
 
@@ -26,6 +25,7 @@ static __dead void usage(void);
 static bool 	inaddreq(struct in_addr, struct in_addr);
 static bool 	httpget(CURL *, const char *);
 static struct sockaddr_in *find_sa(struct ifaddrs *, const char *);
+char	       *strsub(const char *, const char *, const char *);
 
 int
 main(int argc, char *argv[])
@@ -105,19 +105,17 @@ main(int argc, char *argv[])
 
 			ipaddr = inet_ntoa(sa_new->sin_addr);
 
-			struct plist *params = plist_parse(aif->url);
-			plist_setparam(params, "myip", ipaddr);
-			plist_setparam(params, "hostname", SLIST_FIRST(aif->domains)->name);
-			char *url = plist_mkurl(aif->url, params);
+			char *url1 = strsub(aif->url, "$domain", SLIST_FIRST(aif->domains)->name);
+			char *url2 = strsub(url1, "$ip_address", ipaddr);
 
-			if (httpget(curl, url)) {
+			if (httpget(curl, url2)) {
 				long status;
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-				syslog(LOG_INFO, "%s %s %s %ld", aif->name, ipaddr, url, status);
+				syslog(LOG_INFO, "%s %s %s %ld", aif->name, ipaddr, url2, status);
 			}
 
-			free(url);
-			plist_free(params);
+			free(url1);
+			free(url2);
 		}
 
 		freeifaddrs(ifap_old);
@@ -163,4 +161,25 @@ find_sa(struct ifaddrs *ifa, const char *ifname)
 		ifa = ifa->ifa_next;
 	}
 	return NULL;
+}
+
+char *
+strsub(const char *src, const char *search, const char *replace)
+{
+	char *end;
+	char buf[2048] = {0};
+
+	while ((end = strstr(src, search))) {
+		/* copy the substring before the search string */
+		strncat(buf, src, end - src);
+		src = end;
+
+		/* insert the replacement string */
+		strlcat(buf, replace, sizeof(buf));
+		src += strlen(search);
+	}
+
+	strlcat(buf, src, sizeof(buf));
+
+	return strdup(buf);
 }
