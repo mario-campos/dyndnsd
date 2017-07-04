@@ -28,7 +28,7 @@ extern int 	yyparse();
 
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
-char	       *strsub(const char *, const char *, const char *);
+static char    *strsub(const char *, const char *, const char *);
 
 int
 main(int argc, char *argv[])
@@ -151,7 +151,7 @@ httpget(CURL *curl, const char *url)
 	return true;
 }
 
-char *
+static char *
 strsub(const char *src, const char *search, const char *replace)
 {
 	char *end;
