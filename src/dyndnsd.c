@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 	openlog(__progname, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
-	syslog(LOG_INFO, "starting dyndnsd-%s...", VERSION);
+	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
 
 	while (true) {
 		char buf[READ_MEM_LIMIT];
