@@ -11,6 +11,7 @@ configure_file(output : 'pathnames.h', configuration : pathnames)
 
 limits = configuration_data()
 limits.set('URL_MEM_LIMIT', '1024')
+limits.set('READ_MEM_LIMIT', '2048')
 configure_file(output : 'limits.h', configuration : limits)
 
 lex_src = custom_target('lex', input : 'src/lexer.l', output : 'lexer.c',
