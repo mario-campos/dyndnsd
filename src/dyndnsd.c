@@ -112,7 +112,8 @@ main(int argc, char *argv[])
 
 			struct ast_domain *ad;
 			SLIST_FOREACH(ad, aif->domains, next) {
-				char *url1 = strsub(aif->url, "$domain", ad->name);
+				char *url0 = ad->url ?: aif->url ?: ast->url;
+				char *url1 = strsub(url0, "$domain", ad->name);
 				char *url2 = strsub(url1, "$ip_address", ipaddr);
 
 				if (httpget(curl, url2)) {
