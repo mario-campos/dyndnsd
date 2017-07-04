@@ -9,6 +9,10 @@ pathnames.set('ETCDIR', '"/etc"')
 pathnames.set('_PATH_DYNDNSD_CONF', 'ETCDIR "/dyndnsd.conf"')
 configure_file(output : 'pathnames.h', configuration : pathnames)
 
+limits = configuration_data()
+limits.set('URL_MEM_LIMIT', '1024')
+configure_file(output : 'limits.h', configuration : limits)
+
 lex_src = custom_target('lex', input : 'src/lexer.l', output : 'lexer.c',
                         command : ['lex', '-o', 'lexer.c', '@INPUT@'])
 

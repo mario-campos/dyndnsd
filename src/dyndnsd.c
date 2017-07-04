@@ -14,6 +14,7 @@
 
 #include "ast.h"
 #include "config.h"
+#include "limits.h"
 #include "pathnames.h"
 #include "route.h"
 
@@ -167,7 +168,7 @@ char *
 strsub(const char *src, const char *search, const char *replace)
 {
 	char *end;
-	char buf[1024] = {0};
+	char buf[URL_MEM_LIMIT] = {0};
 
 	while ((end = strstr(src, search))) {
 		/* copy the substring before the search string */
