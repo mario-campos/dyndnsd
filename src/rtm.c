@@ -4,7 +4,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
-#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,11 +32,7 @@ char *rtm_getipaddr(struct ifa_msghdr *ifam)
 	sa = get_sa((uint8_t *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
 	sin = (struct sockaddr_in *)sa;
 
-	assert(AF_INET == sin->sin_family);
-
 	memcpy(&addr, &sin->sin_addr, sizeof(addr));
-
-	assert(INADDR_ANY != addr.s_addr);
 
 	return inet_ntoa(addr);
 }
@@ -58,5 +53,6 @@ get_sa(uint8_t *cp, int flags) {
 			ADVANCE(cp, sa);
 		}
 	}
+
 	return NULL;
 }
