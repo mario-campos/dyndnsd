@@ -67,6 +67,10 @@ main(int argc, char *argv[])
 	if (NULL == yyin)
 		err(1, "fopen(\"%s\")", optf);
 
+	FILE *devnull = fopen("/dev/null", "w+");
+	if (NULL == devnull)
+		err(1, "fopen(\"/dev/null\")");
+
 	error = yyparse(&ast);
 	fclose(yyin);
 
@@ -78,6 +82,10 @@ main(int argc, char *argv[])
 	CURL *curl = curl_easy_init();
 	if (NULL == curl)
 		err(1, "curl_easy_init(3): failed to initialize libcurl");
+	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL))
+		err(1, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
+	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, devnull))
+		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	/* set up route(4) socket */
 	int routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
