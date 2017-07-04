@@ -36,6 +36,7 @@ main(int argc, char *argv[])
 	int opt, error;
 	bool optd, optn;
 	char *optf;
+	struct ast *ast;
 
 	optn = false;
 	optd = false;
@@ -66,7 +67,6 @@ main(int argc, char *argv[])
 	if (NULL == yyin)
 		err(1, "fopen(\"%s\")", optf);
 
-	struct ast *ast;
 	error = yyparse(&ast);
 	fclose(yyin);
 
@@ -96,6 +96,8 @@ main(int argc, char *argv[])
 	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
 
 	while (true) {
+		struct ast_iface *aif;
+		struct ast_domain *ad;
 		char buf[READ_MEM_LIMIT];
 
 		ssize_t numread = read(routefd, buf, sizeof(buf));
@@ -105,12 +107,9 @@ main(int argc, char *argv[])
 		char *ifname = rtm_getifname((struct rt_msghdr *)buf);
 		char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)buf);
 
-		struct ast_iface *aif;
 		SLIST_FOREACH(aif, ast->interfaces, next) {
 			if (0 != strcmp(aif->name, ifname))
 				continue;
-
-			struct ast_domain *ad;
 			SLIST_FOREACH(ad, aif->domains, next) {
 				char *url0 = ad->url ?: aif->url ?: ast->url;
 				char *url1 = strsub(url0, "$domain", ad->name);
@@ -119,7 +118,7 @@ main(int argc, char *argv[])
 				if (httpget(curl, url2)) {
 					long status;
 					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-					syslog(LOG_INFO, "%s %s %s %ld", aif->name, ipaddr, url2, status);
+					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url2, status);
 				}
 
 				free(url1);
