@@ -19,7 +19,7 @@ lex_src = custom_target('lex', input : 'src/lexer.l', output : 'lexer.c',
 bison_src = custom_target('bison', input : 'src/parser.y', output: ['parser.c', 'parser.h'],
                           command : ['bison', '-d', '-o', 'parser.c', '@INPUT@'])
 
-sources = ['src/dyndnsd.c', 'src/ast.c', 'src/route.c', lex_src, bison_src]
+sources = ['src/dyndnsd.c', 'src/ast.c', lex_src, bison_src]
 includes = [include_directories('src'), include_directories('/usr/local/include')]
 
 executable('dyndnsd', sources, include_directories : includes,
