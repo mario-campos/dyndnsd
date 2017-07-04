@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	syslog(LOG_INFO, "starting dyndnsd-%s...", VERSION);
 
 	while (true) {
-		char buf[2048];
+		char buf[READ_MEM_LIMIT];
 
 		ssize_t numread = read(routefd, buf, sizeof(buf));
 		if (-1 == numread)
