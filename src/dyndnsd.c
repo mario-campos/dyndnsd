@@ -1,10 +1,8 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 
-#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/route.h>
-#include <netinet/in.h>
 
 #include <assert.h>
 #include <err.h>
@@ -22,19 +20,15 @@
 #include "config.h"
 #include "limits.h"
 #include "pathnames.h"
+#include "rtm.h"
 
 extern char    *__progname;
 extern FILE    *yyin;
 extern int 	yyparse();
 
-#define ROUNDUP(a) \
-		((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
-
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
 char	       *strsub(const char *, const char *, const char *);
-struct sockaddr *get_sa(char *, int);
 
 int
 main(int argc, char *argv[])
@@ -108,27 +102,8 @@ main(int argc, char *argv[])
 		if (-1 == numread)
 			err(1, "read(2)");
 
-		struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
-
-		assert(numread <= rtm->rtm_msglen);
-		assert(rtm->rtm_version == RTM_VERSION);
-		assert(rtm->rtm_type == RTM_NEWADDR);
-
-		struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
-		char ifname[IF_NAMESIZE];
-		if_indextoname(ifam->ifam_index, ifname);
-
-		struct sockaddr *sa = get_sa((char *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
-		struct sockaddr_in *sain = (struct sockaddr_in *)sa;
-
-		assert(sain->sin_family == AF_INET);
-
-		struct in_addr a;
-		memcpy(&a, &sain->sin_addr, sizeof(a));
-
-		assert(a.s_addr != INADDR_ANY);
-
-		char *ipaddr = inet_ntoa(a);
+		char *ifname = rtm_getifname((struct rt_msghdr *)buf);
+		char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)buf);
 
 		struct ast_iface *aif;
 		SLIST_FOREACH(aif, ast->interfaces, next) {
@@ -150,6 +125,8 @@ main(int argc, char *argv[])
 				free(url2);
 			}
 		}
+
+		free(ifname);
 	}
 
 	curl_easy_cleanup(curl);
@@ -193,21 +170,4 @@ strsub(const char *src, const char *search, const char *replace)
 	strlcat(buf, src, sizeof(buf));
 
 	return strdup(buf);
-}
-
-struct sockaddr *
-get_sa(char *cp, int flags) {
-	int i;
-	struct sockaddr *sa;
-	if (0 == flags)
-		return NULL;
-	for (i = 1; i; i <<= 1) {
-		if (flags & i) {
-			sa = (struct sockaddr *)cp;
-			if (i == RTA_IFA)
-				return sa;
-			ADVANCE(cp, sa);
-		}
-	}
-	return NULL;
 }
