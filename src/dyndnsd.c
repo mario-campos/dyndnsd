@@ -113,16 +113,16 @@ main(int argc, char *argv[])
 		if (-1 == numread)
 			err(1, "read(2)");
 
-		char *ifname = rtm_getifname((struct rt_msghdr *)buf);
-		char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)buf);
+		const char *ifname = rtm_getifname((struct rt_msghdr *)buf);
+		const char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)buf);
 
 		SLIST_FOREACH(aif, ast->interfaces, next) {
 			if (0 != strcmp(aif->name, ifname))
 				continue;
 			SLIST_FOREACH(ad, aif->domains, next) {
-				char *url0 = ad->url ?: aif->url ?: ast->url;
-				char *url1 = strsub(url0, "$domain", ad->name);
-				char *url2 = strsub(url1, "$ip_address", ipaddr);
+				const char *url0 = ad->url ?: aif->url ?: ast->url;
+				const char *url1 = strsub(url0, "$domain", ad->name);
+				const char *url2 = strsub(url1, "$ip_address", ipaddr);
 
 				if (httpget(curl, url2)) {
 					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
