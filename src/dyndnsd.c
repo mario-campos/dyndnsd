@@ -33,10 +33,15 @@ static char    *strsub(const char *, const char *, const char *);
 int
 main(int argc, char *argv[])
 {
-	int opt, error;
+	int opt;
 	bool optd, optn;
 	char *optf;
+	char buf[READ_MEM_LIMIT];
+	long http_status;
+
 	struct ast *ast;
+	struct ast_iface *aif;
+	struct ast_domain *ad;
 
 	optn = false;
 	optd = false;
@@ -71,7 +76,7 @@ main(int argc, char *argv[])
 	if (NULL == devnull)
 		err(1, "fopen(\"/dev/null\")");
 
-	error = yyparse(&ast);
+	int error = yyparse(&ast);
 	fclose(yyin);
 
 	if (!ast_is_valid(ast) || optn)
@@ -104,10 +109,6 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 	while (true) {
-		struct ast_iface *aif;
-		struct ast_domain *ad;
-		char buf[READ_MEM_LIMIT];
-
 		ssize_t numread = read(routefd, buf, sizeof(buf));
 		if (-1 == numread)
 			err(1, "read(2)");
@@ -124,9 +125,8 @@ main(int argc, char *argv[])
 				char *url2 = strsub(url1, "$ip_address", ipaddr);
 
 				if (httpget(curl, url2)) {
-					long status;
-					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url2, status);
+					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
+					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url2, http_status);
 				}
 
 				free(url1);
