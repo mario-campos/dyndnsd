@@ -38,7 +38,6 @@ main(int argc, char *argv[])
 	char *optf;
 	char buf[READ_MEM_LIMIT];
 	char url[URL_MEM_LIMIT];
-	long http_status;
 
 	struct ast *ast;
 	struct ast_iface *aif;
@@ -126,8 +125,7 @@ main(int argc, char *argv[])
 				strsub(url, sizeof(url), "$ip_address", ipaddr);
 
 				if (httpget(curl, url)) {
-					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
-					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url, http_status);
+					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url);
 				}
 			}
 		}
