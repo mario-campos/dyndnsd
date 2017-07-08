@@ -28,7 +28,7 @@ extern int 	yyparse();
 
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
-static char    *strsub(const char *, const char *, const char *);
+static void	strsub(char *, size_t, const char *, const char *);
 
 int
 main(int argc, char *argv[])
@@ -37,6 +37,7 @@ main(int argc, char *argv[])
 	bool optd, optn;
 	char *optf;
 	char buf[READ_MEM_LIMIT];
+	char url[URL_MEM_LIMIT];
 	long http_status;
 
 	struct ast *ast;
@@ -120,17 +121,14 @@ main(int argc, char *argv[])
 			if (0 != strcmp(aif->name, ifname))
 				continue;
 			SLIST_FOREACH(ad, aif->domains, next) {
-				const char *url0 = ad->url ?: aif->url ?: ast->url;
-				const char *url1 = strsub(url0, "$domain", ad->name);
-				const char *url2 = strsub(url1, "$ip_address", ipaddr);
+				strlcpy(url, ad->url ?: aif->url ?: ast->url, sizeof(url));
+				strsub(url, sizeof(url), "$domain", ad->name);
+				strsub(url, sizeof(url), "$ip_address", ipaddr);
 
-				if (httpget(curl, url2)) {
+				if (httpget(curl, url)) {
 					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
-					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url2, http_status);
+					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url, http_status);
 				}
-
-				free(url1);
-				free(url2);
 			}
 		}
 
@@ -159,23 +157,25 @@ httpget(CURL *curl, const char *url)
 	return true;
 }
 
-static char *
-strsub(const char *src, const char *search, const char *replace)
+static void
+strsub(char *scope, size_t len, const char *search, const char *replace)
 {
-	char *end;
-	char buf[URL_MEM_LIMIT] = {0};
+	char *start, *end;
+	char buf[len];
 
-	while ((end = strstr(src, search))) {
+	start = scope;
+	explicit_bzero(buf, len);
+
+	while ((end = strstr(start, search))) {
 		/* copy the substring before the search string */
-		strncat(buf, src, end - src);
-		src = end;
+		strncat(buf, start, end - start);
+		start = end;
 
 		/* insert the replacement string */
-		strlcat(buf, replace, sizeof(buf));
-		src += strlen(search);
+		strlcat(buf, replace, len);
+		start += strlen(search);
 	}
 
-	strlcat(buf, src, sizeof(buf));
-
-	return strdup(buf);
+	strlcat(buf, start, len);
+	memcpy(scope, buf, len);
 }
