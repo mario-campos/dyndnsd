@@ -29,6 +29,7 @@ extern int 	yyparse();
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
 static void	strsub(char *, size_t, const char *, const char *);
+static size_t	httplog(char *, size_t, size_t, void *);
 
 int
 main(int argc, char *argv[])
@@ -72,10 +73,6 @@ main(int argc, char *argv[])
 	if (NULL == yyin)
 		err(1, "fopen(\"%s\")", optf);
 
-	FILE *devnull = fopen("/dev/null", "w+");
-	if (NULL == devnull)
-		err(1, "fopen(\"/dev/null\")");
-
 	int error = yyparse(&ast);
 	fclose(yyin);
 
@@ -87,10 +84,8 @@ main(int argc, char *argv[])
 	CURL *curl = curl_easy_init();
 	if (NULL == curl)
 		err(1, "curl_easy_init(3): failed to initialize libcurl");
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL))
+	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, devnull))
-		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	/* set up route(4) socket */
 	int routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
@@ -176,4 +171,10 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 
 	strlcat(buf, start, len);
 	memcpy(scope, buf, len);
+}
+
+static size_t
+httplog(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+	return size * nmemb;
 }
