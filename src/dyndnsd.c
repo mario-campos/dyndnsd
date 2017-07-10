@@ -29,13 +29,14 @@ extern int 	yyparse();
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
 static void	strsub(char *, size_t, const char *, const char *);
+static void 	parse_fqdn(const char *, char **, char **, char **);
 
 int
 main(int argc, char *argv[])
 {
 	int opt;
 	bool optd, optn;
-	char *optf;
+	char *optf, *hostname, *domain, *tld;
 	char buf[READ_MEM_LIMIT];
 	char url[URL_MEM_LIMIT];
 	long http_status;
@@ -122,7 +123,11 @@ main(int argc, char *argv[])
 				continue;
 			SLIST_FOREACH(ad, aif->domains, next) {
 				strlcpy(url, ad->url ?: aif->url ?: ast->url, sizeof(url));
-				strsub(url, sizeof(url), "$domain", ad->name);
+				parse_fqdn(ad->name, &hostname, &domain, &tld);
+				strsub(url, sizeof(url), "$fqdn", ad->name);
+				strsub(url, sizeof(url), "$hostname", hostname);
+				strsub(url, sizeof(url), "$domain", domain);
+				strsub(url, sizeof(url), "$tld", tld);
 				strsub(url, sizeof(url), "$ip_address", ipaddr);
 
 				if (httpget(curl, url)) {
@@ -178,4 +183,27 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 
 	strlcat(buf, start, len);
 	memcpy(scope, buf, len);
+}
+
+void
+parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
+{
+	const char *i, *j;
+
+	/* parse TLD */
+	for (j = fqdn + strlen(fqdn); '.' != *j; j--);
+	*tld = strdup(j+1);
+
+	/* parse 2-label FQDN */
+	for (i = fqdn; '.' != *i; i++);
+	if (i == j) {
+		*hostname = strdup("@");
+		*domain = strdup(fqdn);
+		return;
+	}
+
+	/* parse FQDNs with more than 3 labels */
+	*domain = strdup(i+1);
+	*hostname = malloc(i-fqdn+1);
+	strlcpy(*hostname, fqdn, i-fqdn+1);
 }
