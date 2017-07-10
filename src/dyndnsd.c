@@ -30,6 +30,7 @@ static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
 static void	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, char **, char **, char **);
+static size_t	httplog(char *, size_t, size_t, void *);
 
 int
 main(int argc, char *argv[])
@@ -39,7 +40,7 @@ main(int argc, char *argv[])
 	char *optf, *hostname, *domain, *tld;
 	char buf[READ_MEM_LIMIT];
 	char url[URL_MEM_LIMIT];
-	long http_status;
+	char log[LOG_MEM_LIMIT];
 
 	struct ast *ast;
 	struct ast_iface *aif;
@@ -74,10 +75,6 @@ main(int argc, char *argv[])
 	if (NULL == yyin)
 		err(1, "fopen(\"%s\")", optf);
 
-	FILE *devnull = fopen("/dev/null", "w+");
-	if (NULL == devnull)
-		err(1, "fopen(\"/dev/null\")");
-
 	int error = yyparse(&ast);
 	fclose(yyin);
 
@@ -89,9 +86,9 @@ main(int argc, char *argv[])
 	CURL *curl = curl_easy_init();
 	if (NULL == curl)
 		err(1, "curl_easy_init(3): failed to initialize libcurl");
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL))
+	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, devnull))
+	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, log))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	/* set up route(4) socket */
@@ -130,10 +127,8 @@ main(int argc, char *argv[])
 				strsub(url, sizeof(url), "$tld", tld);
 				strsub(url, sizeof(url), "$ip_address", ipaddr);
 
-				if (httpget(curl, url)) {
-					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
-					syslog(LOG_INFO, "%s %s %s %ld", ifname, ipaddr, url, http_status);
-				}
+				if (httpget(curl, url))
+					syslog(LOG_INFO, "%s %s %s %s", ifname, ad->name, ipaddr, log);
 			}
 		}
 
@@ -185,7 +180,7 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 	memcpy(scope, buf, len);
 }
 
-void
+static void
 parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
 {
 	const char *i, *j;
@@ -206,4 +201,20 @@ parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
 	*domain = strdup(i+1);
 	*hostname = malloc(i-fqdn+1);
 	strlcpy(*hostname, fqdn, i-fqdn+1);
+}
+
+static size_t
+httplog(char *response, size_t size, size_t nmemb, void *userptr)
+{
+	char *log;
+	size_t realsize, copysize;
+
+	log = (char *)userptr;
+	realsize = size * nmemb;
+	copysize = realsize < LOG_MEM_LIMIT ? realsize : LOG_MEM_LIMIT;
+
+	memcpy(log, response, copysize);
+	log[copysize] = '\0';
+
+	return realsize;
 }
