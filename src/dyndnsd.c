@@ -209,7 +209,7 @@ httplog(char *response, size_t size, size_t nmemb, void *userptr)
 
 	log = (char *)userptr;
 	realsize = size * nmemb;
-	copysize = realsize < LOG_MEM_LIMIT ? realsize : LOG_MEM_LIMIT;
+	copysize = realsize < (LOG_MEM_LIMIT-1) ? realsize : (LOG_MEM_LIMIT-1);
 
 	memcpy(log, response, copysize);
 	log[copysize] = '\0';
