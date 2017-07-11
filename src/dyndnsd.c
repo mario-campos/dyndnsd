@@ -38,9 +38,7 @@ main(int argc, char *argv[])
 	int opt;
 	bool optd, optn;
 	char *optf, *hostname, *domain, *tld;
-	char buf[READ_MEM_LIMIT];
-	char url[URL_MEM_LIMIT];
-	char log[LOG_MEM_LIMIT];
+	char rtmbuf[READ_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
 
 	struct ast *ast;
 	struct ast_iface *aif;
@@ -88,7 +86,7 @@ main(int argc, char *argv[])
 		err(1, "curl_easy_init(3): failed to initialize libcurl");
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, log))
+	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	/* set up route(4) socket */
@@ -108,27 +106,27 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 	while (true) {
-		ssize_t numread = read(routefd, buf, sizeof(buf));
+		ssize_t numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 		if (-1 == numread)
 			err(1, "read(2)");
 
-		const char *ifname = rtm_getifname((struct rt_msghdr *)buf);
-		const char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)buf);
+		const char *ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
+		const char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
 
 		SLIST_FOREACH(aif, ast->interfaces, next) {
 			if (0 != strcmp(aif->name, ifname))
 				continue;
 			SLIST_FOREACH(ad, aif->domains, next) {
-				strlcpy(url, ad->url ?: aif->url ?: ast->url, sizeof(url));
+				strlcpy(urlbuf, ad->url ?: aif->url ?: ast->url, sizeof(urlbuf));
 				parse_fqdn(ad->name, &hostname, &domain, &tld);
-				strsub(url, sizeof(url), "$fqdn", ad->name);
-				strsub(url, sizeof(url), "$hostname", hostname);
-				strsub(url, sizeof(url), "$domain", domain);
-				strsub(url, sizeof(url), "$tld", tld);
-				strsub(url, sizeof(url), "$ip_address", ipaddr);
+				strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->name);
+				strsub(urlbuf, sizeof(urlbuf), "$hostname", hostname);
+				strsub(urlbuf, sizeof(urlbuf), "$domain", domain);
+				strsub(urlbuf, sizeof(urlbuf), "$tld", tld);
+				strsub(urlbuf, sizeof(urlbuf), "$ip_address", ipaddr);
 
-				if (httpget(curl, url))
-					syslog(LOG_INFO, "%s %s %s %s", ifname, ad->name, ipaddr, log);
+				if (httpget(curl, urlbuf))
+					syslog(LOG_INFO, "%s %s %s %s", ifname, ad->name, ipaddr, logbuf);
 			}
 		}
 
