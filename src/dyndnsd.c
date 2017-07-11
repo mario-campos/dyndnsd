@@ -35,11 +35,12 @@ static size_t	httplog(char *, size_t, size_t, void *);
 int
 main(int argc, char *argv[])
 {
-	int opt;
+	ssize_t numread;
 	bool optd, optn;
-	char *optf, *hostname, *domain, *tld;
+	int opt, error, routefd;
+	unsigned int rtfilter;
+	char *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
 	char rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
-
 	struct ast *ast;
 	struct ast_iface *aif;
 	struct ast_domain *ad;
@@ -73,7 +74,7 @@ main(int argc, char *argv[])
 	if (NULL == yyin)
 		err(1, "fopen(\"%s\")", optf);
 
-	int error = yyparse(&ast);
+	error = yyparse(&ast);
 	fclose(yyin);
 
 	if (!ast_is_valid(ast) || optn)
@@ -90,11 +91,11 @@ main(int argc, char *argv[])
 		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	/* set up route(4) socket */
-	int routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
 	if (-1 == routefd)
 		err(1, "socket(2)");
 
-	unsigned int rtfilter = ROUTE_FILTER(RTM_NEWADDR);
+	rtfilter = ROUTE_FILTER(RTM_NEWADDR);
 	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 			     &rtfilter, sizeof(rtfilter)))
 		err(1, "setsockopt(2)");
@@ -106,12 +107,12 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 	while (true) {
-		ssize_t numread = read(routefd, rtmbuf, sizeof(rtmbuf));
+		numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 		if (-1 == numread)
 			err(1, "read(2)");
 
-		const char *ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
-		const char *ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
+		ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
+		ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
 
 		SLIST_FOREACH(aif, ast->interfaces, next) {
 			if (0 != strcmp(aif->name, ifname))
