@@ -29,7 +29,7 @@ extern int 	yyparse();
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
 static void 	strsub(char *, size_t, const char *, const char *);
-static void 	parse_fqdn(const char *, char **, char **, char **);
+static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
 
 int
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	bool 		optd, optn;
 	int 		opt, error, routefd;
 	unsigned int 	rtfilter;
-	char           *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
+	const char     *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
 	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
 	CURL 	       *curl;
 	struct ast     *ast;
@@ -181,7 +181,7 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 }
 
 static void
-parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
+parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const char **tld)
 {
 	const char *i, *j;
 
@@ -198,8 +198,7 @@ parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
 	}
 	/* parse FQDNs with more than 3 labels */
 	*domain = strdup(i + 1);
-	*hostname = malloc(i - fqdn + 1);
-	strlcpy(*hostname, fqdn, i - fqdn + 1);
+	*hostname = strndup(fqdn, i - fqdn);
 }
 
 static size_t
