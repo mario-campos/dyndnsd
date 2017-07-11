@@ -196,6 +196,7 @@ parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const c
 		*domain = strdup(fqdn);
 		return;
 	}
+
 	/* parse FQDNs with more than 3 labels */
 	*domain = strdup(i + 1);
 	*hostname = strndup(fqdn, i - fqdn);
