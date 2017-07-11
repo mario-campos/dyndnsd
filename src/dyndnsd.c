@@ -38,7 +38,7 @@ main(int argc, char *argv[])
 	int opt;
 	bool optd, optn;
 	char *optf, *hostname, *domain, *tld;
-	char rtmbuf[READ_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
+	char rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
 
 	struct ast *ast;
 	struct ast_iface *aif;
