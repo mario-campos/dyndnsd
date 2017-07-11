@@ -28,20 +28,21 @@ extern int 	yyparse();
 
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
-static void	strsub(char *, size_t, const char *, const char *);
+static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, char **, char **, char **);
-static size_t	httplog(char *, size_t, size_t, void *);
+static size_t 	httplog(char *, size_t, size_t, void *);
 
 int
 main(int argc, char *argv[])
 {
-	ssize_t numread;
-	bool optd, optn;
-	int opt, error, routefd;
-	unsigned int rtfilter;
-	char *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
-	char rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
-	struct ast *ast;
+	ssize_t 	numread;
+	bool 		optd, optn;
+	int 		opt, error, routefd;
+	unsigned int 	rtfilter;
+	char           *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
+	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
+	CURL 	       *curl;
+	struct ast     *ast;
 	struct ast_iface *aif;
 	struct ast_domain *ad;
 
@@ -82,7 +83,7 @@ main(int argc, char *argv[])
 
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
-	CURL *curl = curl_easy_init();
+	curl = curl_easy_init();
 	if (NULL == curl)
 		err(1, "curl_easy_init(3): failed to initialize libcurl");
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
@@ -186,7 +187,7 @@ parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
 
 	/* parse TLD */
 	for (j = fqdn + strlen(fqdn); '.' != *j; j--);
-	*tld = strdup(j+1);
+	*tld = strdup(j + 1);
 
 	/* parse 2-label FQDN */
 	for (i = fqdn; '.' != *i; i++);
@@ -195,11 +196,10 @@ parse_fqdn(const char *fqdn, char **hostname, char **domain, char **tld)
 		*domain = strdup(fqdn);
 		return;
 	}
-
 	/* parse FQDNs with more than 3 labels */
-	*domain = strdup(i+1);
-	*hostname = malloc(i-fqdn+1);
-	strlcpy(*hostname, fqdn, i-fqdn+1);
+	*domain = strdup(i + 1);
+	*hostname = malloc(i - fqdn + 1);
+	strlcpy(*hostname, fqdn, i - fqdn + 1);
 }
 
 static size_t
@@ -210,7 +210,7 @@ httplog(char *response, size_t size, size_t nmemb, void *userptr)
 
 	log = (char *)userptr;
 	realsize = size * nmemb;
-	copysize = realsize < (LOG_MEM_LIMIT-1) ? realsize : (LOG_MEM_LIMIT-1);
+	copysize = realsize < (LOG_MEM_LIMIT - 1) ? realsize : (LOG_MEM_LIMIT - 1);
 
 	memcpy(log, response, copysize);
 	log[copysize] = '\0';
