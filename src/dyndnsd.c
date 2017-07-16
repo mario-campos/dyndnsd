@@ -1,4 +1,6 @@
 #include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/event.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
@@ -7,6 +9,7 @@
 #include <assert.h>
 #include <err.h>
 #include <ifaddrs.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +40,7 @@ main(int argc, char *argv[])
 {
 	ssize_t 	numread;
 	bool 		optd, optn;
-	int 		opt, error, routefd;
+	int 		opt, error, routefd, kq, nev;
 	unsigned int 	rtfilter;
 	const char     *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
 	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
@@ -45,6 +48,8 @@ main(int argc, char *argv[])
 	struct ast     *ast;
 	struct ast_iface *aif;
 	struct ast_domain *ad;
+	struct kevent changes[2];
+	struct kevent events[2];
 
 	optn = false;
 	optd = false;
@@ -81,6 +86,10 @@ main(int argc, char *argv[])
 	if (!ast_is_valid(ast) || optn)
 		exit(error);
 
+	kq = kqueue();
+	if (-1 == kq)
+		err(1, "kqueue(2)");
+
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
@@ -102,37 +111,64 @@ main(int argc, char *argv[])
 		err(1, "setsockopt(2)");
 
 	if (!optd)
-		daemon(0, 0);
+		if (-1 == daemon(0, 0))
+			err(1, "daemon(3)");
 
 	openlog(__progname, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
 
+	signal(SIGHUP, SIG_IGN);
+	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
+	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, 0);
+
 	while (true) {
-		numread = read(routefd, rtmbuf, sizeof(rtmbuf));
-		if (-1 == numread)
-			err(1, "read(2)");
-
-		ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
-		ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
-
-		SLIST_FOREACH(aif, ast->interfaces, next) {
-			if (0 != strcmp(aif->name, ifname))
-				continue;
-			SLIST_FOREACH(ad, aif->domains, next) {
-				strlcpy(urlbuf, ad->url ?: aif->url ?: ast->url, sizeof(urlbuf));
-				parse_fqdn(ad->name, &hostname, &domain, &tld);
-				strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->name);
-				strsub(urlbuf, sizeof(urlbuf), "$hostname", hostname);
-				strsub(urlbuf, sizeof(urlbuf), "$domain", domain);
-				strsub(urlbuf, sizeof(urlbuf), "$tld", tld);
-				strsub(urlbuf, sizeof(urlbuf), "$ip_address", ipaddr);
-
-				if (httpget(curl, urlbuf))
-					syslog(LOG_INFO, "%s %s %s %s", ifname, ad->name, ipaddr, logbuf);
-			}
+		nev = kevent(kq, changes, 2, NULL, 0, NULL);
+		if (-1 == nev) {
+			syslog(LOG_WARNING, "kevent(2): failed to set events: %m");
+			continue;
 		}
 
-		free(ifname);
+		nev = kevent(kq, NULL, 0, events, 2, NULL);
+		if (-1 == nev) {
+			syslog(LOG_WARNING, "kevent(2): failed to get events: %m");
+			continue;
+		}
+
+		assert(nev != 0);
+
+		for (int i = 0; i < nev; i++) {
+			if (events[i].ident == SIGHUP) {
+				syslog(LOG_INFO, "SIGHUP caught!");
+			}
+
+			if (events[i].ident == routefd) {
+				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
+				if (-1 == numread)
+					break;
+
+				ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
+				ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
+
+				SLIST_FOREACH(aif, ast->interfaces, next) {
+					if (0 != strcmp(aif->name, ifname))
+						continue;
+					SLIST_FOREACH(ad, aif->domains, next) {
+						strlcpy(urlbuf, ad->url ?: aif->url ?: ast->url, sizeof(urlbuf));
+						parse_fqdn(ad->name, &hostname, &domain, &tld);
+						strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->name);
+						strsub(urlbuf, sizeof(urlbuf), "$hostname", hostname);
+						strsub(urlbuf, sizeof(urlbuf), "$domain", domain);
+						strsub(urlbuf, sizeof(urlbuf), "$tld", tld);
+						strsub(urlbuf, sizeof(urlbuf), "$ip_address", ipaddr);
+
+						if (httpget(curl, urlbuf))
+							syslog(LOG_INFO, "%s %s %s %s", ifname, ad->name, ipaddr, logbuf);
+					}
+				}
+
+				free(ifname);
+			}
+		}
 	}
 
 	curl_easy_cleanup(curl);
