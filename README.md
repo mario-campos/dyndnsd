@@ -32,15 +32,15 @@ $
 
 ### Features
 
-[x] route(4)
-[x] kqueue(2)
-[x] IPv4
-[ ] IPv6
-[ ] Unicode
+- [x] route(4)
+- [x] kqueue(2)
+- [x] IPv4
+- [ ] IPv6
+- [ ] Unicode
 
 ### Code Quality
 
-[ ] Unit Testing
-[ ] Fuzz Testing
-[ ] Valgrind
-[ ] Other Static Analyzers 
+- [ ] Unit Testing
+- [ ] Fuzz Testing
+- [ ] Valgrind
+- [ ] Other Static Analyzers 
