@@ -158,14 +158,6 @@ isvalid(struct ast *ast)
 				valid = false;
 				fprintf(stderr, "error: no `http-get` statement in scope of domain \"%s\"\n", ad->name);
 			}
-
-			/* check for duplidate domain names */
-			key = strdup(ad->name);
-			if (hsearch((ENTRY){key, NULL}, FIND)) {
-				valid = false;
-				fprintf(stderr, "error: duplicate domain \"%s\" detected\n", ad->name);
-			}
-			hsearch((ENTRY){key, NULL}, ENTER);
 		}
 	}
 
