@@ -3,6 +3,7 @@
 #include <net/if.h>
 
 #include <err.h>
+#include <errno.h>
 #include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,12 @@
 #include "ast.h"
 
 #define HASH_TABLE_SIZE 10
+
+extern FILE    *yyin;
+extern int 	yyparse();
+
+static bool isvalid(struct ast *);
+static void free_domains(struct ast_domains *);
 
 struct ast *
 ast_new(const struct ast_ifaces *ifaces, const char *url)
@@ -86,8 +93,36 @@ ast_merge_domains(struct ast_domains *lista, struct ast_domains *listb)
 	return lista;
 }
 
-bool
-ast_is_valid(struct ast *ast)
+void
+ast_free(struct ast *ast)
+{
+	struct ast_iface *aif;
+	while (!SLIST_EMPTY(ast->interfaces)) {
+		aif = SLIST_FIRST(ast->interfaces);
+		SLIST_REMOVE_HEAD(ast->interfaces, next);
+		free_domains(aif->domains);
+		free(aif->domains);
+		free(aif->name);
+		free(aif->url);
+		free(aif);
+	}
+	free(ast->url);
+	free(ast);
+}
+
+int
+ast_load(struct ast **ast, FILE *file)
+{
+	yyin = file;
+	int yyerror = yyparse(ast);
+	fclose(yyin);
+	if (-1 == yyerror || !isvalid(*ast))
+		return -1;
+	return 0;
+}
+
+static bool
+isvalid(struct ast *ast)
 {
 	struct ast_iface *aif;
 	struct ast_domain *ad;
@@ -108,11 +143,11 @@ ast_is_valid(struct ast *ast)
 
 		/* check for duplicate interfaces */
 		char *key = strdup(aif->name);
-		if (hsearch((ENTRY) {key, NULL}, FIND)) {
+		if (hsearch((ENTRY){key, NULL}, FIND)) {
 			valid = false;
 			fprintf(stderr, "error: duplicate interface \"%s\" detected\n", aif->name);
 		}
-		hsearch((ENTRY) {key, NULL}, ENTER);
+		hsearch((ENTRY){key, NULL}, ENTER);
 
 		SLIST_FOREACH(ad, aif->domains, next) {
 			bool has_local2_url = ad->url != NULL;
@@ -127,14 +162,26 @@ ast_is_valid(struct ast *ast)
 
 			/* check for duplidate domain names */
 			key = strdup(ad->name);
-			if (hsearch((ENTRY) {key, NULL}, FIND)) {
+			if (hsearch((ENTRY){key, NULL}, FIND)) {
 				valid = false;
 				fprintf(stderr, "error: duplicate domain \"%s\" detected\n", ad->name);
 			}
-			hsearch((ENTRY) {key, NULL}, ENTER);
+			hsearch((ENTRY){key, NULL}, ENTER);
 		}
 	}
 
 	hdestroy();
 	return valid;
+}
+
+static void
+free_domains(struct ast_domains *list)
+{
+	while (!SLIST_EMPTY(list)) {
+		struct ast_domain *ad = SLIST_FIRST(list);
+		SLIST_REMOVE_HEAD(list, next);
+		free(ad->name);
+		free(ad->url);
+		free(ad);
+	}
 }

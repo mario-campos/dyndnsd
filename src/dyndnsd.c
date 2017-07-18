@@ -38,14 +38,15 @@ static size_t 	httplog(char *, size_t, size_t, void *);
 int
 main(int argc, char *argv[])
 {
+	FILE 	       *conf;
 	ssize_t 	numread;
 	bool 		optd, optn;
-	int 		opt, error, routefd, kq, nev;
+	int 		opt, res, routefd, kq, nev;
 	unsigned int 	rtfilter;
 	const char     *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
 	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
 	CURL 	       *curl;
-	struct ast     *ast;
+	struct ast     *ast, *ast_tmp;
 	struct ast_iface *aif;
 	struct ast_domain *ad;
 	struct kevent changes[2];
@@ -76,15 +77,13 @@ main(int argc, char *argv[])
 		}
 	}
 
-	yyin = fopen(optf, "r");
-	if (NULL == yyin)
+	conf = fopen(optf, "r");
+	if (NULL == conf)
 		err(1, "fopen(\"%s\")", optf);
 
-	error = yyparse(&ast);
-	fclose(yyin);
-
-	if (!ast_is_valid(ast) || optn)
-		exit(error);
+	res = ast_load(&ast, conf);
+	if (-1 == res || optn)
+		exit(res);
 
 	kq = kqueue();
 	if (-1 == kq)
@@ -118,8 +117,8 @@ main(int argc, char *argv[])
 	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
 
 	signal(SIGHUP, SIG_IGN);
-	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, 0);
-	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, 0);
+	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 	while (true) {
 		nev = kevent(kq, changes, 2, NULL, 0, NULL);
@@ -138,10 +137,14 @@ main(int argc, char *argv[])
 
 		for (int i = 0; i < nev; i++) {
 			if (events[i].ident == SIGHUP) {
-				syslog(LOG_INFO, "SIGHUP caught!");
-			}
-
-			if (events[i].ident == routefd) {
+				syslog(LOG_INFO, "SIGHUP received; reloading configuration");
+				if (-1 == ast_load(&ast_tmp, conf)) {
+					syslog(LOG_ERR, "invalid configuration: unable to load");
+				} else {
+					ast_free(ast);
+					ast = ast_tmp;
+				}
+			} else {
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
 					break;

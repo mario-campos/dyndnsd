@@ -4,6 +4,7 @@
 #include <sys/queue.h>
 
 #include <stdbool.h>
+#include <stdio.h>
 
 SLIST_HEAD(ast_domains, ast_domain);
 
@@ -24,7 +25,7 @@ struct ast_iface {
 
 struct ast {
 	const char     *url;
-	const struct ast_ifaces *interfaces;
+	struct ast_ifaces *interfaces;
 };
 
 
@@ -54,8 +55,13 @@ struct ast_ifaces *ast_merge_ifaces(struct ast_ifaces *, struct ast_ifaces *);
 struct ast_domains *ast_merge_domains(struct ast_domains *, struct ast_domains *);
 
 /*
- * Check the AST for illogical configurations.
+ * Deallocate Abstract Syntax Tree.
  */
-bool ast_is_valid(struct ast *);
+void ast_free(struct ast *);
+
+/*
+ * Parse an Abstract Syntax Tree from a configuration file.
+ */
+int ast_load(struct ast **, FILE *);
 
 #endif /* AST_H */
