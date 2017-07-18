@@ -114,7 +114,6 @@ ast_load(struct ast **ast, FILE *file)
 {
 	yyin = file;
 	int yyerror = yyparse(ast);
-	fclose(yyin);
 	if (-1 == yyerror || !isvalid(*ast))
 		return -1;
 	return 0;

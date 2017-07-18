@@ -140,6 +140,7 @@ main(int argc, char *argv[])
 		for (int i = 0; i < nev; i++) {
 			if (events[i].ident == SIGHUP) {
 				syslog(LOG_INFO, "SIGHUP received; reloading configuration");
+				rewind(conf);
 				if (-1 == ast_load(&ast_tmp, conf)) {
 					syslog(LOG_ERR, "invalid configuration: unable to load");
 				} else {
