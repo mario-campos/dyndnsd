@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 	FILE 	       *conf;
 	ssize_t 	numread;
 	bool 		optd, optn;
-	int 		opt, res, routefd, kq, nev;
+	int 		opt, res, routefd, kq;
 	unsigned int 	rtfilter;
 	const char     *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
 	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
@@ -121,6 +121,8 @@ main(int argc, char *argv[])
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 	while (true) {
+		int nev;
+
 		nev = kevent(kq, changes, 2, NULL, 0, NULL);
 		if (-1 == nev) {
 			syslog(LOG_WARNING, "kevent(2): failed to set events: %m");

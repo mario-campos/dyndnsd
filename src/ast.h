@@ -19,7 +19,7 @@ SLIST_HEAD(ast_ifaces, ast_iface);
 struct ast_iface {
 	const char     *name;
 	const char     *url;
-	const struct ast_domains *domains;
+	struct ast_domains *domains;
 	SLIST_ENTRY(ast_iface) next;
 };
 
@@ -32,12 +32,12 @@ struct ast {
 /*
  * Allocate a new Abstract Syntax Tree (AST).
  */
-struct ast *ast_new(const struct ast_ifaces *, const char *);
+struct ast *ast_new(struct ast_ifaces *, const char *);
 
 /*
  * Allocate a new AST node for interfaces.
  */
-struct ast_ifaces *ast_new_iface(const char *, const struct ast_domains *, const char *);
+struct ast_ifaces *ast_new_iface(const char *, struct ast_domains *, const char *);
 
 /*
  * Allocate a new AST node for domain names.

@@ -20,7 +20,7 @@ static bool isvalid(struct ast *);
 static void free_domains(struct ast_domains *);
 
 struct ast *
-ast_new(const struct ast_ifaces *ifaces, const char *url)
+ast_new(struct ast_ifaces *ifaces, const char *url)
 {
 	struct ast *ast = malloc(sizeof(struct ast));
 	if (NULL == ast)
@@ -31,7 +31,7 @@ ast_new(const struct ast_ifaces *ifaces, const char *url)
 }
 
 struct ast_ifaces *
-ast_new_iface(const char *name, const struct ast_domains *domains, const char *url)
+ast_new_iface(const char *name, struct ast_domains *domains, const char *url)
 {
 	struct ast_ifaces *list = malloc(sizeof(struct ast_ifaces));
 	if (NULL == list)
@@ -96,9 +96,8 @@ ast_merge_domains(struct ast_domains *lista, struct ast_domains *listb)
 void
 ast_free(struct ast *ast)
 {
-	struct ast_iface *aif;
 	while (!SLIST_EMPTY(ast->interfaces)) {
-		aif = SLIST_FIRST(ast->interfaces);
+		struct ast_iface *aif = SLIST_FIRST(ast->interfaces);
 		SLIST_REMOVE_HEAD(ast->interfaces, next);
 		free_domains(aif->domains);
 		free(aif->domains);
