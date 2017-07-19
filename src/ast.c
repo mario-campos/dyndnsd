@@ -4,14 +4,11 @@
 
 #include <err.h>
 #include <errno.h>
-#include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "ast.h"
-
-#define HASH_TABLE_SIZE 10
 
 extern FILE    *yyin;
 extern int 	yyparse();
@@ -128,8 +125,6 @@ isvalid(struct ast *ast)
 	bool valid = true;
 	bool has_local0_url = ast->url != NULL;
 
-	hcreate(HASH_TABLE_SIZE);
-
 	SLIST_FOREACH(aif, ast->interfaces, next) {
 		bool has_local1_url = aif->url != NULL;
 
@@ -138,14 +133,6 @@ isvalid(struct ast *ast)
 			valid = false;
 			fprintf(stderr, "error: interface \"%s\" not found\n", aif->name);
 		}
-
-		/* check for duplicate interfaces */
-		char *key = strdup(aif->name);
-		if (hsearch((ENTRY){key, NULL}, FIND)) {
-			valid = false;
-			fprintf(stderr, "error: duplicate interface \"%s\" detected\n", aif->name);
-		}
-		hsearch((ENTRY){key, NULL}, ENTER);
 
 		SLIST_FOREACH(ad, aif->domains, next) {
 			bool has_local2_url = ad->url != NULL;
@@ -160,7 +147,6 @@ isvalid(struct ast *ast)
 		}
 	}
 
-	hdestroy();
 	return valid;
 }
 
