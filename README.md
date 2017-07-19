@@ -6,7 +6,7 @@ Dynamic DNS Daemon for OpenBSD
 First, create the configuration file, */etc/dyndnsd.conf*:
 
 ```
-http-get https://www.duckdns.org/update?domains=$fqdn&token=sometoken&ip=$ip_address
+update https://www.duckdns.org/update?domains=$fqdn&token=sometoken&ip=$ip_address
 
 interface em0 {
 	domain example.com

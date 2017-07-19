@@ -142,7 +142,7 @@ isvalid(struct ast *ast)
 			    !has_local1_url &&
 			    !has_local2_url) {
 				valid = false;
-				fprintf(stderr, "error: no `http-get` statement in scope of domain \"%s\"\n", ad->name);
+				fprintf(stderr, "error: no `update` statement in scope of domain \"%s\"\n", ad->name);
 			}
 		}
 	}

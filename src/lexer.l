@@ -17,7 +17,7 @@ unquoted_string		[^ \n\t]+
 
 "interface"		return INTERFACE;
 "domain"		return DOMAIN;
-"http-get" 		return HTTP_GET;
+"update" 		return UPDATE;
 "{"			return '{';
 "}"			return '}';
 {comment}		;

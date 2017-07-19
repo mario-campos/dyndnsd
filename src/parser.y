@@ -14,7 +14,7 @@ extern int yyerror();
 
 %token INTERFACE
 %token DOMAIN
-%token HTTP_GET
+%token UPDATE
 %token <str> STRING
 
 %type <ast> configuration
@@ -50,5 +50,5 @@ domain	: DOMAIN STRING					{ $$ = ast_new_domain($2, NULL); }
 	| DOMAIN STRING '{' url '}'		        { $$ = ast_new_domain($2, $4); }
 	;
 
-url     : HTTP_GET STRING				{ $$ = $2; }
+url     : UPDATE STRING					{ $$ = $2; }
 	;
