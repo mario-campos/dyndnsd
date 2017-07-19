@@ -1,7 +1,7 @@
 %{
 #include <string.h>
 #include "parser.h"
-void yyerror(const char *);
+void yyerror(struct ast **, const char *);
 %}
 
 %option nounput
@@ -27,6 +27,6 @@ unquoted_string		[^ \n\t]+
 
 %%
 
-void yyerror(const char *s) {
+void yyerror(struct ast **ast, const char *s) {
     fprintf(stderr, "%s (line %d)\n", s, yylineno);
 }

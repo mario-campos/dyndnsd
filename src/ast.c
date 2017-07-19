@@ -106,14 +106,15 @@ ast_free(struct ast *ast)
 	free(ast);
 }
 
-int
+bool
 ast_load(struct ast **ast, FILE *file)
 {
 	yyin = file;
-	int yyerror = yyparse(ast);
-	if (-1 == yyerror || !isvalid(*ast))
-		return -1;
-	return 0;
+	if (yyparse(ast))
+		return false;
+	if (!isvalid(*ast))
+		return false;
+	return true;
 }
 
 static bool

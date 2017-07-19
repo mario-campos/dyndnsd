@@ -62,6 +62,6 @@ void ast_free(struct ast *);
 /*
  * Parse an Abstract Syntax Tree from a configuration file.
  */
-int ast_load(struct ast **, FILE *);
+bool ast_load(struct ast **, FILE *);
 
 #endif /* AST_H */

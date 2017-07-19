@@ -38,8 +38,8 @@ main(int argc, char *argv[])
 {
 	FILE 	       *conf;
 	ssize_t 	numread;
-	bool 		optd, optn;
-	int 		opt, res, routefd, kq;
+	bool 		optd, optn, valid_conf;
+	int 		opt, routefd, kq;
 	unsigned int 	rtfilter;
 	const char     *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
 	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
@@ -79,9 +79,9 @@ main(int argc, char *argv[])
 	if (NULL == conf)
 		err(1, "fopen(\"%s\")", optf);
 
-	res = ast_load(&ast, conf);
-	if (-1 == res || optn)
-		exit(res);
+	valid_conf = ast_load(&ast, conf);
+	if (!valid_conf || optn)
+		exit(valid_conf ? 0 : 1);
 
 	kq = kqueue();
 	if (-1 == kq)
