@@ -26,8 +26,6 @@
 #include "rtm.h"
 
 extern char    *__progname;
-extern FILE    *yyin;
-extern int 	yyparse();
 
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
