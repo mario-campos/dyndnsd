@@ -139,12 +139,11 @@ main(int argc, char *argv[])
 			if (events[i].ident == SIGHUP) {
 				syslog(LOG_INFO, "SIGHUP received; reloading configuration");
 				rewind(conf);
-				if (-1 == ast_load(&ast_tmp, conf)) {
-					syslog(LOG_ERR, "invalid configuration: unable to load");
-				} else {
+				if (ast_load(&ast_tmp, conf)) {
 					ast_free(ast);
 					ast = ast_tmp;
-				}
+				} else
+					syslog(LOG_ERR, "invalid configuration: unable to load");
 			} else {
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
