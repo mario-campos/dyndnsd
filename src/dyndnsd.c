@@ -37,18 +37,15 @@ int
 main(int argc, char *argv[])
 {
 	FILE 	       *conf;
-	ssize_t 	numread;
 	bool 		optd, optn, valid_conf;
 	int 		opt, routefd, kq;
 	unsigned int 	rtfilter;
-	const char     *optf, *hostname, *domain, *tld, *ifname, *ipaddr;
-	char 		rtmbuf[RTM_MEM_LIMIT], urlbuf[URL_MEM_LIMIT], logbuf[LOG_MEM_LIMIT];
+	const char     *optf;
+	char 		logbuf[LOG_MEM_LIMIT];
 	CURL 	       *curl;
-	struct ast     *ast, *ast_tmp;
-	struct ast_iface *aif;
-	struct ast_domain *ad;
-	struct kevent changes[2];
-	struct kevent events[2];
+	struct ast     *ast;
+	struct kevent   changes[2];
+	struct kevent   events[2];
 
 	optn = false;
 	optd = false;
@@ -139,14 +136,23 @@ main(int argc, char *argv[])
 
 		for (int i = 0; i < nev; i++) {
 			if (events[i].ident == SIGHUP) {
+				struct ast *tmp;
 				syslog(LOG_INFO, "SIGHUP received; reloading configuration");
 				rewind(conf);
-				if (ast_load(&ast_tmp, conf)) {
+				if (ast_load(&tmp, conf)) {
 					ast_free(ast);
-					ast = ast_tmp;
+					ast = tmp;
 				} else
 					syslog(LOG_ERR, "invalid configuration: unable to load");
 			} else {
+				ssize_t numread;
+				char *ifname;
+				const char *ipaddr, *hostname, *domain, *tld;
+				char rtmbuf[RTM_MEM_LIMIT];
+				char urlbuf[URL_MEM_LIMIT];
+				struct ast_iface *aif;
+				struct ast_domain *ad;
+
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
 					break;
@@ -171,7 +177,7 @@ main(int argc, char *argv[])
 					}
 				}
 
-				free((char *)ifname);
+				free(ifname);
 			}
 		}
 	}
