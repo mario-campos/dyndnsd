@@ -98,11 +98,11 @@ ast_free(struct ast *ast)
 		SLIST_REMOVE_HEAD(ast->interfaces, next);
 		free_domains(aif->domains);
 		free(aif->domains);
-		free(aif->name);
-		free(aif->url);
+		free((char *)aif->name);
+		free((char *)aif->url);
 		free(aif);
 	}
-	free(ast->url);
+	free((char *)ast->url);
 	free(ast);
 }
 
@@ -157,8 +157,8 @@ free_domains(struct ast_domains *list)
 	while (!SLIST_EMPTY(list)) {
 		struct ast_domain *ad = SLIST_FIRST(list);
 		SLIST_REMOVE_HEAD(list, next);
-		free(ad->name);
-		free(ad->url);
+		free((char *)ad->name);
+		free((char *)ad->url);
 		free(ad);
 	}
 }

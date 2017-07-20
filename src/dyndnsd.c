@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 					}
 				}
 
-				free(ifname);
+				free((char *)ifname);
 			}
 		}
 	}
