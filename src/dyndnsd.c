@@ -80,16 +80,6 @@ main(int argc, char *argv[])
 	if (!valid_conf || optn)
 		exit(valid_conf ? 0 : 1);
 
-	/* set up event handler */
-	signal(SIGHUP, SIG_IGN);
-
-	kq = kqueue();
-	if (-1 == kq)
-		err(1, "kqueue(2)");
-
-	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
@@ -116,6 +106,18 @@ main(int argc, char *argv[])
 
 	openlog(__progname, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
+
+	/* set up event handler */
+	signal(SIGHUP, SIG_IGN);
+
+	kq = kqueue();
+	if (-1 == kq) {
+		syslog(LOG_ERR, "kqueue(2): %m");
+		exit(1);
+	}
+
+	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 	while (true) {
 		int nev;
