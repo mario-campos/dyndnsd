@@ -70,6 +70,10 @@ main(int argc, char *argv[])
 		}
 	}
 
+	routefd = rtm_socket(RTM_NEWADDR);
+	if (-1 == routefd)
+		err(1, "cannot create route(4) socket");
+
 	conf = fopen(optf, "r");
 	if (NULL == conf)
 		err(1, "fopen(\"%s\")", optf);
@@ -87,10 +91,6 @@ main(int argc, char *argv[])
 		err(1, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
-
-	routefd = rtm_socket(RTM_NEWADDR);
-	if (-1 == routefd)
-		err(1, "cannot create route(4) socket");
 
 	if (!optd)
 		if (-1 == daemon(0, 0))
