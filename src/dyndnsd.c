@@ -38,7 +38,6 @@ main(int argc, char *argv[])
 	FILE 	       *conf;
 	bool 		optd, optn, valid_conf;
 	int 		opt, routefd, kq;
-	unsigned int 	rtfilter;
 	const char     *optf;
 	char 		logbuf[LOG_MEM_LIMIT];
 	CURL 	       *curl;
