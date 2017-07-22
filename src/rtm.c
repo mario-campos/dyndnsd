@@ -16,6 +16,20 @@
 
 static struct sockaddr *get_sa(uint8_t *, int);
 
+int rtm_socket(unsigned int flags)
+{
+	int routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	if (-1 == routefd)
+		return -1;
+
+	unsigned int rtfilter = ROUTE_FILTER(flags);
+	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+			     &rtfilter, sizeof(rtfilter)))
+		return -1;
+
+	return routefd;
+}
+
 char *rtm_getifname(struct rt_msghdr *rtm)
 {
 	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;

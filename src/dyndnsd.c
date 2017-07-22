@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <assert.h>
 #include <err.h>
@@ -90,15 +89,9 @@ main(int argc, char *argv[])
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
 		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
-	/* set up route(4) socket */
-	routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	routefd = rtm_socket(RTM_NEWADDR);
 	if (-1 == routefd)
-		err(1, "socket(2)");
-
-	rtfilter = ROUTE_FILTER(RTM_NEWADDR);
-	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
-			     &rtfilter, sizeof(rtfilter)))
-		err(1, "setsockopt(2)");
+		err(1, "cannot create route(4) socket");
 
 	if (!optd)
 		if (-1 == daemon(0, 0))
