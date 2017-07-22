@@ -37,6 +37,7 @@ $
 - [x] IPv4
 - [ ] IPv6
 - [ ] Unicode
+- [x] pledge(2)
 
 ### Code Quality
 

@@ -74,6 +74,9 @@ main(int argc, char *argv[])
 	if (-1 == routefd)
 		err(1, "cannot create route(4) socket");
 
+	if (-1 == pledge("stdio rpath inet dns proc", NULL))
+		err(1, "pledge(2)");
+
 	conf = fopen(optf, "r");
 	if (NULL == conf)
 		err(1, "fopen(\"%s\")", optf);
@@ -97,7 +100,11 @@ main(int argc, char *argv[])
 			err(1, "daemon(3)");
 
 	openlog(__progname, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
-	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
+
+	if (-1 == pledge("stdio rpath inet dns", NULL)) {
+		syslog(LOG_ERR, "pledge(2): %m");
+		exit(1);
+	}
 
 	/* set up event handler */
 	signal(SIGHUP, SIG_IGN);
@@ -110,6 +117,8 @@ main(int argc, char *argv[])
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+
+	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
 
 	while (true) {
 		int nev;
