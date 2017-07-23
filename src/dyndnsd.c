@@ -197,7 +197,6 @@ end:
 	curl_easy_cleanup(curl);
 	close(routefd);
 	closelog();
-
 }
 
 static __dead void
