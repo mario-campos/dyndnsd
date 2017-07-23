@@ -141,18 +141,18 @@ main(int argc, char *argv[])
 
 		for (int i = 0; i < nev; i++) {
 			if (events[i].ident == SIGTERM) {
-				syslog(LOG_INFO, "SIGTERM received");
+				syslog(LOG_NOTICE, "SIGTERM received");
 				goto end;
 			} else if (events[i].ident == SIGHUP) {
 				struct ast *tmp;
-				syslog(LOG_INFO, "SIGHUP received");
+				syslog(LOG_NOTICE, "SIGHUP received");
 				rewind(conf);
 				if (ast_load(&tmp, conf)) {
 					ast_free(ast);
 					ast = tmp;
-					syslog(LOG_INFO, "reloaded configuration file");
+					syslog(LOG_NOTICE, "reloaded configuration file \"%s\"", optf);
 				} else {
-					syslog(LOG_ERR, "invalid configuration: unable to load");
+					syslog(LOG_ERR, "cannot reload configuration file \"%s\"", optf);
 				}
 			} else {
 				ssize_t numread;
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 	}
 
 end:
-	syslog(LOG_INFO, "terminating...");
+	syslog(LOG_NOTICE, "terminating...");
 	curl_easy_cleanup(curl);
 	close(routefd);
 	closelog();
