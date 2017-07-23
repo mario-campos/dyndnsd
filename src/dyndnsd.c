@@ -42,8 +42,8 @@ main(int argc, char *argv[])
 	char 		logbuf[LOG_MEM_LIMIT];
 	CURL 	       *curl;
 	struct ast     *ast;
-	struct kevent   changes[2];
-	struct kevent   events[2];
+	struct kevent   changes[3];
+	struct kevent   events[3];
 
 	optn = false;
 	optd = false;
@@ -108,6 +108,7 @@ main(int argc, char *argv[])
 
 	/* set up event handler */
 	signal(SIGHUP, SIG_IGN);
+	signal(SIGTERM, SIG_IGN);
 
 	kq = kqueue();
 	if (-1 == kq) {
@@ -117,19 +118,20 @@ main(int argc, char *argv[])
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&changes[2], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 
 	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
 
 	while (true) {
 		int nev;
 
-		nev = kevent(kq, changes, 2, NULL, 0, NULL);
+		nev = kevent(kq, changes, 3, NULL, 0, NULL);
 		if (-1 == nev) {
 			syslog(LOG_WARNING, "kevent(2): failed to set events: %m");
 			continue;
 		}
 
-		nev = kevent(kq, NULL, 0, events, 2, NULL);
+		nev = kevent(kq, NULL, 0, events, 3, NULL);
 		if (-1 == nev) {
 			syslog(LOG_WARNING, "kevent(2): failed to get events: %m");
 			continue;
@@ -138,15 +140,20 @@ main(int argc, char *argv[])
 		assert(nev != 0);
 
 		for (int i = 0; i < nev; i++) {
-			if (events[i].ident == SIGHUP) {
+			if (events[i].ident == SIGTERM) {
+				syslog(LOG_INFO, "SIGTERM received");
+				goto end;
+			} else if (events[i].ident == SIGHUP) {
 				struct ast *tmp;
-				syslog(LOG_INFO, "SIGHUP received; reloading configuration");
+				syslog(LOG_INFO, "SIGHUP received");
 				rewind(conf);
 				if (ast_load(&tmp, conf)) {
 					ast_free(ast);
 					ast = tmp;
-				} else
+					syslog(LOG_INFO, "reloaded configuration file");
+				} else {
 					syslog(LOG_ERR, "invalid configuration: unable to load");
+				}
 			} else {
 				ssize_t numread;
 				char *ifname;
@@ -185,7 +192,12 @@ main(int argc, char *argv[])
 		}
 	}
 
+end:
+	syslog(LOG_INFO, "terminating...");
 	curl_easy_cleanup(curl);
+	close(routefd);
+	closelog();
+
 }
 
 static __dead void
