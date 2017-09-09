@@ -8,20 +8,20 @@ void yyerror(struct ast **, const char *);
 %option noyywrap
 %option yylineno
 
-comment			"#"[^\n]*
+comment			#.*
 whitespace		[ \t\n]+
 quoted_string		"\""([^"\\]|\\.)*"\""
 unquoted_string		[^ \n\t]+
 
 %%
 
-"interface"		return INTERFACE;
-"domain"		return DOMAIN;
-"update" 		return UPDATE;
+interface		return INTERFACE;
+domain			return DOMAIN;
+update	 		return UPDATE;
 "{"			return '{';
 "}"			return '}';
-{comment}		;
-{whitespace}		;
+{comment}		/* ignore */ ;
+{whitespace}		/* ignore */ ;
 {quoted_string}		{ yylval.str = strndup(yytext+1, yyleng-2); return STRING; }
 {unquoted_string}	{ yylval.str = strndup(yytext, yyleng); return STRING; }
 
