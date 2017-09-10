@@ -20,7 +20,7 @@ extern int yyerror();
 %type <ast> configuration
 %type <ast_ifaces> interfaces interface
 %type <ast_domains> domains domain
-%type <string> url
+%type <string> update
 
 %locations
 %parse-param {struct ast **ast}
@@ -29,7 +29,7 @@ extern int yyerror();
 
 configuration
 	: interfaces					{ *ast = ast_new($1, NULL); }
-	| url interfaces				{ *ast = ast_new($2, $1); }
+	| update interfaces				{ *ast = ast_new($2, $1); }
 	;
 
 interfaces
@@ -39,7 +39,7 @@ interfaces
 
 interface
 	: INTERFACE STRING '{' domains '}'		{ $$ = ast_new_iface($2, $4, NULL); }
-	| INTERFACE STRING '{' url domains '}'	        { $$ = ast_new_iface($2, $5, $4); }
+	| INTERFACE STRING '{' update domains '}'	{ $$ = ast_new_iface($2, $5, $4); }
 	;
 
 domains : domain	
@@ -47,8 +47,8 @@ domains : domain
 	;
 
 domain	: DOMAIN STRING					{ $$ = ast_new_domain($2, NULL); }
-	| DOMAIN STRING '{' url '}'		        { $$ = ast_new_domain($2, $4); }
+	| DOMAIN STRING '{' update '}'		        { $$ = ast_new_domain($2, $4); }
 	;
 
-url     : UPDATE STRING					{ $$ = $2; }
+update	: UPDATE STRING					{ $$ = $2; }
 	;
