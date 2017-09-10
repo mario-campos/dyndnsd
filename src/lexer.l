@@ -30,5 +30,5 @@ update	 		return UPDATE;
 %%
 
 void yyerror(struct ast **ast, const char *msg) {
-    fprintf(stderr, "%d: %s: %s\n", yylineno, msg, yytext);
+    fprintf(stderr, "%d: syntax error: %s (%s)\n", yylineno, msg, yytext);
 }
