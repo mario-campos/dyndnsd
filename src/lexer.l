@@ -22,8 +22,8 @@ update	 		return UPDATE;
 "}"			return '}';
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
-{quoted_string}		{ yylval.str = strndup(yytext+1, yyleng-2); return STRING; }
-{unquoted_string}	{ yylval.str = strndup(yytext, yyleng); return STRING; }
+{quoted_string}		{ yylval.string = strndup(yytext+1, yyleng-2); return STRING; }
+{unquoted_string}	{ yylval.string = strndup(yytext, yyleng); return STRING; }
 
 %%
 

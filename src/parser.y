@@ -6,7 +6,7 @@ extern int yyerror();
 %}
 
 %union {
-	char               *str;
+	char               *string;
 	struct ast         *ast;
 	struct ast_ifaces  *ast_ifaces;
 	struct ast_domains *ast_domains;
@@ -15,12 +15,12 @@ extern int yyerror();
 %token INTERFACE
 %token DOMAIN
 %token UPDATE
-%token <str> STRING
+%token <string> STRING
 
 %type <ast> configuration
 %type <ast_ifaces> interfaces interface
 %type <ast_domains> domains domain
-%type <str> url 
+%type <string> url
 
 %locations
 %parse-param {struct ast **ast}
