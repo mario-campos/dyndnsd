@@ -12,6 +12,7 @@ comment			#.*
 whitespace		[ \t\n]+
 quoted_string		"\""([^"\\]|\\.)*"\""
 unquoted_string		[^ \n\t]+
+unterminated_string	("\""{unquoted_string}|{unquoted_string}"\"")
 
 %%
 
@@ -23,6 +24,7 @@ update	 		return UPDATE;
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
 {quoted_string}		{ yylval.string = strndup(yytext+1, yyleng-2); return STRING; }
+{unterminated_string}	yyerror(NULL, "unterminated string");
 {unquoted_string}	{ yylval.string = strndup(yytext, yyleng); return STRING; }
 
 %%
