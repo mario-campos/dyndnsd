@@ -24,7 +24,7 @@ update	 		return UPDATE;
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
 {quoted_string}		{ yylval.string = strndup(yytext+1, yyleng-2); return STRING; }
-{unterminated_string}	yyerror(NULL, "unterminated string");
+{unterminated_string}	yyerror(NULL, "this string needs an enclosing quotation character");
 {unquoted_string}	{ yylval.string = strndup(yytext, yyleng); return STRING; }
 
 %%
