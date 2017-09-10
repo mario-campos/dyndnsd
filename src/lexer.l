@@ -27,6 +27,6 @@ update	 		return UPDATE;
 
 %%
 
-void yyerror(struct ast **ast, const char *s) {
-    fprintf(stderr, "%s (line %d)\n", s, yylineno);
+void yyerror(struct ast **ast, const char *msg) {
+    fprintf(stderr, "%d: %s: %s\n", yylineno, msg, yytext);
 }
