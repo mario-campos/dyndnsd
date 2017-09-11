@@ -12,9 +12,8 @@ void yyerror(struct ast **, const char *);
 
 comment			#.*
 whitespace		[ \t\n]+
-quoted_string		"\""([^"\\]|\\.)*"\""
+quoted_string		\"([^"\\]|\\.)*\"
 unquoted_string		[^ \n\t]+
-unterminated_string	("\""{unquoted_string}|{unquoted_string}"\"")
 
 %%
 
