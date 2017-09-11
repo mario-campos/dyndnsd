@@ -32,6 +32,8 @@ static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
 
+bool ast_error = false;
+
 int
 main(int argc, char *argv[])
 {
@@ -84,6 +86,9 @@ main(int argc, char *argv[])
 	valid_conf = ast_load(&ast, conf);
 	if (!valid_conf || optn)
 		exit(valid_conf ? 0 : 1);
+
+	if (ast_error)
+		exit(1);
 
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);

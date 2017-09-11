@@ -1,6 +1,8 @@
 %{
 #include <string.h>
+#include "ast.h"
 #include "parser.h"
+
 void yyerror(struct ast **, const char *);
 %}
 
@@ -24,7 +26,18 @@ update	 		return UPDATE;
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
 {quoted_string}		{ yylval.string = strndup(yytext+1, yyleng-2); return STRING; }
-{unterminated_string}	yyerror(NULL, "this string needs an enclosing quotation character");
+\"{unquoted_string}	{
+				yyerror(NULL, "this string needs an enclosing quotation character");
+				yylval.string = strdup(yytext+1);
+				ast_error = true;
+				return STRING;
+			}
+{unquoted_string}\"	{
+				yyerror(NULL, "this string needs an enclosing quotation character");
+				yylval.string = strndup(yytext, yyleng-1);
+				ast_error = true;
+				return STRING;
+			}
 {unquoted_string}	{ yylval.string = strndup(yytext, yyleng); return STRING; }
 
 %%

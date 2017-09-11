@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+extern bool ast_error;
+
 SLIST_HEAD(ast_domains, ast_domain);
 
 struct ast_domain {
