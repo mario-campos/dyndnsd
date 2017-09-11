@@ -2,7 +2,6 @@
 #define AST_H
 
 #include <sys/queue.h>
-
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -27,32 +26,6 @@ struct ast {
 	const char     *url;
 	struct ast_ifaces *interfaces;
 };
-
-
-/*
- * Allocate a new Abstract Syntax Tree (AST).
- */
-struct ast *ast_new(struct ast_ifaces *, const char *);
-
-/*
- * Allocate a new AST node for interfaces.
- */
-struct ast_ifaces *ast_new_iface(const char *, struct ast_domains *, const char *);
-
-/*
- * Allocate a new AST node for domain names.
- */
-struct ast_domains *ast_new_domain(const char *, const char *);
-
-/*
- * Combine two Singly-Linked Lists of interfaces.
- */
-struct ast_ifaces *ast_merge_ifaces(struct ast_ifaces *, struct ast_ifaces *);
-
-/*
- * Combine two Singly-Linked Lists of domains.
- */
-struct ast_domains *ast_merge_domains(struct ast_domains *, struct ast_domains *);
 
 /*
  * Deallocate Abstract Syntax Tree.
