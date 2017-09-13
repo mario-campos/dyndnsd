@@ -7,6 +7,13 @@
 
 extern bool ast_error;
 
+struct ast_node {
+	int nodetype;
+	const char *strval;
+	SLIST_HEAD(, ast_node) children;
+	SLIST_ENTRY(ast_node)  next;
+};
+
 SLIST_HEAD(ast_domains, ast_domain);
 
 struct ast_domain {

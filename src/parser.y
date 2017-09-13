@@ -10,6 +10,8 @@ static struct ast_ifaces *ast_new_iface(const char *, struct ast_domains *, cons
 static struct ast_domains *ast_new_domain(const char *, const char *);
 static struct ast_ifaces *ast_merge_ifaces(struct ast_ifaces *, struct ast_ifaces *);
 static struct ast_domains *ast_merge_domains(struct ast_domains *, struct ast_domains *);
+static struct ast_node *ast_node(int, const char *, struct ast_node *);
+static struct ast_node *prepend(struct ast_node *, struct ast_node *);
 %}
 
 %union {
@@ -134,4 +136,24 @@ ast_merge_domains(struct ast_domains *lista, struct ast_domains *listb)
 	}
 	free(listb);
 	return lista;
+}
+
+static struct ast_node *
+ast_node(int nodetype, const char *strval, struct ast_node *children)
+{
+	struct ast_node *n = malloc(sizeof(*n));
+	if (NULL == n)
+		err(1, "malloc(3)");
+	n->nodetype = nodetype;
+	n->strval = strval;
+	n->children.slh_first = children;
+	SLIST_NEXT(n, next) = NULL;
+	return n;
+}
+
+static struct ast_node *
+prepend(struct ast_node *head, struct ast_node *tail)
+{
+	SLIST_NEXT(head, next) = tail;
+	return head;
 }
