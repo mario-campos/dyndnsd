@@ -4,6 +4,8 @@
 #include "ast.h"
 #include "parser.h"
 
+#define YYMAXLENG 15
+
 extern bool ast_error;
 bool ast_error = false;
 
@@ -45,6 +47,14 @@ update	 		return UPDATE;
 
 %%
 
-void yyerror(struct ast_root **ast, const char *msg) {
-    fprintf(stderr, "%d: syntax error: %s (%s)\n", yylineno, msg, yytext);
+void
+yyerror(struct ast_root **ast, const char *msg)
+{
+	const char *fmtstr;
+	if (yyleng > YYMAXLENG)
+		fmtstr = "%d: syntax error: %s (%.*s...)\n";
+	else
+		fmtstr = "%d: syntax error: %s (%.*s)\n";
+
+	fprintf(stderr, fmtstr, yylineno, msg, YYMAXLENG, yytext);
 }
