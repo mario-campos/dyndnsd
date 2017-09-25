@@ -1,6 +1,7 @@
 #ifndef RTM_H
 #define RTM_H
 
+#include <net/if.h>
 #include <net/route.h>
 
 /*

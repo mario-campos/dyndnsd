@@ -3,7 +3,10 @@
 #include "ast.h"
 #include "parser.h"
 
-void yyerror(struct ast **, const char *);
+extern bool ast_error;
+bool ast_error = false;
+
+void yyerror(struct ast_root **, const char *);
 %}
 
 %option nounput
@@ -26,13 +29,13 @@ update	 		return UPDATE;
 {whitespace}		/* ignore */ ;
 {quoted_string}		{ yylval.string = strndup(yytext+1, yyleng-2); return STRING; }
 \"{unquoted_string}	{
-				yyerror(NULL, "this string needs an enclosing quotation character");
+				yyerror(NULL, "this string lacks an closing quotation character");
 				yylval.string = strdup(yytext+1);
 				ast_error = true;
 				return STRING;
 			}
 {unquoted_string}\"	{
-				yyerror(NULL, "this string needs an enclosing quotation character");
+				yyerror(NULL, "this string lacks an opening quotation character");
 				yylval.string = strndup(yytext, yyleng-1);
 				ast_error = true;
 				return STRING;
@@ -41,6 +44,6 @@ update	 		return UPDATE;
 
 %%
 
-void yyerror(struct ast **ast, const char *msg) {
+void yyerror(struct ast_root **ast, const char *msg) {
     fprintf(stderr, "%d: syntax error: %s (%s)\n", yylineno, msg, yytext);
 }

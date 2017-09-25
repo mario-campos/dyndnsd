@@ -5,45 +5,36 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-extern bool ast_error;
-
-struct ast_node {
-	int nodetype;
-	const char *strval;
-	SLIST_HEAD(, ast_node) children;
-	SLIST_ENTRY(ast_node)  next;
-};
-
-SLIST_HEAD(ast_domains, ast_domain);
+#define IFNAMSIZ		16 // also in net/if.h
+#define OPENBSD_USERNAME_SIZE 	32
+#define OPENBSD_GROUPNAME_SIZE 	32
 
 struct ast_domain {
-	const char     *name;
-	const char     *url;
+	const char *domain;
+	const char *url;
 	SLIST_ENTRY(ast_domain) next;
 };
 
-SLIST_HEAD(ast_ifaces, ast_iface);
-
 struct ast_iface {
-	const char     *name;
-	const char     *url;
-	struct ast_domains *domains;
+	char if_name[IFNAMSIZ];
+	SLIST_HEAD(, ast_domain) domains;
 	SLIST_ENTRY(ast_iface) next;
 };
 
-struct ast {
-	const char     *url;
-	struct ast_ifaces *interfaces;
+struct ast_root {
+	char user[OPENBSD_USERNAME_SIZE];
+	char group[OPENBSD_GROUPNAME_SIZE];
+	SLIST_HEAD(, ast_iface) interfaces;
 };
 
 /*
  * Deallocate Abstract Syntax Tree.
  */
-void ast_free(struct ast *);
+void ast_free(struct ast_root *);
 
 /*
  * Parse an Abstract Syntax Tree from a configuration file.
  */
-bool ast_load(struct ast **, FILE *);
+bool ast_load(struct ast_root **, FILE *);
 
 #endif /* AST_H */

@@ -3,12 +3,11 @@
 #include <sys/event.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
-
 #include <assert.h>
 #include <err.h>
 #include <ifaddrs.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,20 +31,18 @@ static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
 
-bool ast_error = false;
-
 int
 main(int argc, char *argv[])
 {
-	FILE 	       *conf;
-	bool 		optd, optn, valid_conf;
-	int 		opt, routefd, kq;
-	const char     *optf;
-	char 		logbuf[LOG_MEM_LIMIT];
-	CURL 	       *curl;
-	struct ast     *ast;
-	struct kevent   changes[3];
-	struct kevent   events[3];
+	FILE 	        *conf;
+	bool 		 optd, optn, valid_conf;
+	int 		 opt, routefd, kq;
+	const char      *optf;
+	char 		 logbuf[LOG_MEM_LIMIT];
+	CURL 	        *curl;
+	struct ast_root *ast;
+	struct kevent    changes[3];
+	struct kevent    events[3];
 
 	optn = false;
 	optd = false;
@@ -86,9 +83,6 @@ main(int argc, char *argv[])
 	valid_conf = ast_load(&ast, conf);
 	if (!valid_conf || optn)
 		exit(valid_conf ? 0 : 1);
-
-	if (ast_error)
-		exit(1);
 
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -149,7 +143,7 @@ main(int argc, char *argv[])
 				syslog(LOG_NOTICE, "SIGTERM received");
 				goto end;
 			} else if (events[i].ident == SIGHUP) {
-				struct ast *tmp;
+				struct ast_root *tmp;
 				syslog(LOG_NOTICE, "SIGHUP received");
 				rewind(conf);
 				if (ast_load(&tmp, conf)) {
@@ -175,20 +169,20 @@ main(int argc, char *argv[])
 				ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
 				ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
 
-				SLIST_FOREACH(aif, ast->interfaces, next) {
-					if (0 != strcmp(aif->name, ifname))
+				SLIST_FOREACH(aif, &ast->interfaces, next) {
+					if (0 != strcmp(aif->if_name, ifname))
 						continue;
-					SLIST_FOREACH(ad, aif->domains, next) {
-						strlcpy(urlbuf, ad->url ?: aif->url ?: ast->url, sizeof(urlbuf));
-						parse_fqdn(ad->name, &hostname, &domain, &tld);
-						strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->name);
+					SLIST_FOREACH(ad, &aif->domains, next) {
+						strlcpy(urlbuf, ad->url, sizeof(urlbuf));
+						parse_fqdn(ad->domain, &hostname, &domain, &tld);
+						strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->domain);
 						strsub(urlbuf, sizeof(urlbuf), "$hostname", hostname);
 						strsub(urlbuf, sizeof(urlbuf), "$domain", domain);
 						strsub(urlbuf, sizeof(urlbuf), "$tld", tld);
 						strsub(urlbuf, sizeof(urlbuf), "$ip_address", ipaddr);
 
 						if (httpget(curl, urlbuf))
-							syslog(LOG_INFO, "%s %s %s %s", ifname, ad->name, ipaddr, logbuf);
+							syslog(LOG_INFO, "%s %s %s %s", ifname, ad->domain, ipaddr, logbuf);
 					}
 				}
 
