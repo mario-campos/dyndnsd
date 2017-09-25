@@ -3,6 +3,11 @@
 #include <sys/event.h>
 #include <sys/socket.h>
 
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+
 #include <assert.h>
 #include <err.h>
 #include <ifaddrs.h>
@@ -17,13 +22,26 @@
 
 #include <curl/curl.h>
 
-#include "ast.h"
 #include "config.h"
 #include "limits.h"
 #include "pathnames.h"
-#include "rtm.h"
+#include "ast.h"
+
+#define ROUNDUP(a) \
+    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 extern char    *__progname;
+extern FILE    *yyin;
+extern int	yyparse();
+
+static void	ast_free(struct ast_root *);
+static bool	ast_load(struct ast_root **, FILE *);
+
+static int	rtm_socket(unsigned int);
+static char    *rtm_getifname(struct rt_msghdr *);
+static char    *rtm_getipaddr(struct ifa_msghdr *);
+static struct sockaddr *rtm_getsa(uint8_t *, int);
 
 static __dead void usage(void);
 static bool 	httpget(CURL *, const char *);
@@ -196,6 +214,95 @@ end:
 	curl_easy_cleanup(curl);
 	close(routefd);
 	closelog();
+}
+
+static void
+ast_free(struct ast_root *ast)
+{
+	struct ast_iface *aif;
+	struct ast_domain *ad;
+
+	while (!SLIST_EMPTY(&ast->interfaces)) {
+		aif = SLIST_FIRST(&ast->interfaces);	
+		SLIST_REMOVE_HEAD(&ast->interfaces, next);
+		while (!SLIST_EMPTY(&aif->domains)) {
+			ad = SLIST_FIRST(&aif->domains);
+			SLIST_REMOVE_HEAD(&aif->domains, next);
+			free((char *)ad->domain);
+			free((char *)ad->url);
+			free(ad);
+		}
+		free(aif);
+	}
+
+	free(ast);
+}
+
+static bool
+ast_load(struct ast_root **ast, FILE *file)
+{
+	yyin = file;
+	if (yyparse(ast))
+		return false;
+	return true;
+}
+
+static int
+rtm_socket(unsigned int flags)
+{
+	int routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	if (-1 == routefd)
+		return -1;
+
+	unsigned int rtfilter = ROUTE_FILTER(flags);
+	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+			     &rtfilter, sizeof(rtfilter)))
+		return -1;
+
+	return routefd;
+}
+
+static char *
+rtm_getifname(struct rt_msghdr *rtm)
+{
+	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
+	char *buf = malloc(IF_NAMESIZE);
+	return if_indextoname(ifam->ifam_index, buf);
+}
+
+static char *
+rtm_getipaddr(struct ifa_msghdr *ifam)
+{
+	struct in_addr addr;
+	struct sockaddr *sa;
+	struct sockaddr_in *sin;
+
+	sa = rtm_getsa((uint8_t *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
+	sin = (struct sockaddr_in *)sa;
+
+	memcpy(&addr, &sin->sin_addr, sizeof(addr));
+
+	return inet_ntoa(addr);
+}
+
+static struct sockaddr *
+rtm_getsa(uint8_t *cp, int flags) {
+	int i;
+	struct sockaddr *sa;
+
+	if (0 == flags)
+		return NULL;
+
+	for (i = 1; i; i <<= 1) {
+		if (flags & i) {
+			sa = (struct sockaddr *)cp;
+			if (i == RTA_IFA)
+				return sa;
+			ADVANCE(cp, sa);
+		}
+	}
+
+	return NULL;
 }
 
 static __dead void
