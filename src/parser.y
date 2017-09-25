@@ -45,8 +45,7 @@ static struct ast_iface *ast_iface_new(const char *);
 
 %%
 
-config
-	: config-statements				{
+config : config-statements				{
 								if (ast_error)
 									exit(1);
 								struct cst_root cst;
