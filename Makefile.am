@@ -1,8 +1,9 @@
 bin_PROGRAMS = dyndnsd
 dyndnsd_SOURCES = src/dyndnsd.c src/parser.y src/lexer.l
-dist_man_MANS = man/dyndnsd.8 man/dyndnsd.conf.5
-MOSTLYCLEANFILES = parser.c parser.h lexer.c
-EXTRA_DIST = LICENSE README.md
-BUILT_SOURCES = parser.h
-AM_FLAGS = -Wall
+dyndnsd_CFLAGS = -Wall $(CURL_CFLAGS)
+dyndnsd_LDADD = $(CURL_LIBS)
+BUILT_SOURCES = src/parser.h
 AM_YFLAGS = -d
+dist_man_MANS = man/dyndnsd.8 man/dyndnsd.conf.5
+MOSTLYCLEANFILES = src/parser.c src/parser.h src/lexer.c
+EXTRA_DIST = LICENSE README.md

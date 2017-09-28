@@ -23,12 +23,13 @@
 #include <curl/curl.h>
 
 #include "config.h"
-#include "limits.h"
-#include "pathnames.h"
 #include "ast.h"
 
+#define LOG_MEM_LIMIT 1024
+#define RTM_MEM_LIMIT 1024
+#define URL_MEM_LIMIT 1024
 #define ROUNDUP(a) \
-    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 extern char    *__progname;

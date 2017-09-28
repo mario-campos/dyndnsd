@@ -36,8 +36,8 @@ static struct ast_iface *ast_iface_new(const char *);
 %token UPDATE
 %token <string> STRING
 
-%type <cst_node> config config-statements config-statement
-%type <cst_node> interface interface-statements interface-statement
+%type <cst_node> config config_statements config_statement
+%type <cst_node> interface interface_statements interface_statement
 %type <cst_node> domain update
 
 %locations
@@ -45,35 +45,35 @@ static struct ast_iface *ast_iface_new(const char *);
 
 %%
 
-config : config-statements				{
+config : config_statements				{
 								if (ast_error)
 									exit(1);
-								struct cst_root cst;
+								struct cst_root cst = SLIST_HEAD_INITIALIZER(cst);
 								SLIST_INSERT_HEAD(&cst, $1, next);
 								*ast = ast_new(&cst);
 							}
 	;
 
-config-statements
-	: config-statement
-	| config-statements config-statement		{ $$ = prepend($2, $1); }
+config_statements
+	: config_statement
+	| config_statements config_statement		{ $$ = prepend($2, $1); }
 	;
 
-config-statement
+config_statement
 	: interface
 	| update
 	;
 
 interface
-	: INTERFACE STRING '{' interface-statements '}'	{ $$ = cst_node_new(INTERFACE, $2, $4); }
+	: INTERFACE STRING '{' interface_statements '}'	{ $$ = cst_node_new(INTERFACE, $2, $4); }
 	;
 
-interface-statements
-	: interface-statement
-	| interface-statements interface-statement	{ $$ = prepend($2, $1); }
+interface_statements
+	: interface_statement
+	| interface_statements interface_statement	{ $$ = prepend($2, $1); }
 	;
 
-interface-statement
+interface_statement
 	: domain
 	| update
 	;

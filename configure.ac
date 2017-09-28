@@ -26,8 +26,9 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
 
 AC_FUNC_MALLOC
-AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset pledge daemon getifaddrs])
+
+PKG_CHECK_MODULES([CURL], [libcurl])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
