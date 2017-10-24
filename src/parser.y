@@ -1,8 +1,15 @@
 %{
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
 #include <err.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "ast.h"
 
 extern int yylex();
@@ -65,7 +72,13 @@ config_statement
 	;
 
 interface
-	: INTERFACE STRING '{' interface_statements '}'	{ $$ = cst_node_new(INTERFACE, $2, $4); }
+	: INTERFACE STRING '{' interface_statements '}'	{
+								if (!if_nametoindex($2)) {
+									ast_error = true;
+									fprintf(stderr, "parser error: this interface does not exist (%s)\n", $2);
+								}
+								$$ = cst_node_new(INTERFACE, $2, $4);
+							}
 	;
 
 interface_statements
