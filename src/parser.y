@@ -75,7 +75,7 @@ interface
 	: INTERFACE STRING '{' interface_statements '}'	{
 								if (!if_nametoindex($2)) {
 									ast_error = true;
-									fprintf(stderr, "parser error: this interface does not exist (%s)\n", $2);
+									fprintf(stderr, "error: this interface does not exist (%s)\n", $2);
 								}
 								$$ = cst_node_new(INTERFACE, $2, $4);
 							}

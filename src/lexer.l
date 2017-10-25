@@ -52,9 +52,9 @@ yyerror(struct ast_root **ast, const char *msg)
 {
 	const char *fmtstr;
 	if (yyleng > YYMAXLENG)
-		fmtstr = "syntax error: %s (%.*s...)\n";
+		fmtstr = "error: %s (%.*s...)\n";
 	else
-		fmtstr = "syntax error: %s (%.*s)\n";
+		fmtstr = "error: %s (%.*s)\n";
 
 	fprintf(stderr, fmtstr, msg, YYMAXLENG, yytext);
 }
