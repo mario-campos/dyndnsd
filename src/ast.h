@@ -5,8 +5,6 @@
 #include <stdio.h>
 
 #define IFNAMSIZ		16 // also in net/if.h
-#define OPENBSD_USERNAME_SIZE 	32
-#define OPENBSD_GROUPNAME_SIZE 	32
 
 struct ast_domain {
 	const char *domain;
@@ -21,8 +19,8 @@ struct ast_iface {
 };
 
 struct ast_root {
-	char user[OPENBSD_USERNAME_SIZE];
-	char group[OPENBSD_GROUPNAME_SIZE];
+	const char *user;
+	const char *group;
 	SLIST_HEAD(, ast_iface) interfaces;
 };
 

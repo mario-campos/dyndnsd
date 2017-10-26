@@ -38,6 +38,8 @@ static struct ast_iface *ast_iface_new(const char *);
 	struct cst_node *cst_node;
 }
 
+%token USER
+%token GROUP
 %token INTERFACE
 %token DOMAIN
 %token UPDATE
@@ -45,7 +47,7 @@ static struct ast_iface *ast_iface_new(const char *);
 
 %type <cst_node> config config_statements config_statement
 %type <cst_node> interface interface_statements interface_statement
-%type <cst_node> domain update
+%type <cst_node> domain update user group
 
 %locations
 %parse-param {struct ast_root **ast}
@@ -69,6 +71,14 @@ config_statements
 config_statement
 	: interface
 	| update
+	| user
+	| group
+	;
+
+user	: USER STRING					{ $$ = cst_node_new(USER, $2, NULL); }
+	;
+
+group	: GROUP STRING					{ $$ = cst_node_new(GROUP, $2, NULL); }
 	;
 
 interface
@@ -174,6 +184,12 @@ ast_new(struct cst_root *cst)
 
 			url2 = NULL;
 			SLIST_INSERT_HEAD(&ast->interfaces, aif, next);
+		}
+		else if (USER == child1->nodetype) {
+			ast->user = child1->strval;
+		}
+		else if (GROUP == child1->nodetype) {
+			ast->group = child1->strval;
 		}
 	}
 
