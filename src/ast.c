@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "ast.h"
@@ -39,4 +40,17 @@ ast_load(struct ast_root **ast, FILE *file)
 	if (yyparse(ast))
 		return false;
 	return true;
+}
+
+bool
+ast_reload(struct ast_root **ast, FILE *file)
+{
+	struct ast_root *tmp;
+	rewind(conf);
+	if (ast_load(&tmp, file)) {
+		ast_free(ast);
+		*ast = tmp;
+		return true;
+	}
+	return false;
 }

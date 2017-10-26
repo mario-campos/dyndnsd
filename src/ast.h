@@ -27,5 +27,6 @@ struct ast_root {
 
 void ast_free(struct ast_root *);
 bool ast_load(struct ast_root **, FILE *);
+bool ast_reload(struct ast_root **, FILE *);
 
 #endif /* AST_H */
