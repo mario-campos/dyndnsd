@@ -4,8 +4,6 @@
 #include <sys/queue.h>
 #include <stdio.h>
 
-#define IFNAMSIZ		16 // also in net/if.h
-
 struct ast_domain {
 	const char *domain;
 	const char *url;
@@ -13,7 +11,7 @@ struct ast_domain {
 };
 
 struct ast_iface {
-	char if_name[IFNAMSIZ];
+	const char *if_name;
 	SLIST_HEAD(, ast_domain) domains;
 	SLIST_ENTRY(ast_iface) next;
 };

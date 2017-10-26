@@ -7,7 +7,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 
 #include "ast.h"
@@ -222,7 +221,7 @@ ast_iface_new(const char *name)
 		syslog(LOG_ERR, "malloc(3): %m");
 		exit(1);
 	}
-	strlcpy(aif->if_name, name, sizeof(aif->if_name));
+	aif->if_name = name;
 	SLIST_NEXT(aif, next) = NULL;
 	return aif;
 }

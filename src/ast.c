@@ -27,6 +27,8 @@ ast_free(struct ast_root *ast)
 			free((char *)ad->url);
 			free(ad);
 		}
+
+		free((char *)aif->if_name);
 		free(aif);
 	}
 
