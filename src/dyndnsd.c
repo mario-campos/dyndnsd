@@ -158,11 +158,11 @@ main(int argc, char *argv[])
 				syslog(LOG_NOTICE, "SIGTERM received");
 				goto end;
 			} else if (events[i].ident == SIGHUP) {
-				syslog(LOG_NOTICE, "SIGHUP received");
+				syslog(LOG_NOTICE, "SIGHUP received; reloading configuration file.");
 				if (ast_reload(&ast, conf))
-					syslog(LOG_NOTICE, "reloaded configuration file \"%s\"", optf);
+					syslog(LOG_NOTICE, "successfully reloaded configuration file.");
 				else
-					syslog(LOG_ERR, "cannot reload configuration file \"%s\"", optf);
+					syslog(LOG_ERR, "cannot reload configuration file.");
 			} else {
 				ssize_t numread;
 				char *ifname;
