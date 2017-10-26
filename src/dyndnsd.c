@@ -33,11 +33,6 @@
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 extern char    *__progname;
-extern FILE    *yyin;
-extern int	yyparse();
-
-static void	ast_free(struct ast_root *);
-static bool	ast_load(struct ast_root **, FILE *);
 
 static int	rtm_socket(unsigned int);
 static char    *rtm_getifname(struct rt_msghdr *);
@@ -215,37 +210,6 @@ end:
 	curl_easy_cleanup(curl);
 	close(routefd);
 	closelog();
-}
-
-static void
-ast_free(struct ast_root *ast)
-{
-	struct ast_iface *aif;
-	struct ast_domain *ad;
-
-	while (!SLIST_EMPTY(&ast->interfaces)) {
-		aif = SLIST_FIRST(&ast->interfaces);	
-		SLIST_REMOVE_HEAD(&ast->interfaces, next);
-		while (!SLIST_EMPTY(&aif->domains)) {
-			ad = SLIST_FIRST(&aif->domains);
-			SLIST_REMOVE_HEAD(&aif->domains, next);
-			free((char *)ad->domain);
-			free((char *)ad->url);
-			free(ad);
-		}
-		free(aif);
-	}
-
-	free(ast);
-}
-
-static bool
-ast_load(struct ast_root **ast, FILE *file)
-{
-	yyin = file;
-	if (yyparse(ast))
-		return false;
-	return true;
 }
 
 static int

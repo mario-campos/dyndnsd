@@ -17,6 +17,7 @@ missing
 src/.deps/
 src/.dirstamp
 src/dyndnsd-dyndnsd.o
+src/dyndnsd-ast.o
 src/dyndnsd-lexer.o
 src/dyndnsd-parser.o
 src/lexer.c

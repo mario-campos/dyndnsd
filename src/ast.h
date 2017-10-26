@@ -2,6 +2,7 @@
 #define AST_H
 
 #include <sys/queue.h>
+#include <stdio.h>
 
 #define IFNAMSIZ		16 // also in net/if.h
 #define OPENBSD_USERNAME_SIZE 	32
@@ -24,5 +25,9 @@ struct ast_root {
 	char group[OPENBSD_GROUPNAME_SIZE];
 	SLIST_HEAD(, ast_iface) interfaces;
 };
+
+
+void ast_free(struct ast_root *);
+bool ast_load(struct ast_root **, FILE *);
 
 #endif /* AST_H */
