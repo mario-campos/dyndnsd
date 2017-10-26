@@ -14,8 +14,8 @@ ast_free(struct ast_root *ast)
 	struct ast_iface *aif;
 	struct ast_domain *ad;
 
-	free(ast->user);
-	free(ast->group);
+	free((char *)ast->user);
+	free((char *)ast->group);
 
 	while (!SLIST_EMPTY(&ast->interfaces)) {
 		aif = SLIST_FIRST(&ast->interfaces);	
