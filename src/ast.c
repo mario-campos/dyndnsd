@@ -46,9 +46,9 @@ bool
 ast_reload(struct ast_root **ast, FILE *file)
 {
 	struct ast_root *tmp;
-	rewind(conf);
+	rewind(file);
 	if (ast_load(&tmp, file)) {
-		ast_free(ast);
+		ast_free(*ast);
 		*ast = tmp;
 		return true;
 	}
