@@ -23,6 +23,8 @@ unquoted_string		[^ \n\t]+
 
 %%
 
+user			return USER;
+group			return GROUP;
 interface		return INTERFACE;
 domain			return DOMAIN;
 update	 		return UPDATE;
