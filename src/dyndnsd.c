@@ -83,6 +83,9 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* open syslog first so yyerror() can call syslog() */
+	openlog(__progname, LOG_PERROR | LOG_PID, LOG_DAEMON);
+
 	routefd = rtm_socket(RTM_NEWADDR);
 	if (-1 == routefd)
 		err(1, "cannot create route(4) socket");
@@ -111,8 +114,6 @@ main(int argc, char *argv[])
 	if (!optd)
 		if (-1 == daemon(0, 0))
 			err(1, "daemon(3)");
-
-	openlog(__progname, (optd ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
 
 	if (-1 == pledge("stdio rpath inet dns", NULL)) {
 		syslog(LOG_ERR, "pledge(2): %m");

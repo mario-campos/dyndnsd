@@ -4,11 +4,11 @@
 
 #include <net/if.h>
 
-#include <err.h>
+#include <stdarg.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 
 #include "ast.h"
 
@@ -85,7 +85,7 @@ interface
 	: INTERFACE STRING '{' interface_statements '}'	{
 								if (!if_nametoindex($2)) {
 									ast_error = true;
-									fprintf(stderr, "error: this interface does not exist (%s)\n", $2);
+									syslog(LOG_ERR, "error: this interface does not exist (%s)", $2);
 								}
 								$$ = cst_node_new(INTERFACE, $2, $4);
 							}
@@ -114,8 +114,10 @@ static struct cst_node *
 cst_node_new(int nodetype, const char *strval, struct cst_node *children)
 {
 	struct cst_node *node = malloc(sizeof(*node));
-	if (NULL == node)
-		err(1, "malloc(3)");
+	if (NULL == node) {
+		syslog(LOG_ERR, "malloc(3): %m");
+		exit(1);
+	}
 	node->nodetype = nodetype;
 	node->strval = strval;
 	node->children.slh_first = children;
@@ -157,8 +159,10 @@ ast_new(struct cst_root *cst)
 	url1 = url2 = url3 = NULL;
 
 	ast = malloc(sizeof(*ast));
-	if (NULL == ast)
-		err(1, "malloc(3)");
+	if (NULL == ast) {
+		syslog(LOG_ERR, "malloc(3): %m");
+		exit(1);
+	}
 
 	SLIST_FOREACH(child1, cst, next)
 		if (UPDATE == child1->nodetype)
@@ -200,8 +204,10 @@ static struct ast_domain *
 ast_domain_new(const char *domain, const char *url)
 {
 	struct ast_domain *ad = malloc(sizeof(*ad));
-	if (NULL == ad)
-		err(1, "malloc(3)");
+	if (NULL == ad) {
+		syslog(LOG_ERR, "malloc(3): %m");
+		exit(1);
+	}
 	ad->domain = domain;
 	ad->url = url;
 	SLIST_NEXT(ad, next) = NULL;
@@ -212,8 +218,10 @@ static struct ast_iface *
 ast_iface_new(const char *name)
 {
 	struct ast_iface *aif = malloc(sizeof(*aif));
-	if (NULL == aif)
-		err(1, "malloc(3)");
+	if (NULL == aif) {
+		syslog(LOG_ERR, "malloc(3): %m");
+		exit(1);
+	}
 	strlcpy(aif->if_name, name, sizeof(aif->if_name));
 	SLIST_NEXT(aif, next) = NULL;
 	return aif;

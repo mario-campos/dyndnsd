@@ -1,6 +1,9 @@
 %{
+#include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
+#include <syslog.h>
+
 #include "ast.h"
 #include "parser.h"
 
@@ -54,9 +57,8 @@ yyerror(struct ast_root **ast, const char *msg)
 {
 	const char *fmtstr;
 	if (yyleng > YYMAXLENG)
-		fmtstr = "error: %s (%.*s...)\n";
+		fmtstr = "error: %s (%.*s...)";
 	else
-		fmtstr = "error: %s (%.*s)\n";
-
-	fprintf(stderr, fmtstr, msg, YYMAXLENG, yytext);
+		fmtstr = "error: %s (%.*s)";
+	syslog(LOG_ERR, fmtstr, msg, YYMAXLENG, yytext);
 }
