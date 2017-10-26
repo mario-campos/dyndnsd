@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 				goto end;
 			} else if (events[i].ident == SIGHUP) {
 				syslog(LOG_NOTICE, "SIGHUP received");
-				if (ast_reload(ast, conf))
+				if (ast_reload(&ast, conf))
 					syslog(LOG_NOTICE, "reloaded configuration file \"%s\"", optf);
 				else
 					syslog(LOG_ERR, "cannot reload configuration file \"%s\"", optf);
