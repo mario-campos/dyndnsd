@@ -1,9 +1,4 @@
 %{
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <net/if.h>
-
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -81,13 +76,7 @@ group	: GROUP STRING					{ $$ = cst_node_new(GROUP, $2, NULL); }
 	;
 
 interface
-	: INTERFACE STRING '{' interface_statements '}'	{
-								if (!if_nametoindex($2)) {
-									ast_error = true;
-									syslog(LOG_ERR, "error: this interface does not exist (%s)", $2);
-								}
-								$$ = cst_node_new(INTERFACE, $2, $4);
-							}
+	: INTERFACE STRING '{' interface_statements '}'	{ $$ = cst_node_new(INTERFACE, $2, $4); }
 	;
 
 interface_statements
