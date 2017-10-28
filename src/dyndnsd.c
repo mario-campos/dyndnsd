@@ -169,8 +169,6 @@ main(int argc, char *argv[])
 				const char *ipaddr, *hostname, *domain, *tld;
 				char rtmbuf[RTM_MEM_LIMIT];
 				char urlbuf[URL_MEM_LIMIT];
-				struct ast_iface *aif;
-				struct ast_domain *ad;
 
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
@@ -179,10 +177,15 @@ main(int argc, char *argv[])
 				ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
 				ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
 
-				SLIST_FOREACH(aif, &ast->interfaces, next) {
+				for(int i = 0; i < ast->iface_len; i++) {
+					struct ast_iface *aif = ast->iface[i];
+
 					if (0 != strcmp(aif->if_name, ifname))
 						continue;
-					SLIST_FOREACH(ad, &aif->domains, next) {
+
+					for(int j = 0; j < aif->domain_len; j++) {
+						struct ast_domain *ad = aif->domain[j];
+
 						strlcpy(urlbuf, ad->url, sizeof(urlbuf));
 						parse_fqdn(ad->domain, &hostname, &domain, &tld);
 						strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->domain);

@@ -1,29 +1,28 @@
 #ifndef AST_H
 #define AST_H
 
-#include <sys/queue.h>
 #include <stdio.h>
 
 struct ast_domain {
-	const char *domain;
-	const char *url;
-	SLIST_ENTRY(ast_domain) next;
+	char *domain;
+	char *url;
 };
 
 struct ast_iface {
-	const char *if_name;
-	SLIST_HEAD(, ast_domain) domains;
-	SLIST_ENTRY(ast_iface) next;
+	char *if_name;
+	int domain_len;
+	struct ast_domain *domain[];
 };
 
 struct ast_root {
-	const char *user;
-	const char *group;
-	SLIST_HEAD(, ast_iface) interfaces;
+	char *user;
+	char *group;
+	int iface_len;
+	struct ast_iface *iface[];
 };
 
-
-void ast_free(struct ast_root *);
+struct ast_domain *ast_domain_new(char *, char *);
+struct ast_iface *ast_iface_new(char *, int);
 bool ast_load(struct ast_root **, FILE *);
 bool ast_reload(struct ast_root **, FILE *);
 

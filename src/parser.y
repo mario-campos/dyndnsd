@@ -1,30 +1,31 @@
 %{
+#include <sys/queue.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <syslog.h>
-
 #include "ast.h"
 
 extern int yylex();
 extern int yyerror();
 extern bool ast_error;
 
-SLIST_HEAD(cst_root, cst_node);
+SLIST_HEAD(cst_list, cst_node);
 
 struct cst_node {
-	int nodetype;
-	const char *strval;
-	SLIST_HEAD(, cst_node) children;
-	SLIST_ENTRY(cst_node)  next;
+	int type;
+	int len;
+	SLIST_ENTRY(cst_node) next;
+	char *string;
+	struct cst_node *child[];
 };
 
-static struct cst_node *cst_node_new(int, const char *, struct cst_node *);
+static int count(struct cst_list *);
+static bool cst_valid(struct cst_node *);
+static struct cst_node *cst_node_new(int, char *, int);
 static struct cst_node *prepend(struct cst_node *, struct cst_node *);
 static void cst_free(struct cst_node *);
-static struct ast_root *ast_new(struct cst_root *);
-static struct ast_domain *ast_domain_new(const char *, const char *);
-static struct ast_iface *ast_iface_new(const char *);
+static struct ast_root *cst2ast(struct cst_node *);
 %}
 
 %union {
@@ -32,13 +33,8 @@ static struct ast_iface *ast_iface_new(const char *);
 	struct cst_node *cst_node;
 }
 
-%token USER
-%token GROUP
-%token INTERFACE
-%token DOMAIN
-%token UPDATE
+%token USER GROUP INTERFACE DOMAIN UPDATE
 %token <string> STRING
-
 %type <cst_node> config config_statements config_statement
 %type <cst_node> interface interface_statements interface_statement
 %type <cst_node> domain update user group
@@ -49,11 +45,22 @@ static struct ast_iface *ast_iface_new(const char *);
 %%
 
 config : config_statements				{
-								if (ast_error)
-									exit(1);
-								struct cst_root cst = SLIST_HEAD_INITIALIZER(cst);
-								SLIST_INSERT_HEAD(&cst, $1, next);
-								*ast = ast_new(&cst);
+       								int i;
+								struct cst_list list;
+								struct cst_node *cst, *x;
+
+								i = 0;
+								SLIST_FIRST(&list) = $1;
+								cst = cst_node_new(0, NULL, count(&list));
+								SLIST_FOREACH(x, &list, next)
+									cst->child[i++] = x;
+
+								if (!cst_valid(cst))
+									return false;
+
+								*ast = cst2ast(cst);
+								cst_free(cst);
+								return true;
 							}
 	;
 
@@ -69,14 +76,26 @@ config_statement
 	| group
 	;
 
-user	: USER STRING					{ $$ = cst_node_new(USER, $2, NULL); }
+user	: USER STRING					{ $$ = cst_node_new(USER, $2, 0); }
 	;
 
-group	: GROUP STRING					{ $$ = cst_node_new(GROUP, $2, NULL); }
+group	: GROUP STRING					{ $$ = cst_node_new(GROUP, $2, 0); }
 	;
 
 interface
-	: INTERFACE STRING '{' interface_statements '}'	{ $$ = cst_node_new(INTERFACE, $2, $4); }
+	: INTERFACE STRING '{' interface_statements '}'	{
+								int i;
+								struct cst_list list;
+								struct cst_node *iface, *x;
+
+								i = 0;
+								SLIST_FIRST(&list) = $4;
+								iface = cst_node_new(INTERFACE, $2, count(&list));
+								SLIST_FOREACH(x, &list, next)
+									iface->child[i++] = x;
+
+								$$ = iface;
+							}
 	;
 
 interface_statements
@@ -89,27 +108,89 @@ interface_statement
 	| update
 	;
 
-domain	: DOMAIN STRING					{ $$ = cst_node_new(DOMAIN, $2, NULL); }
-	| DOMAIN STRING '{' update '}'		        { $$ = cst_node_new(DOMAIN, $2,   $4); }
+domain	: DOMAIN STRING					{ $$ = cst_node_new(DOMAIN, $2, 0); }
+	| DOMAIN STRING '{' update '}'		        {
+								$$ = cst_node_new(DOMAIN, $2, 1); 
+								$$->child[0] = $4;
+							}
 	;
 
-update	: UPDATE STRING					{ $$ = cst_node_new(UPDATE, $2, NULL); }
+update	: UPDATE STRING					{ $$ = cst_node_new(UPDATE, $2, 0); }
 	;
 
 %%
 
-static struct cst_node *
-cst_node_new(int nodetype, const char *strval, struct cst_node *children)
+static int
+count(struct cst_list *list)
 {
-	struct cst_node *node = malloc(sizeof(*node));
-	if (NULL == node) {
-		syslog(LOG_ERR, "malloc(3): %m");
+	int count = 0;
+	struct cst_node *node;
+	SLIST_FOREACH(node, list, next)
+		count++;
+	return count;
+}
+
+static bool
+cst_valid(struct cst_node *cst)
+{
+	bool cst_valid = true;
+	uint8_t topcount[300] = { 0 };
+
+	/* check for extraneous top-scope nodes */
+	for (int i = 0; i < cst->len; i++) {
+		switch (cst->child[i]->type) {
+		case UPDATE:
+			topcount[UPDATE]++; break;
+		case USER:
+			topcount[USER]++; break;
+		case GROUP:
+			topcount[GROUP]++; break;
+		default: continue; 
+		}
+	}
+
+	if (topcount[UPDATE] > 1) {
+		cst_valid = false;
+		syslog(LOG_ERR, "error: too many 'update' statements in top scope; limit one.");
+	}
+	if (topcount[USER] > 1) {
+		cst_valid = false;
+		syslog(LOG_ERR, "error: too many 'user' statements; limit one.");
+	}
+	if (topcount[GROUP] > 1) {
+		cst_valid = false;
+		syslog(LOG_ERR, "error: too many 'group' statements; limit one.");
+	}
+
+	for (int i = 0, n = 0; i < cst->len; i++, n = 0) {
+		if (INTERFACE != cst->child[i]->type)
+			continue;
+
+		const struct cst_node *node = cst->child[i];
+		for (int j = 0; j < node->len; j++)
+			if (UPDATE == node->child[j]->type) n++;
+
+		if (n > 1) {
+			cst_valid = false;
+			syslog(LOG_ERR, "error: too many 'update' statements in interface (%s) scope; limit one.", node->string);
+		}
+	}
+
+	return cst_valid;
+}
+
+static struct cst_node *
+cst_node_new(int type, char *string, int len)
+{
+	struct cst_node *node = calloc(sizeof(*node) + len * sizeof(node), 1);
+	if (!node) {
+		syslog(LOG_ERR, "calloc(3): %m");
 		exit(1);
 	}
-	node->nodetype = nodetype;
-	node->strval = strval;
-	node->children.slh_first = children;
-	SLIST_NEXT(node, next) = NULL;
+
+	node->type = type;
+	node->string = string;
+	node->len = len;
 	return node;
 }
 
@@ -123,94 +204,64 @@ prepend(struct cst_node *head, struct cst_node *tail)
 static void
 cst_free(struct cst_node *cst)
 {
-	struct cst_node *child;
-
-	while (!SLIST_EMPTY(&cst->children)) {
-		child = SLIST_FIRST(&cst->children);
-		SLIST_REMOVE_HEAD(&cst->children, next);
-		cst_free(child);
-	}
-
-	free((char *)cst->strval);
+	for (int i = 0; i < cst->len; i++)
+		cst_free(cst->child[i]);
+	free(cst->string);
 	free(cst);
 }
 
 static struct ast_root *
-ast_new(struct cst_root *cst)
+cst2ast(struct cst_node *cst)
 {
-	const char *url1, *url2, *url3;
-	struct cst_node *child1, *child2;
-	struct ast_domain *ad;
-	struct ast_iface *aif;
 	struct ast_root *ast;
+	char *url1, *url2, *url3;
 
 	url1 = url2 = url3 = NULL;
 
-	ast = malloc(sizeof(*ast));
-	if (NULL == ast) {
-		syslog(LOG_ERR, "malloc(3): %m");
+	ast = calloc(sizeof(*ast) + cst->len * sizeof(struct ast_iface *), 1);
+	if (!ast) {
+		syslog(LOG_ERR, "calloc(3): %m");
 		exit(1);
 	}
 
-	SLIST_FOREACH(child1, cst, next)
-		if (UPDATE == child1->nodetype)
-			url1 = child1->strval;
+	for (int i = 0; i < cst->len; i++) {
+		if (USER == cst->child[i]->type)
+			ast->user = cst->child[i]->string;
+		else if (GROUP == cst->child[i]->type)
+			ast->group = cst->child[i]->string;
+		else if (UPDATE == cst->child[i]->type)
+			url1 = cst->child[i]->string;
+	}
 
-	SLIST_FOREACH(child1, cst, next) {
-		if (INTERFACE == child1->nodetype) {
-			aif = ast_iface_new(child1->strval);
+	for (int i = 0; i < cst->len; i++) {
+		if (INTERFACE != cst->child[i]->type)
+			continue;
 
-			SLIST_FOREACH(child2, &child1->children, next)
-				if (UPDATE == child2->nodetype)
-					url2 = child2->strval;
+		struct ast_iface *aif;
+		struct cst_node *inode;
 
-			SLIST_FOREACH(child2, &child1->children, next) {
-				if (DOMAIN == child2->nodetype) {
-					if (!SLIST_EMPTY(&child2->children))
-						url3 = SLIST_FIRST(&child2->children)->strval;
-					ad = ast_domain_new(child2->strval, url3 ?: url2 ?: url1);
-					url3 = NULL;
-					SLIST_INSERT_HEAD(&aif->domains, ad, next);
-				}
+		inode = cst->child[i];
+		aif = ast_iface_new(inode->string, inode->len);
+		ast->iface[ast->iface_len++] = aif;
+
+		for (int j = 0; j < inode->len; j++) {
+			if (UPDATE == inode->child[j]->type)
+				url2 = inode->child[j]->string;
+			else {
+				struct ast_domain *ad;
+				struct cst_node *dnode;
+
+				dnode = inode->child[j];
+				if (1 == dnode->len)
+					url3 = dnode->child[0]->string; 
+				ad = ast_domain_new(dnode->string, url3 ?: url2 ?: url1);
+				aif->domain[aif->domain_len++] = ad;
+				url3 = NULL;
 			}
+		}
 
-			url2 = NULL;
-			SLIST_INSERT_HEAD(&ast->interfaces, aif, next);
-		}
-		else if (USER == child1->nodetype) {
-			ast->user = child1->strval;
-		}
-		else if (GROUP == child1->nodetype) {
-			ast->group = child1->strval;
-		}
+		url2 = NULL;
 	}
 
 	return ast;
-}
-
-static struct ast_domain *
-ast_domain_new(const char *domain, const char *url)
-{
-	struct ast_domain *ad = malloc(sizeof(*ad));
-	if (NULL == ad) {
-		syslog(LOG_ERR, "malloc(3): %m");
-		exit(1);
-	}
-	ad->domain = domain;
-	ad->url = url;
-	SLIST_NEXT(ad, next) = NULL;
-	return ad;
-}
-
-static struct ast_iface *
-ast_iface_new(const char *name)
-{
-	struct ast_iface *aif = malloc(sizeof(*aif));
-	if (NULL == aif) {
-		syslog(LOG_ERR, "malloc(3): %m");
-		exit(1);
-	}
-	aif->if_name = name;
-	SLIST_NEXT(aif, next) = NULL;
-	return aif;
 }

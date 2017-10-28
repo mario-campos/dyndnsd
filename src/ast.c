@@ -1,37 +1,34 @@
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 
 #include "ast.h"
 #include "parser.h"
 
 extern FILE *yyin;
 extern int   yyparse();
-	
-void
+
+static void
 ast_free(struct ast_root *ast)
 {
-	struct ast_iface *aif;
-	struct ast_domain *ad;
+	for(int i = 0; i < ast->iface_len; i++) {
+		struct ast_iface *aif = ast->iface[i];
 
-	free((char *)ast->user);
-	free((char *)ast->group);
-
-	while (!SLIST_EMPTY(&ast->interfaces)) {
-		aif = SLIST_FIRST(&ast->interfaces);	
-		SLIST_REMOVE_HEAD(&ast->interfaces, next);
-		while (!SLIST_EMPTY(&aif->domains)) {
-			ad = SLIST_FIRST(&aif->domains);
-			SLIST_REMOVE_HEAD(&aif->domains, next);
-			free((char *)ad->domain);
-			free((char *)ad->url);
+		for(int j = 0; j < aif->domain_len; j++) {
+			struct ast_domain *ad = aif->domain[j];
+			free(ad->domain);
+			free(ad->url);
 			free(ad);
 		}
 
-		free((char *)aif->if_name);
+		free(aif->if_name);
 		free(aif);
 	}
 
+	free(ast->user);
+	free(ast->group);
 	free(ast);
 }
 
@@ -39,9 +36,7 @@ bool
 ast_load(struct ast_root **ast, FILE *file)
 {
 	yyin = file;
-	if (yyparse(ast))
-		return false;
-	return true;
+	return yyparse(ast);
 }
 
 bool
@@ -55,4 +50,29 @@ ast_reload(struct ast_root **ast, FILE *file)
 		return true;
 	}
 	return false;
+}
+
+struct ast_domain *
+ast_domain_new(char *domain, char *url)
+{
+	struct ast_domain *ad = malloc(sizeof(*ad));
+	if (!ad) {
+		syslog(LOG_ERR, "malloc(3): %m");
+		exit(1);
+	}
+	ad->domain = domain;
+	ad->url = url;
+	return ad;
+}
+
+struct ast_iface *
+ast_iface_new(char *name, int len)
+{
+	struct ast_iface *aif = calloc(sizeof(*aif) + len * sizeof(aif), 1);
+	if (!aif) {
+		syslog(LOG_ERR, "calloc(3): %m");
+		exit(1);
+	}
+	aif->if_name = name;
+	return aif;
 }
