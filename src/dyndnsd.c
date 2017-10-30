@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <err.h>
+#include <grp.h>
 #include <ifaddrs.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -43,6 +44,7 @@ static bool 	httpget(CURL *, const char *);
 static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
+static void     drop_privilege(char *, char *);
 
 int
 main(int argc, char *argv[])
@@ -60,6 +62,15 @@ main(int argc, char *argv[])
 	optn = false;
 	optd = false;
 	optf = _PATH_DYNDNSD_CONF;
+
+	/* allocate route(4) socket first... */
+	routefd = rtm_socket(RTM_NEWADDR);
+	if (-1 == routefd)
+		err(1, "cannot create route(4) socket");
+
+	/* ...to pledge(2) ASAP */
+	if (-1 == pledge("stdio rpath inet dns proc", NULL))
+		err(1, "pledge(2)");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -82,15 +93,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* open syslog first so yyerror() can call syslog() */
+	/* open syslog next so yyerror() can call syslog() */
 	openlog(__progname, LOG_PERROR | LOG_PID, LOG_DAEMON);
-
-	routefd = rtm_socket(RTM_NEWADDR);
-	if (-1 == routefd)
-		err(1, "cannot create route(4) socket");
-
-	if (-1 == pledge("stdio rpath inet dns proc", NULL))
-		err(1, "pledge(2)");
 
 	conf = fopen(optf, "r");
 	if (NULL == conf)
@@ -99,6 +103,8 @@ main(int argc, char *argv[])
 	valid_conf = ast_load(&ast, conf);
 	if (!valid_conf || optn)
 		exit(valid_conf ? 0 : 1);
+
+	drop_privilege(ast->user, ast->group);
 
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -346,4 +352,27 @@ httplog(char *response, size_t size, size_t nmemb, void *userptr)
 	log[copysize] = '\0';
 
 	return realsize;
+}
+
+static void
+drop_privilege(char *username, char *groupname)
+{
+	struct passwd *newuser;
+	struct group *newgroup;
+
+	if (!(newuser = getpwnam(username))) {
+		syslog(LOG_ERR, "getpwnam(3): %m");
+		return;
+	}
+	if (!(newgroup = getgrnam(groupname))) {
+		syslog(LOG_ERR, "getgrnam(3): %m");
+		return;
+	}
+
+	if (-1 == setgid(newgroup->gr_gid))
+		syslog(LOG_WARNING, "cannot setgid(2): %m");
+	if (-1 == setgroups(1, newgroup->gr_gid))
+		syslog(LOG_WARNING, "cannot setgroups(2): %m");
+	if (-1 == setuid(newuser->pw_uid))
+		syslog(LOG_WARNING, "cannot setuid(3): %m");
 }
