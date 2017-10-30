@@ -176,13 +176,13 @@ main(int argc, char *argv[])
 				ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
 				ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
 
-				for(int i = 0; i < ast->iface_len; i++) {
+				for(size_t i = 0; i < ast->iface_len; i++) {
 					struct ast_iface *aif = ast->iface[i];
 
 					if (0 != strcmp(aif->if_name, ifname))
 						continue;
 
-					for(int j = 0; j < aif->domain_len; j++) {
+					for(size_t j = 0; j < aif->domain_len; j++) {
 						struct ast_domain *ad = aif->domain[j];
 
 						strlcpy(urlbuf, ad->url, sizeof(urlbuf));

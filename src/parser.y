@@ -14,7 +14,7 @@ SLIST_HEAD(cst_list, cst_node);
 
 struct cst_node {
 	int type;
-	int len;
+	size_t len;
 	SLIST_ENTRY(cst_node) next;
 	char *string;
 	struct cst_node *child[];
@@ -45,7 +45,7 @@ static struct ast_root *cst2ast(struct cst_node *);
 %%
 
 config : config_statements				{
-       								int i;
+								size_t i;
 								struct cst_list list;
 								struct cst_node *cst, *x;
 
@@ -84,7 +84,7 @@ group	: GROUP STRING					{ $$ = cst_node_new(GROUP, $2, 0); }
 
 interface
 	: INTERFACE STRING '{' interface_statements '}'	{
-								int i;
+								size_t i;
 								struct cst_list list;
 								struct cst_node *iface, *x;
 
@@ -123,7 +123,7 @@ update	: UPDATE STRING					{ $$ = cst_node_new(UPDATE, $2, 0); }
 static int
 count(struct cst_list *list)
 {
-	int count = 0;
+	size_t count = 0;
 	struct cst_node *node;
 	SLIST_FOREACH(node, list, next)
 		count++;
@@ -137,7 +137,7 @@ cst_valid(struct cst_node *cst)
 	uint8_t topcount[300] = { 0 };
 
 	/* check for extraneous top-scope nodes */
-	for (int i = 0; i < cst->len; i++) {
+	for (size_t i = 0; i < cst->len; i++) {
 		switch (cst->child[i]->type) {
 		case UPDATE:
 			topcount[UPDATE]++; break;
@@ -162,12 +162,12 @@ cst_valid(struct cst_node *cst)
 		syslog(LOG_ERR, "error: too many 'group' statements; limit one.");
 	}
 
-	for (int i = 0, n = 0; i < cst->len; i++, n = 0) {
+	for (size_t i = 0, n = 0; i < cst->len; i++, n = 0) {
 		if (INTERFACE != cst->child[i]->type)
 			continue;
 
 		const struct cst_node *node = cst->child[i];
-		for (int j = 0; j < node->len; j++)
+		for (size_t j = 0; j < node->len; j++)
 			if (UPDATE == node->child[j]->type) n++;
 
 		if (n > 1) {
@@ -204,7 +204,7 @@ prepend(struct cst_node *head, struct cst_node *tail)
 static void
 cst_free(struct cst_node *cst)
 {
-	for (int i = 0; i < cst->len; i++)
+	for (size_t i = 0; i < cst->len; i++)
 		cst_free(cst->child[i]);
 	free(cst->string);
 	free(cst);
@@ -224,7 +224,7 @@ cst2ast(struct cst_node *cst)
 		exit(1);
 	}
 
-	for (int i = 0; i < cst->len; i++) {
+	for (size_t i = 0; i < cst->len; i++) {
 		if (USER == cst->child[i]->type)
 			ast->user = cst->child[i]->string;
 		else if (GROUP == cst->child[i]->type)
@@ -233,7 +233,7 @@ cst2ast(struct cst_node *cst)
 			url1 = cst->child[i]->string;
 	}
 
-	for (int i = 0; i < cst->len; i++) {
+	for (size_t i = 0; i < cst->len; i++) {
 		if (INTERFACE != cst->child[i]->type)
 			continue;
 
@@ -244,7 +244,7 @@ cst2ast(struct cst_node *cst)
 		aif = ast_iface_new(inode->string, inode->len);
 		ast->iface[ast->iface_len++] = aif;
 
-		for (int j = 0; j < inode->len; j++) {
+		for (size_t j = 0; j < inode->len; j++) {
 			if (UPDATE == inode->child[j]->type)
 				url2 = inode->child[j]->string;
 			else {
