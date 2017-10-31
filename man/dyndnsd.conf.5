@@ -7,24 +7,20 @@
 .Sh DESCRIPTION
 The 
 .Nm
-configuration defines the network interfaces to watch, the domain names to update, and the HTTP-based API of the DNS provider.
-
-The configuration consists of three elements:
-.Sy interface
-definitions,
-.Sy domain
-definitions, and parameters.
+configuration defines the entire configuration of
+.Xr dyndnsd 8
+, including the network interfaces to watch, the domain names to update, and the HTTP update APIs of your DNS provider(s).
 
 Comments begin with 
 .Sq #
 and continue to the end of the line.
 
-User input must be double-quoted if it contains whitespace ([ \\n\\t]). Otherwise, it's optional.
+User input must be double-quoted if it contains whitespace ([ \\n\\t]). Otherwise, the double-quotes are optional.
 .Ss interface Em string
 .Ss domain Em string
-.Ss http-url Em string
-.Ss http-auth Em string string
-.Ss http-header Em string string
+.Ss update Em string
+.Ss user Em string
+.Ss group Em string
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa /etc/dyndnsd.conf
@@ -34,7 +30,7 @@ This is the default configuration file.
 The configuration below defines one network interface to watch and one domain name to update:
 .Bd -literal -offset Ds
 interface em0 {
-    http-url https://namecheap.com
+    update https://namecheap.com
     domain example.com
 }
 .Ed
@@ -44,12 +40,10 @@ The following example illustrates a slightly-more complicated configuration:
 .Bd -literal -offset Ds
 interface em0 {
     domain www.example.com {
-        http-url https://easydns.com/api/dyndns.php
-        http-auth user2 secret
+        update https://user2:secret@easydns.com/api/dyndns.php
     }
     domain www.example.org {
-        http-url https://namecheap.com/api
-        http-auth myuser "OpenBSD FTW"
+        update https://myuser:mypass@namecheap.com/api
     }
 }
 .Ed
