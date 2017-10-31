@@ -38,6 +38,7 @@ $
 - [ ] IPv6
 - [ ] Unicode
 - [x] pledge(2)
+- [x] drop privilege
 
 ### Code Quality
 

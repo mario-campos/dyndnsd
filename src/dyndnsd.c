@@ -11,6 +11,7 @@
 #include <err.h>
 #include <grp.h>
 #include <ifaddrs.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -69,7 +70,7 @@ main(int argc, char *argv[])
 		err(1, "cannot create route(4) socket");
 
 	/* ...to pledge(2) ASAP */
-	if (-1 == pledge("stdio rpath inet dns proc", NULL))
+	if (-1 == pledge("stdio rpath inet dns proc id getpw", NULL))
 		err(1, "pledge(2)");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
@@ -360,19 +361,19 @@ drop_privilege(char *username, char *groupname)
 	struct passwd *newuser;
 	struct group *newgroup;
 
-	if (!(newuser = getpwnam(username))) {
-		syslog(LOG_ERR, "getpwnam(3): %m");
-		return;
-	}
-	if (!(newgroup = getgrnam(groupname))) {
-		syslog(LOG_ERR, "getgrnam(3): %m");
-		return;
+	if (!(newgroup = getgrnam(groupname)))
+		syslog(LOG_ERR, "cannot set GID: getgrnam(3): %m");
+	else {
+		if (-1 == setgid(newgroup->gr_gid))
+			syslog(LOG_WARNING, "cannot set GID: setgid(2): %m");
+		if (-1 == setgroups(1, &newgroup->gr_gid))
+			syslog(LOG_WARNING, "cannot set groups: setgroups(2): %m");
 	}
 
-	if (-1 == setgid(newgroup->gr_gid))
-		syslog(LOG_WARNING, "cannot setgid(2): %m");
-	if (-1 == setgroups(1, newgroup->gr_gid))
-		syslog(LOG_WARNING, "cannot setgroups(2): %m");
-	if (-1 == setuid(newuser->pw_uid))
-		syslog(LOG_WARNING, "cannot setuid(3): %m");
+	if (!(newuser = getpwnam(username)))
+		syslog(LOG_ERR, "cannot set UID: getpwnam(3): %m");
+	else {
+		if (-1 == setuid(newuser->pw_uid))
+			syslog(LOG_WARNING, "cannot set UID: setuid(2): %m");
+	}
 }
