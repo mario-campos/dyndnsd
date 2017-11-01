@@ -363,7 +363,7 @@ drop_privilege(char *username, char *groupname)
 
 	if (username) {
 		if (!(newgroup = getgrnam(groupname)))
-			syslog(LOG_ERR, "cannot set GID: getgrnam(3): %m");
+			syslog(LOG_WARNING, "cannot set GID: getgrnam(3): %m");
 		if (-1 == setgid(newgroup->gr_gid))
 			syslog(LOG_WARNING, "cannot set GID: setgid(2): %m");
 		if (-1 == setgroups(1, &newgroup->gr_gid))
@@ -372,7 +372,7 @@ drop_privilege(char *username, char *groupname)
 
 	if (groupname) {
 		if (!(newuser = getpwnam(username)))
-			syslog(LOG_ERR, "cannot set UID: getpwnam(3): %m");
+			syslog(LOG_WARNING, "cannot set UID: getpwnam(3): %m");
 		if (-1 == setuid(newuser->pw_uid))
 			syslog(LOG_WARNING, "cannot set UID: setuid(2): %m");
 	}
