@@ -1,6 +1,6 @@
 bin_PROGRAMS = dyndnsd
 dyndnsd_SOURCES = src/dyndnsd.c src/ast.c src/parser.y src/lexer.l
-dyndnsd_CFLAGS = -Wall -fstack-protector-all $(CURL_CFLAGS)
+dyndnsd_CFLAGS = -Wall -fstack-protector-all -fpie -pie $(CURL_CFLAGS)
 dyndnsd_LDADD = $(CURL_LIBS)
 BUILT_SOURCES = src/parser.h
 AM_YFLAGS = -d
