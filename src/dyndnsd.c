@@ -51,7 +51,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE 	        *conf;
-	bool 		 optd, optn, valid_conf;
+	bool 		 optd, optn;
 	int 		 opt, routefd, kq;
 	const char      *optf;
 	char 		 logbuf[LOG_MEM_LIMIT];
@@ -99,11 +99,13 @@ main(int argc, char *argv[])
 
 	conf = fopen(optf, "r");
 	if (NULL == conf)
-		err(1, "fopen(\"%s\")", optf);
+		err(1, "fopen(3)");
 
-	valid_conf = ast_load(&ast, conf);
-	if (!valid_conf || optn)
-		exit(valid_conf ? 0 : 1);
+	if (!ast_load(&ast, conf))
+		err(1, "cannot parse configuration file");
+
+	if (optn)
+		exit(0);
 
 	drop_privilege(ast->user, ast->group);
 
@@ -160,16 +162,24 @@ main(int argc, char *argv[])
 		assert(nev != 0);
 
 		for (int i = 0; i < nev; i++) {
+
+			/* SIGTERM event */
 			if (events[i].ident == SIGTERM) {
 				syslog(LOG_NOTICE, "SIGTERM received");
 				goto end;
-			} else if (events[i].ident == SIGHUP) {
+			}
+
+			/* SIGHUP event */
+			else if (events[i].ident == SIGHUP) {
 				syslog(LOG_NOTICE, "SIGHUP received; reloading configuration file.");
 				if (ast_reload(&ast, conf))
 					syslog(LOG_NOTICE, "successfully reloaded configuration file.");
 				else
 					syslog(LOG_ERR, "cannot reload configuration file.");
-			} else {
+			}
+
+			/* RTM_NEWADDR event */
+			else {
 				ssize_t numread;
 				char *ifname;
 				const char *ipaddr, *hostname, *domain, *tld;
@@ -220,11 +230,14 @@ end:
 static int
 rtm_socket(unsigned int flags)
 {
-	int routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	int routefd;
+	unsigned int rtfilter;
+
+	routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
 	if (-1 == routefd)
 		return -1;
 
-	unsigned int rtfilter = ROUTE_FILTER(flags);
+	rtfilter = ROUTE_FILTER(flags);
 	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 			     &rtfilter, sizeof(rtfilter)))
 		return -1;
@@ -256,7 +269,8 @@ rtm_getipaddr(struct ifa_msghdr *ifam)
 }
 
 static struct sockaddr *
-rtm_getsa(uint8_t *cp, int flags) {
+rtm_getsa(uint8_t *cp, int flags)
+{
 	int i;
 	struct sockaddr *sa;
 
