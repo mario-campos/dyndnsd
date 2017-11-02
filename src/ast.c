@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -13,6 +14,8 @@ extern int   yyparse();
 static void
 ast_free(struct ast_root *ast)
 {
+	assert(ast);
+
 	for(int i = 0; i < ast->iface_len; i++) {
 		struct ast_iface *aif = ast->iface[i];
 
@@ -35,6 +38,10 @@ ast_free(struct ast_root *ast)
 bool
 ast_load(struct ast_root **ast, FILE *file)
 {
+
+	assert(ast);
+	assert(file);
+
 	yyin = file;
 	return yyparse(ast);
 }
@@ -42,6 +49,9 @@ ast_load(struct ast_root **ast, FILE *file)
 bool
 ast_reload(struct ast_root **ast, FILE *file)
 {
+	assert(ast);
+	assert(file);
+
 	struct ast_root *tmp;
 	rewind(file);
 	if (ast_load(&tmp, file)) {
@@ -55,6 +65,9 @@ ast_reload(struct ast_root **ast, FILE *file)
 struct ast_domain *
 ast_domain_new(char *domain, char *url)
 {
+	assert(domain);
+	assert(url);
+
 	struct ast_domain *ad = malloc(sizeof(*ad));
 	if (!ad) {
 		syslog(LOG_ERR, "malloc(3): %m");
@@ -68,6 +81,9 @@ ast_domain_new(char *domain, char *url)
 struct ast_iface *
 ast_iface_new(char *name, int len)
 {
+	assert(name);
+	assert(len > 0);
+
 	struct ast_iface *aif = calloc(sizeof(*aif) + len * sizeof(aif), 1);
 	if (!aif) {
 		syslog(LOG_ERR, "calloc(3): %m");
