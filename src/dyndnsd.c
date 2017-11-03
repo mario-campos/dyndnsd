@@ -165,17 +165,17 @@ main(int argc, char *argv[])
 
 			/* SIGTERM event */
 			if (events[i].ident == SIGTERM) {
-				syslog(LOG_NOTICE, "SIGTERM received");
+				syslog(LOG_NOTICE, "SIGTERM received. Terminating...");
 				goto end;
 			}
 
 			/* SIGHUP event */
 			else if (events[i].ident == SIGHUP) {
-				syslog(LOG_NOTICE, "SIGHUP received; reloading configuration file.");
+				syslog(LOG_NOTICE, "SIGHUP received. Reloading the configuration file...");
 				if (ast_reload(&ast, conf))
-					syslog(LOG_NOTICE, "successfully reloaded configuration file.");
+					syslog(LOG_NOTICE, "successfully reloaded the configuration file!");
 				else
-					syslog(LOG_ERR, "cannot reload configuration file.");
+					syslog(LOG_ERR, "cannot reload the configuration file.");
 			}
 
 			/* RTM_NEWADDR event */
@@ -221,7 +221,6 @@ main(int argc, char *argv[])
 	}
 
 end:
-	syslog(LOG_NOTICE, "terminating...");
 	curl_easy_cleanup(curl);
 	close(routefd);
 	closelog();
