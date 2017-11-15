@@ -122,8 +122,8 @@ main(int argc, char *argv[])
 		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	if (!optd)
-		if (-1 == daemon(0, 0))
-			err(1, "daemon(3)");
+	if (-1 == daemon(0, 0))
+		err(1, "daemon(3)");
 
 	if (-1 == pledge("stdio rpath inet dns", NULL))
 		serrx(1, LOG_ERR, "pledge(2): %m");
