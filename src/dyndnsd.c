@@ -107,7 +107,8 @@ main(int argc, char *argv[])
 	if (optn)
 		exit(0);
 
-	drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
+	if (0 == getuid())
+		drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
 
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -371,22 +372,30 @@ httplog(char *response, size_t size, size_t nmemb, void *userptr)
 static void
 drop_privilege(char *username, char *groupname)
 {
+	assert(username);
+	assert(groupname);
+
 	struct passwd *newuser;
 	struct group *newgroup;
 
-	if (username) {
-		if (!(newgroup = getgrnam(groupname)))
-			syslog(LOG_WARNING, "cannot set GID: getgrnam(3): %m");
-		if (-1 == setgid(newgroup->gr_gid))
-			syslog(LOG_WARNING, "cannot set GID: setgid(2): %m");
-		if (-1 == setgroups(1, &newgroup->gr_gid))
-			syslog(LOG_WARNING, "cannot set groups: setgroups(2): %m");
+	if (!(newgroup = getgrnam(groupname))) {
+		syslog(LOG_ERR, "cannot set GID: getgrnam(3): %m");
+		exit(1);
 	}
-
-	if (groupname) {
-		if (!(newuser = getpwnam(username)))
-			syslog(LOG_WARNING, "cannot set UID: getpwnam(3): %m");
-		if (-1 == setuid(newuser->pw_uid))
-			syslog(LOG_WARNING, "cannot set UID: setuid(2): %m");
+	if (-1 == setgid(newgroup->gr_gid)) {
+		syslog(LOG_ERR, "cannot set GID: setgid(2): %m");
+		exit(1);
+	}
+	if (-1 == setgroups(1, &newgroup->gr_gid)) {
+		syslog(LOG_ERR, "cannot set groups: setgroups(2): %m");
+		exit(1);
+	}
+	if (!(newuser = getpwnam(username))) {
+		syslog(LOG_ERR, "cannot set UID: getpwnam(3): %m");
+		exit(1);
+	}
+	if (-1 == setuid(newuser->pw_uid)) {
+		syslog(LOG_ERR, "cannot set UID: setuid(2): %m");
+		exit(1);
 	}
 }
