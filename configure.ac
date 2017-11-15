@@ -6,7 +6,31 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([1.11 subdir-objects foreign -Wall])
 AM_SILENT_RULES([yes])
 
-AC_DEFINE([_PATH_DYNDNSD_CONF], ["/etc/dyndnsd.conf"], [Default configuration file])
+AC_ARG_WITH([user],
+	    AS_HELP_STRING([--with-user],
+			   [Set the default process user @<:@nobody@:>@]),
+	    [with_user="$withval"],
+	    [with_user="nobody"])
+AC_ARG_WITH([group],
+	    AS_HELP_STRING([--with-group],
+			   [Set the default process group @<:@nobody@:>@]),
+	    [with_group="$withval"],
+	    [with_group="nobody"])
+AC_ARG_WITH([conf-path],
+	    AS_HELP_STRING([--with-conf-path],
+			   [Set the default configuration file path @<:@/etc/dyndnsd.conf@:>@]),
+	    [with_conf_path="$withval"],
+	    [with_conf_path="/etc/dyndnsd.conf"])
+
+AC_DEFINE_UNQUOTED([DYNDNSD_USER],
+		   ["$with_user"],
+		   [default process user])
+AC_DEFINE_UNQUOTED([DYNDNSD_GROUP],
+		   ["$with_group"],
+		   [default process group])
+AC_DEFINE_UNQUOTED([DYNDNSD_CONF_PATH],
+		   ["$with_conf_path"],
+		   [default configuration file path])
 
 AC_PROG_CC
 AC_PROG_CC_C99

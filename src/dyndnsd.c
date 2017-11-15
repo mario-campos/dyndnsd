@@ -45,7 +45,7 @@ static bool 	httpget(CURL *, const char *);
 static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
-static void     drop_privilege(char *, char *);
+static void	drop_privilege(char *, char *);
 
 int
 main(int argc, char *argv[])
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 
 	optn = false;
 	optd = false;
-	optf = _PATH_DYNDNSD_CONF;
+	optf = DYNDNSD_CONF_PATH;
 
 	/* allocate route(4) socket first... */
 	routefd = rtm_socket(RTM_NEWADDR);
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	if (optn)
 		exit(0);
 
-	drop_privilege(ast->user, ast->group);
+	drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
 
 	/* initialize libcurl */
 	curl_global_init(CURL_GLOBAL_ALL);
