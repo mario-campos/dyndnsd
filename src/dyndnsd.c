@@ -46,6 +46,7 @@ static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
 static void	drop_privilege(char *, char *);
+static __dead void serrx(int, int, char *);
 
 int
 main(int argc, char *argv[])
@@ -124,20 +125,16 @@ main(int argc, char *argv[])
 		if (-1 == daemon(0, 0))
 			err(1, "daemon(3)");
 
-	if (-1 == pledge("stdio rpath inet dns", NULL)) {
-		syslog(LOG_ERR, "pledge(2): %m");
-		exit(1);
-	}
+	if (-1 == pledge("stdio rpath inet dns", NULL))
+		serrx(1, LOG_ERR, "pledge(2): %m");
 
 	/* set up event handler */
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGTERM, SIG_IGN);
 
 	kq = kqueue();
-	if (-1 == kq) {
-		syslog(LOG_ERR, "kqueue(2): %m");
-		exit(1);
-	}
+	if (-1 == kq)
+		serrx(1, LOG_ERR, "kqueue(2): %m");
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -378,24 +375,21 @@ drop_privilege(char *username, char *groupname)
 	struct passwd *newuser;
 	struct group *newgroup;
 
-	if (!(newgroup = getgrnam(groupname))) {
-		syslog(LOG_ERR, "cannot set GID: getgrnam(3): %m");
-		exit(1);
-	}
-	if (-1 == setgid(newgroup->gr_gid)) {
-		syslog(LOG_ERR, "cannot set GID: setgid(2): %m");
-		exit(1);
-	}
-	if (-1 == setgroups(1, &newgroup->gr_gid)) {
-		syslog(LOG_ERR, "cannot set groups: setgroups(2): %m");
-		exit(1);
-	}
-	if (!(newuser = getpwnam(username))) {
-		syslog(LOG_ERR, "cannot set UID: getpwnam(3): %m");
-		exit(1);
-	}
-	if (-1 == setuid(newuser->pw_uid)) {
-		syslog(LOG_ERR, "cannot set UID: setuid(2): %m");
-		exit(1);
-	}
+	if (!(newgroup = getgrnam(groupname)))
+		serrx(1, LOG_ERR, "cannot set GID: getgrnam(3): %m");
+	if (-1 == setgid(newgroup->gr_gid))
+		serrx(1, LOG_ERR, "cannot set GID: setgid(2): %m");
+	if (-1 == setgroups(1, &newgroup->gr_gid))
+		serrx(1, LOG_ERR, "cannot set groups: setgroups(2): %m");
+	if (!(newuser = getpwnam(username)))
+		serrx(1, LOG_ERR, "cannot set UID: getpwnam(3): %m");
+	if (-1 == setuid(newuser->pw_uid))
+		serrx(1, LOG_ERR, "cannot set UID: setuid(2): %m");
+}
+
+static __dead void
+serrx(int eval, int priority, char *msg)
+{
+	syslog(priority, msg);
+	exit(eval);
 }
