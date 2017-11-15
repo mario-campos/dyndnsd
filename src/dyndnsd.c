@@ -202,11 +202,11 @@ main(int argc, char *argv[])
 
 						strlcpy(urlbuf, ad->url, sizeof(urlbuf));
 						parse_fqdn(ad->domain, &hostname, &domain, &tld);
-						strsub(urlbuf, sizeof(urlbuf), "$fqdn", ad->domain);
-						strsub(urlbuf, sizeof(urlbuf), "$hostname", hostname);
-						strsub(urlbuf, sizeof(urlbuf), "$domain", domain);
-						strsub(urlbuf, sizeof(urlbuf), "$tld", tld);
-						strsub(urlbuf, sizeof(urlbuf), "$ip_address", ipaddr);
+						strsub(urlbuf, sizeof(urlbuf), "${FQDN}", ad->domain);
+						strsub(urlbuf, sizeof(urlbuf), "${HOSTNAME}", hostname);
+						strsub(urlbuf, sizeof(urlbuf), "${DOMAIN}", domain);
+						strsub(urlbuf, sizeof(urlbuf), "${TLD}", tld);
+						strsub(urlbuf, sizeof(urlbuf), "${IPv4_ADDRESS}", ipaddr);
 
 						if (httpget(curl, urlbuf))
 							syslog(LOG_INFO, "%s %s %s %s", ifname, ad->domain, ipaddr, logbuf);
