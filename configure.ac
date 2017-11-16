@@ -4,7 +4,6 @@ AC_CONFIG_SRCDIR([src/dyndnsd.c])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([1.11 subdir-objects foreign -Wall])
-AM_SILENT_RULES([yes])
 
 AC_ARG_WITH([user],
 	    AS_HELP_STRING([--with-user],
