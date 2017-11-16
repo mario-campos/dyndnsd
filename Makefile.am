@@ -1,4 +1,4 @@
-bin_PROGRAMS = dyndnsd
+sbin_PROGRAMS = dyndnsd
 dyndnsd_SOURCES = src/dyndnsd.c src/ast.c src/parser.y src/lexer.l
 dyndnsd_CFLAGS = -pipe -Wall -Wextra -Wconversion -Wsign-conversion \
 		 -Wformat -Wformat-security -Wl,-z,relro -Wl,-z,now \
