@@ -246,7 +246,7 @@ static char *
 rtm_getifname(struct rt_msghdr *rtm)
 {
 	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
-	char *buf = malloc((size_t)IF_NAMESIZE);
+	char *buf = malloc(IF_NAMESIZE);
 	return if_indextoname(ifam->ifam_index, buf);
 }
 
