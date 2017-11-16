@@ -16,10 +16,10 @@ ast_free(struct ast_root *ast)
 {
 	assert(ast);
 
-	for(int i = 0; i < ast->iface_len; i++) {
+	for(size_t i = 0; i < ast->iface_len; i++) {
 		struct ast_iface *aif = ast->iface[i];
 
-		for(int j = 0; j < aif->domain_len; j++) {
+		for(size_t j = 0; j < aif->domain_len; j++) {
 			struct ast_domain *ad = aif->domain[j];
 			free(ad->domain);
 			free(ad->url);

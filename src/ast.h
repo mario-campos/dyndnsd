@@ -10,14 +10,14 @@ struct ast_domain {
 
 struct ast_iface {
 	char *if_name;
-	int domain_len;
+	size_t domain_len;
 	struct ast_domain *domain[];
 };
 
 struct ast_root {
 	char *user;
 	char *group;
-	int iface_len;
+	size_t iface_len;
 	struct ast_iface *iface[];
 };
 

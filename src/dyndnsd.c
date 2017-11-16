@@ -46,7 +46,7 @@ static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
 static void	drop_privilege(char *, char *);
-static __dead void serrx(int, int, char *);
+static __dead void serr(int, int, char *);
 
 int
 main(int argc, char *argv[])
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 		err(1, "daemon(3)");
 
 	if (-1 == pledge("stdio rpath inet dns", NULL))
-		serrx(1, LOG_ERR, "pledge(2): %m");
+		serr(1, LOG_ERR, "pledge(2)");
 
 	/* set up event handler */
 	signal(SIGHUP, SIG_IGN);
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 
 	kq = kqueue();
 	if (-1 == kq)
-		serrx(1, LOG_ERR, "kqueue(2): %m");
+		serr(1, LOG_ERR, "kqueue(2)");
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -246,7 +246,7 @@ static char *
 rtm_getifname(struct rt_msghdr *rtm)
 {
 	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
-	char *buf = malloc(IF_NAMESIZE);
+	char *buf = malloc((size_t)IF_NAMESIZE);
 	return if_indextoname(ifam->ifam_index, buf);
 }
 
@@ -308,6 +308,7 @@ httpget(CURL *curl, const char *url)
 static void
 strsub(char *scope, size_t len, const char *search, const char *replace)
 {
+	size_t n;
 	char *start, *end;
 	char buf[len];
 
@@ -315,8 +316,10 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 	explicit_bzero(buf, len);
 
 	while ((end = strstr(start, search))) {
+		n = end - start;
+
 		/* copy the substring before the search string */
-		strncat(buf, start, end - start);
+		strncat(buf, start, n);
 		start = end;
 
 		/* insert the replacement string */
@@ -331,6 +334,7 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 static void
 parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const char **tld)
 {
+	size_t n;
 	const char *i, *j;
 
 	/* parse TLD */
@@ -346,8 +350,9 @@ parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const c
 	}
 
 	/* parse FQDNs with more than 3 labels */
+	n = i - fqdn;
 	*domain = strdup(i + 1);
-	*hostname = strndup(fqdn, i - fqdn);
+	*hostname = strndup(fqdn, n);
 }
 
 static size_t
@@ -376,20 +381,20 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (!(newgroup = getgrnam(groupname)))
-		serrx(1, LOG_ERR, "cannot set GID: getgrnam(3): %m");
+		serr(1, LOG_ERR, "cannot set GID: getgrnam(3)");
 	if (-1 == setgid(newgroup->gr_gid))
-		serrx(1, LOG_ERR, "cannot set GID: setgid(2): %m");
+		serr(1, LOG_ERR, "cannot set GID: setgid(2)");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		serrx(1, LOG_ERR, "cannot set groups: setgroups(2): %m");
+		serr(1, LOG_ERR, "cannot set groups: setgroups(2)");
 	if (!(newuser = getpwnam(username)))
-		serrx(1, LOG_ERR, "cannot set UID: getpwnam(3): %m");
+		serr(1, LOG_ERR, "cannot set UID: getpwnam(3)");
 	if (-1 == setuid(newuser->pw_uid))
-		serrx(1, LOG_ERR, "cannot set UID: setuid(2): %m");
+		serr(1, LOG_ERR, "cannot set UID: setuid(2)");
 }
 
 static __dead void
-serrx(int eval, int priority, char *msg)
+serr(int eval, int priority, char *msg)
 {
-	syslog(priority, msg);
+	syslog(priority, "%s: %m", msg);
 	exit(eval);
 }
