@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 
 #include <assert.h>
-#include <err.h>
 #include <grp.h>
 #include <ifaddrs.h>
 #include <pwd.h>
@@ -65,14 +64,16 @@ main(int argc, char *argv[])
 	optd = false;
 	optf = DYNDNSD_CONF_PATH;
 
+	openlog(__progname, LOG_PERROR | LOG_PID, LOG_DAEMON);
+
 	/* allocate route(4) socket first... */
 	routefd = rtm_socket(RTM_NEWADDR);
 	if (-1 == routefd)
-		err(1, "cannot create route(4) socket");
+		serr(1, LOG_ERR, "cannot create route(4) socket");
 
 	/* ...to pledge(2) ASAP */
 	if (-1 == pledge("stdio rpath inet dns proc id getpw", NULL))
-		err(1, "pledge(2)");
+		serr(1, LOG_ERR, "pledge(2)");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -95,15 +96,13 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* open syslog next so yyerror() can call syslog() */
-	openlog(__progname, LOG_PERROR | LOG_PID, LOG_DAEMON);
 
 	conf = fopen(optf, "r");
 	if (NULL == conf)
-		err(1, "fopen(3)");
+		serr(1, LOG_ERR, "fopen(3)");
 
 	if (!ast_load(&ast, conf))
-		err(1, "cannot parse configuration file");
+		serrx(1, LOG_ERR, "cannot parse configuration file");
 
 	if (optn)
 		exit(0);
@@ -115,15 +114,15 @@ main(int argc, char *argv[])
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (NULL == curl)
-		err(1, "curl_easy_init(3): failed to initialize libcurl");
+		serr(1, LOG_ERR, "curl_easy_init(3): failed to initialize libcurl");
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
-		err(1, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
+		serr(1, LOG_ERR, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
-		err(1, "curl_easy_setopt(CURLOPT_WRITEDATA)");
+		serr(1, LOG_ERR, "curl_easy_setopt(CURLOPT_WRITEDATA)");
 
 	if (!optd)
 	if (-1 == daemon(0, 0))
-		err(1, "daemon(3)");
+		serr(1, LOG_ERR, "daemon(3)");
 
 	if (-1 == pledge("stdio rpath inet dns", NULL))
 		serr(1, LOG_ERR, "pledge(2)");
