@@ -11,6 +11,7 @@ config.status
 configure
 depcomp
 dyndnsd
+dyndnsd.core
 dyndnsd.conf
 install-sh
 missing
