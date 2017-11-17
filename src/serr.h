@@ -1,6 +1,8 @@
 #ifndef SERR_H
 #define SERR_H
 
+#include <syslog.h>
+
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 #define AT(x) "[" __FILE__ ":" TOSTRING(__LINE__) "] " x
