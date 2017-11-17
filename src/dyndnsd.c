@@ -116,9 +116,9 @@ main(int argc, char *argv[])
 	if (NULL == curl)
 		serr(1, LOG_CRIT, AT("curl_easy_init(3): failed to initialize libcurl"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
-		serr(1, LOG_CRIT, AT("curl_easy_setopt(CURLOPT_WRITEFUNCTION)"));
+		serr(1, LOG_CRIT, AT("curl_easy_setopt(3)"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
-		serr(1, LOG_CRIT, AT("curl_easy_setopt(CURLOPT_WRITEDATA)"));
+		serr(1, LOG_CRIT, AT("curl_easy_setopt(3)"));
 
 	if (!optd)
 	if (-1 == daemon(0, 0))
@@ -146,13 +146,13 @@ main(int argc, char *argv[])
 
 		nev = kevent(kq, changes, 3, NULL, 0, NULL);
 		if (-1 == nev) {
-			syslog(LOG_WARNING, "kevent(2): failed to set events: %m");
+			syslog(LOG_WARNING, AT("kevent(2): %m"));
 			continue;
 		}
 
 		nev = kevent(kq, NULL, 0, events, 3, NULL);
 		if (-1 == nev) {
-			syslog(LOG_WARNING, "kevent(2): failed to get events: %m");
+			syslog(LOG_WARNING, AT("kevent(2): %m"));
 			continue;
 		}
 
@@ -298,7 +298,7 @@ httpget(CURL *curl, const char *url)
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	CURLcode err = curl_easy_perform(curl);
 	if (err) {
-		syslog(LOG_ERR, "curl_easy_perform(3): %s", curl_easy_strerror(err));
+		syslog(LOG_ERR, AT("curl_easy_perform(3): %s"), curl_easy_strerror(err));
 		return false;
 	}
 	return true;
