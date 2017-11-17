@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include "ast.h"
+#include "serr.h"
 
 extern int yylex();
 extern int yyerror();
@@ -183,11 +184,7 @@ static struct cst_node *
 cst_node_new(int type, char *string, int len)
 {
 	struct cst_node *node = calloc(sizeof(*node) + len * sizeof(node), 1);
-	if (!node) {
-		syslog(LOG_ERR, "calloc(3): %m");
-		exit(1);
-	}
-
+	if (!node) serr(1, LOG_ERR, "calloc(3)");
 	node->type = type;
 	node->string = string;
 	node->len = len;
@@ -219,10 +216,7 @@ cst2ast(struct cst_node *cst)
 	url1 = url2 = url3 = NULL;
 
 	ast = calloc(sizeof(*ast) + cst->len * sizeof(struct ast_iface *), 1);
-	if (!ast) {
-		syslog(LOG_ERR, "calloc(3): %m");
-		exit(1);
-	}
+	if (!ast) serr(1, LOG_ERR, "calloc(3)");
 
 	for (size_t i = 0; i < cst->len; i++) {
 		if (USER == cst->child[i]->type)

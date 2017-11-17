@@ -23,8 +23,9 @@
 
 #include <curl/curl.h>
 
-#include "config.h"
 #include "ast.h"
+#include "config.h"
+#include "serr.h"
 
 #define LOG_MEM_LIMIT 1024
 #define RTM_MEM_LIMIT 1024
@@ -46,7 +47,6 @@ static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(const char *, const char **, const char **, const char **);
 static size_t 	httplog(char *, size_t, size_t, void *);
 static void	drop_privilege(char *, char *);
-static __dead void serr(int, int, char *);
 
 int
 main(int argc, char *argv[])
@@ -390,11 +390,4 @@ drop_privilege(char *username, char *groupname)
 		serr(1, LOG_ERR, "cannot set UID: getpwnam(3)");
 	if (-1 == setuid(newuser->pw_uid))
 		serr(1, LOG_ERR, "cannot set UID: setuid(2)");
-}
-
-static __dead void
-serr(int eval, int priority, char *msg)
-{
-	syslog(priority, "%s: %m", msg);
-	exit(eval);
 }
