@@ -114,15 +114,15 @@ main(int argc, char *argv[])
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (NULL == curl)
-		serr(1, LOG_ERR, "curl_easy_init(3): failed to initialize libcurl");
+		serr(1, LOG_CRIT, AT("curl_easy_init(3): failed to initialize libcurl"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
-		serr(1, LOG_ERR, "curl_easy_setopt(CURLOPT_WRITEFUNCTION)");
+		serr(1, LOG_CRIT, AT("curl_easy_setopt(CURLOPT_WRITEFUNCTION)"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
-		serr(1, LOG_ERR, "curl_easy_setopt(CURLOPT_WRITEDATA)");
+		serr(1, LOG_CRIT, AT("curl_easy_setopt(CURLOPT_WRITEDATA)"));
 
 	if (!optd)
 	if (-1 == daemon(0, 0))
-		serr(1, LOG_ERR, "daemon(3)");
+		serr(1, LOG_CRIT, AT("daemon(3)"));
 
 	if (-1 == pledge("stdio rpath inet dns", NULL))
 		serr(1, LOG_ERR, "pledge(2)");
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 
 	kq = kqueue();
 	if (-1 == kq)
-		serr(1, LOG_ERR, "kqueue(2)");
+		serr(1, LOG_CRIT, AT("kqueue(2)"));
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
