@@ -144,16 +144,12 @@ main(int argc, char *argv[])
 		int nev;
 
 		nev = kevent(kq, changes, 3, NULL, 0, NULL);
-		if (-1 == nev) {
-			syslog(LOG_WARNING, AT("kevent(2): %m"));
-			continue;
-		}
+		if (-1 == nev)
+			serr(1, LOG_CRIT, AT("kevent(2)"));
 
 		nev = kevent(kq, NULL, 0, events, 3, NULL);
-		if (-1 == nev) {
-			syslog(LOG_WARNING, AT("kevent(2): %m"));
-			continue;
-		}
+		if (-1 == nev)
+			serr(1, LOG_CRIT, AT("kevent(2)"));
 
 		assert(nev != 0);
 
