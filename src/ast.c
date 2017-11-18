@@ -67,12 +67,12 @@ ast_domain_new(char *domain, char *url)
 }
 
 struct ast_iface *
-ast_iface_new(char *name, int len)
+ast_iface_new(char *name, int ndomains)
 {
 	assert(name);
-	assert(len > 0);
+	assert(ndomains > 0);
 
-	struct ast_iface *aif = calloc(sizeof(*aif) + len * sizeof(aif), 1);
+	struct ast_iface *aif = calloc(sizeof(*aif) + ndomains * sizeof(aif), 1);
 	if (!aif) serr(1, LOG_CRIT, AT("calloc(3)"));
 	aif->if_name = name;
 	return aif;
