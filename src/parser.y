@@ -215,7 +215,7 @@ cst2ast(struct cst_node *cst)
 	url1 = url2 = url3 = NULL;
 
 	ast = calloc(sizeof(*ast) + cst->len * sizeof(struct ast_iface *), 1);
-	if (NULL = ast) serr(1, LOG_CRIT, AT("calloc(3)"));
+	if (NULL == ast) serr(1, LOG_CRIT, AT("calloc(3)"));
 
 	for (size_t i = 0; i < cst->len; i++) {
 		if (USER == cst->child[i]->type)
