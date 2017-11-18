@@ -22,7 +22,7 @@ struct ast_root {
 };
 
 struct ast_domain *ast_domain_new(char *, char *);
-struct ast_iface *ast_iface_new(char *, int);
+struct ast_iface *ast_iface_new(char *, size_t);
 bool ast_load(struct ast_root **, FILE *);
 
 #endif /* AST_H */

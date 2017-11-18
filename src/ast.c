@@ -67,7 +67,7 @@ ast_domain_new(char *domain, char *url)
 }
 
 struct ast_iface *
-ast_iface_new(char *name, int ndomains)
+ast_iface_new(char *name, size_t ndomains)
 {
 	assert(name);
 	assert(ndomains > 0);
