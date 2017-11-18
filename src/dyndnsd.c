@@ -60,6 +60,7 @@ main(int argc, char *argv[])
 	struct kevent    changes[3];
 	struct kevent    events[3];
 
+	ast = NULL;
 	optn = false;
 	optd = false;
 	optf = DYNDNSD_CONF_PATH;
@@ -169,10 +170,8 @@ main(int argc, char *argv[])
 			/* SIGHUP event */
 			else if (events[i].ident == SIGHUP) {
 				syslog(LOG_NOTICE, "SIGHUP received. Reloading the configuration file...");
-				if (ast_reload(&ast, conf))
-					syslog(LOG_NOTICE, "successfully reloaded the configuration file!");
-				else
-					syslog(LOG_ERR, "cannot reload the configuration file.");
+				rewind(conf);
+				ast_load(&ast, conf);
 			}
 
 			/* RTM_NEWADDR event */

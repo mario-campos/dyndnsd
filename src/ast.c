@@ -38,27 +38,18 @@ ast_free(struct ast_root *ast)
 bool
 ast_load(struct ast_root **ast, FILE *file)
 {
-
-	assert(ast);
-	assert(file);
-
-	yyin = file;
-	return yyparse(ast);
-}
-
-bool
-ast_reload(struct ast_root **ast, FILE *file)
-{
 	assert(ast);
 	assert(file);
 
 	struct ast_root *tmp;
-	rewind(file);
-	if (ast_load(&tmp, file)) {
-		ast_free(*ast);
+
+	yyin = file;
+	if (yyparse(&tmp)) {
+		if (*ast) ast_free(*ast);
 		*ast = tmp;
 		return true;
 	}
+
 	return false;
 }
 
