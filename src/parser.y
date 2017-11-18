@@ -203,7 +203,6 @@ cst_free(struct cst_node *cst)
 {
 	for (size_t i = 0; i < cst->len; i++)
 		cst_free(cst->child[i]);
-	free(cst->string);
 	free(cst);
 }
 
