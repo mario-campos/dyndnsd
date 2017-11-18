@@ -1,9 +1,7 @@
 %{
 #include <sys/queue.h>
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include "ast.h"
 #include "serr.h"
 
