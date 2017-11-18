@@ -378,13 +378,13 @@ drop_privilege(char *username, char *groupname)
 	struct passwd *newuser;
 	struct group *newgroup;
 
-	if (!(newgroup = getgrnam(groupname)))
+	if (NULL == (newgroup = getgrnam(groupname)))
 		serr(1, LOG_ERR, "cannot set GID: getgrnam(3)");
 	if (-1 == setgid(newgroup->gr_gid))
 		serr(1, LOG_ERR, "cannot set GID: setgid(2)");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
 		serr(1, LOG_ERR, "cannot set groups: setgroups(2)");
-	if (!(newuser = getpwnam(username)))
+	if (NULL == (newuser = getpwnam(username)))
 		serr(1, LOG_ERR, "cannot set UID: getpwnam(3)");
 	if (-1 == setuid(newuser->pw_uid))
 		serr(1, LOG_ERR, "cannot set UID: setuid(2)");
