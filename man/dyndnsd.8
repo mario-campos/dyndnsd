@@ -14,8 +14,7 @@ The
 daemon is a generic Dynamic-DNS client. That is, in order to dynamically update the public IP address of a domain's A record,
 .Nm
 will send an HTTP(S) GET request to the configured DNS provider if the configured network interface's IP address has changed.
-
-Options:
+.Ss OPTIONS 
 .Bl -tag -width Ds
 .It Fl d
 Enable debug mode, which prevents
@@ -26,10 +25,7 @@ messages to standard error.
 .It Fl f Ar file
 Use
 .Em file
-as the configuration file. If this option is not passed,
-.Nm
-will default to
-.Pa /etc/dyndnsd.conf
+as the configuration file.
 .It Fl h
 Print usage.
 .It Fl n
@@ -37,6 +33,16 @@ Validate the configuration file, then terminate.
 .It Fl v
 Print version number.
 .El
+.Ss DROPPING PRIVILEGE
+If
+.Nm
+is executed as a non-root user, then it will not attempt to change its process user and group.
+.Pp
+However, if
+.Nm
+is executed as the root user, then it will drop privilege by first attempting to set its user/group to that which was specified in the configuration file. If no user/group was specified in the configuration file, then
+.Nm
+will attempt to set the user/group to the compile-time-configured user and group.
 .Sh FILES
 .Bl -tag
 .It Pa /etc/dyndnsd.conf
