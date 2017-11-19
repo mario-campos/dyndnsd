@@ -95,7 +95,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-
 	conf = fopen(optf, "r");
 	if (NULL == conf)
 		serr(1, LOG_ERR, "fopen(3)");
