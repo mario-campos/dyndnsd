@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 The 
 .Nm
-configuration defines the entire configuration of
+configuration file details the configuration of
 .Xr dyndnsd 8
 , including the network interfaces to watch, the domain names to update, and the HTTP update APIs of your DNS provider(s).
 
@@ -15,35 +15,71 @@ Comments begin with
 .Sq #
 and continue to the end of the line.
 
-User input must be double-quoted if it contains whitespace ([ \\n\\t]). Otherwise, the double-quotes are optional.
-.Ss interface Em string
-.Ss domain Em string
-.Ss update Em string
-.Ss user Em string
-.Ss group Em string
+User input must be double-quoted if it contains whitespace ([ \\n\\t]). Otherwise, the double quotes are optional.
+.Ss interface Em NAME
+Monitor network interface
+.Em NAME No for IP address changes. This statement may only be placed in the top scope. There is no limit to the number of
+.Sy interface No statements.
+.Ss domain Em FQDN
+Specify the Fully-Qualified Domain Name (FQDN) to be updated. This statement may only be placed within an
+.Sy interface No statement's scope. There is no limit to the number of
+.Sy domain No statements.
+.Pp
+This statement has two forms: one with a braced ({}) scope, and one without. If this statement has a scope, then the
+.Sy update No statement specified in that scope will be used. If this statement does not have a scope, then the 
+.Sy update No statement will be selected based on increasing lexical-scope order, from domain, to interface, and then, lastly, top scope.
+.Ss update Em URL 
+Issue an HTTP(S) GET request at the specified URL,
+.Em URL No . This statement may only be applied once per scope, but may be applied in all scopes: top, interface, and domain. When it comes to selecting which
+.Sy update No statement to use, domain scopes have the highest preference and the top scope has the lowest preference.
+.Ss user Em USERNAME
+Set the process user to
+.Em USERNAME No if
+.Xr dyndnsd 8 No was executed as root. This statement can be specified only once and only in the top scope.
+.Ss group Em GROUPNAME
+Set the process group to
+.Em GROUPNAME No if
+.Xr dyndnsd 8 No was executed as root. This statement can be specified only once and only in the top scope.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa /etc/dyndnsd.conf
 This is the default configuration file.
 .El
 .Sh EXAMPLES
-The configuration below defines one network interface to watch and one domain name to update:
+The configuration example below uses DuckDNS.org's Update API as an example. The configuration specifies one network interface to watch, em0, and one domain name to update, example.com. When the IPv4 address of interface em0 changes,
+.Xr dyndnsd 8
+will issue a request to the specified URL in the
+.Sy update
+statement, replacing the variables
+.Em ${FQDN}
+with "example.com" and 
+.Em ${IPv4_ADDRESS}
+with em0's new IPv4 address.
 .Bd -literal -offset Ds
+update https://www.duckdns.org/update?domains=${FQDN}&token=secret&ip=${IPv4_ADDRESS}
+
 interface em0 {
-    update https://namecheap.com
     domain example.com
 }
-.Ed
 
-The following example illustrates a slightly-more complicated configuration:
+.Ed
+The next snippet exemplifies how to use two or more Dynamic DNS providers. In this case, the snippet demonstrates Namecheap.com's Update API for one interface and EasyDNS.com's Update API for another. This example also specifies the system user and group that
+.Xr dyndnsd 8
+should run as.
 
 .Bd -literal -offset Ds
+user nobody
+group nobody
+
 interface em0 {
     domain www.example.com {
-        update https://user2:secret@easydns.com/api/dyndns.php
+        update https://user:token@api.cp.easydns.com/dyn/generic.php?hostname=${FQDN}&myip=${IPv4_ADDRESS}
     }
-    domain www.example.org {
-        update https://myuser:mypass@namecheap.com/api
+}
+
+interface em1 {
+    domain vpn.example.com {
+        update https://dynamicdns.park-your-domain.com/update?host=${HOSTNAME}&domain=${DOMAIN}&password=secret&ip=${IPv4_ADDRESS}
     }
 }
 .Ed
