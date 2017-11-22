@@ -1,2 +1,6 @@
 language: c
 os: osx
+script:
+ - ./autogen.sh
+ - ./configure
+ - make
