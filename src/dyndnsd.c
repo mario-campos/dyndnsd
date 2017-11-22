@@ -71,11 +71,9 @@ main(int argc, char *argv[])
 	if (-1 == routefd)
 		serr(1, LOG_ERR, "cannot create route(4) socket");
 
-#if HAVE_PLEDGE
 	/* ...to pledge(2) ASAP */
 	if (-1 == pledge("stdio rpath inet dns proc id getpw", NULL))
 		serr(1, LOG_ERR, "pledge(2)");
-#endif
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -125,10 +123,8 @@ main(int argc, char *argv[])
 	if (-1 == daemon(0, 0))
 		serr(1, LOG_CRIT, AT("daemon(3)"));
 
-#if HAVE_PLEDGE
 	if (-1 == pledge("stdio rpath inet dns", NULL))
 		serr(1, LOG_ERR, "pledge(2)");
-#endif
 
 	/* set up event handler */
 	signal(SIGHUP, SIG_IGN);
