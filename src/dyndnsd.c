@@ -303,7 +303,7 @@ httpget(CURL *curl, const char *url)
 static void
 strsub(char *scope, size_t len, const char *search, const char *replace)
 {
-	size_t n;
+	ptrdiff_t n;
 	char *start, *end;
 	char buf[len];
 
@@ -329,7 +329,7 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 static void
 parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const char **tld)
 {
-	size_t n;
+	ptrdiff_t n;
 	const char *i, *j;
 
 	/* parse TLD */
