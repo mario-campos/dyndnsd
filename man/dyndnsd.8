@@ -40,7 +40,7 @@ is executed as a non-root user, then it will not attempt to change its process u
 .Pp
 However, if
 .Nm
-is executed as the root user, then it will drop privilege by first attempting to set its user/group to that which was specified in the configuration file. If no user/group was specified in the configuration file, then
+is started as the root user, then it will drop privilege by first attempting to set its user/group to that which was specified in the configuration file. If no user/group was specified in the configuration file, then
 .Nm
 will attempt to set the user/group to the compile-time-configured user and group.
 .Sh FILES
