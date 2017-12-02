@@ -71,7 +71,7 @@ ast_iface_new(char *name, size_t ndomains)
 	assert(name);
 	assert(ndomains > 0);
 
-	struct ast_iface *aif = calloc(sizeof(*aif) + ndomains * sizeof(aif), 1);
+	struct ast_iface *aif = calloc(sizeof(*aif) + ndomains * sizeof(aif), (size_t)1);
 	if (NULL == aif) serr(1, LOG_CRIT, AT("calloc(3)"));
 	aif->if_name = name;
 	return aif;

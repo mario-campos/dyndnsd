@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 		drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
 
 	/* initialize libcurl */
-	curl_global_init(CURL_GLOBAL_ALL);
+	curl_global_init((long)CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (NULL == curl)
 		serr(1, LOG_CRIT, AT("curl_easy_init(3): failed to initialize libcurl"));
@@ -228,7 +228,7 @@ rtm_socket(unsigned int flags)
 
 	rtfilter = ROUTE_FILTER(flags);
 	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
-			     &rtfilter, sizeof(rtfilter)))
+			     &rtfilter, (socklen_t)sizeof(rtfilter)))
 		return -1;
 
 	return routefd;
@@ -238,7 +238,7 @@ static char *
 rtm_getifname(struct rt_msghdr *rtm)
 {
 	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
-	char *buf = malloc(IF_NAMESIZE);
+	char *buf = malloc((size_t)IF_NAMESIZE);
 	return if_indextoname(ifam->ifam_index, buf);
 }
 
@@ -300,7 +300,7 @@ httpget(CURL *curl, const char *url)
 static void
 strsub(char *scope, size_t len, const char *search, const char *replace)
 {
-	ptrdiff_t n;
+	size_t n;
 	char *start, *end;
 	char buf[len];
 
@@ -326,7 +326,7 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 static void
 parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const char **tld)
 {
-	ptrdiff_t n;
+	size_t n;
 	const char *i, *j;
 
 	/* parse TLD */
