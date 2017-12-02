@@ -1,5 +1,5 @@
-#ifndef SERR_H
-#define SERR_H
+#ifndef DIE_H
+#define DIE_H
 
 #include <syslog.h>
 
@@ -7,7 +7,6 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define AT(x) "[" __FILE__ ":" TOSTRING(__LINE__) "] " x
 
-__dead void serr(int, int, const char *);
-__dead void serrx(int, int, const char *);
+__dead void die(int, const char *, ...);
 
-#endif /* SERR_H */
+#endif /* DIE_H */

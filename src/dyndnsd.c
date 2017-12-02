@@ -23,7 +23,7 @@
 
 #include "ast.h"
 #include "config.h"
-#include "serr.h"
+#include "die.h"
 
 #define LOG_MEM_LIMIT 1024
 #define RTM_MEM_LIMIT 1024
@@ -69,11 +69,11 @@ main(int argc, char *argv[])
 	/* allocate route(4) socket first... */
 	routefd = rtm_socket(RTM_NEWADDR);
 	if (-1 == routefd)
-		serr(1, LOG_ERR, "cannot create route(4) socket");
+		die(LOG_ERR, "cannot create route(4) socket");
 
 	/* ...to pledge(2) ASAP */
 	if (-1 == pledge("stdio rpath inet dns proc id getpw", NULL))
-		serr(1, LOG_ERR, "pledge(2)");
+		die(LOG_ERR, "pledge(2): %m");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -98,10 +98,10 @@ main(int argc, char *argv[])
 
 	conf = fopen(optf, "r");
 	if (NULL == conf)
-		serr(1, LOG_ERR, "fopen(3)");
+		die(LOG_ERR, "fopen(3): %m");
 
 	if (!ast_load(&ast, conf))
-		serrx(1, LOG_ERR, "cannot parse configuration file");
+		die(LOG_ERR, "cannot parse configuration file");
 
 	if (optn)
 		exit(0);
@@ -113,18 +113,18 @@ main(int argc, char *argv[])
 	curl_global_init((long)CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (NULL == curl)
-		serr(1, LOG_CRIT, AT("curl_easy_init(3): failed to initialize libcurl"));
+		die(LOG_CRIT, AT("curl_easy_init(3): failed to initialize libcurl"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
-		serr(1, LOG_CRIT, AT("curl_easy_setopt(3)"));
+		die(LOG_CRIT, AT("curl_easy_setopt(3): %m"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
-		serr(1, LOG_CRIT, AT("curl_easy_setopt(3)"));
+		die(LOG_CRIT, AT("curl_easy_setopt(3): %m"));
 
 	if (!optd)
 	if (-1 == daemon(0, 0))
-		serr(1, LOG_CRIT, AT("daemon(3)"));
+		die(LOG_CRIT, AT("daemon(3): %m"));
 
 	if (-1 == pledge("stdio rpath inet dns", NULL))
-		serr(1, LOG_ERR, "pledge(2)");
+		die(LOG_ERR, "pledge(2): %m");
 
 	/* set up event handler */
 	signal(SIGHUP, SIG_IGN);
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 
 	kq = kqueue();
 	if (-1 == kq)
-		serr(1, LOG_CRIT, AT("kqueue(2)"));
+		die(LOG_CRIT, AT("kqueue(2): %m"));
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -145,11 +145,11 @@ main(int argc, char *argv[])
 
 		nev = kevent(kq, changes, 3, NULL, 0, NULL);
 		if (-1 == nev)
-			serr(1, LOG_CRIT, AT("kevent(2)"));
+			die(LOG_CRIT, AT("kevent(2): %m"));
 
 		nev = kevent(kq, NULL, 0, events, 3, NULL);
 		if (-1 == nev)
-			serr(1, LOG_CRIT, AT("kevent(2)"));
+			die(LOG_CRIT, AT("kevent(2): %m"));
 
 		assert(nev != 0);
 
@@ -373,13 +373,13 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (NULL == (newgroup = getgrnam(groupname)))
-		serr(1, LOG_ERR, "cannot set GID: getgrnam(3)");
+		die(LOG_ERR, "cannot set GID: getgrnam(3): %m");
 	if (-1 == setgid(newgroup->gr_gid))
-		serr(1, LOG_ERR, "cannot set GID: setgid(2)");
+		die(LOG_ERR, "cannot set GID: setgid(2): %m");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		serr(1, LOG_ERR, "cannot set groups: setgroups(2)");
+		die(LOG_ERR, "cannot set groups: setgroups(2): %m");
 	if (NULL == (newuser = getpwnam(username)))
-		serr(1, LOG_ERR, "cannot set UID: getpwnam(3)");
+		die(LOG_ERR, "cannot set UID: getpwnam(3): %m");
 	if (-1 == setuid(newuser->pw_uid))
-		serr(1, LOG_ERR, "cannot set UID: setuid(2)");
+		die(LOG_ERR, "cannot set UID: setuid(2): %m");
 }

@@ -21,7 +21,7 @@ src/dyndnsd-dyndnsd.o
 src/dyndnsd-ast.o
 src/dyndnsd-lexer.o
 src/dyndnsd-parser.o
-src/dyndnsd-serr.o
+src/dyndnsd-die.o
 src/lexer.c
 src/parser.c
 src/parser.h
