@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 
 	conf = fopen(optf, "r");
 	if (NULL == conf)
-		die(LOG_ERR, "fopen(3): %m");
+		die(LOG_ERR, "cannot open file '%s': fopen(3): %m", optf);
 
 	if (!ast_load(&ast, conf))
 		die(LOG_ERR, "cannot parse configuration file");
