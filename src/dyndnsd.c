@@ -19,15 +19,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <curl/curl.h>
-
 #include "ast.h"
 #include "config.h"
 #include "die.h"
 
-#define LOG_MEM_LIMIT 1024
 #define RTM_MEM_LIMIT 1024
-#define URL_MEM_LIMIT 1024
+#define RUN_BUF_LIMIT 1024
 #define ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
@@ -40,11 +37,11 @@ static char    *rtm_getipaddr(struct ifa_msghdr *);
 static struct sockaddr *rtm_getsa(uint8_t *, int);
 
 static __dead void usage(void);
-static bool 	httpget(CURL *, const char *);
 static void 	strsub(char *, size_t, const char *, const char *);
-static void 	parse_fqdn(const char *, const char **, const char **, const char **);
-static size_t 	httplog(char *, size_t, size_t, void *);
+static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
+static char *	interpolate(char *, char *, char *);
+static struct ast_iface *find_ast_iface(struct ast_root *, char *);
 
 int
 main(int argc, char *argv[])
@@ -53,8 +50,6 @@ main(int argc, char *argv[])
 	bool 		 optd, optn;
 	int 		 opt, routefd, kq;
 	const char      *optf;
-	char 		 logbuf[LOG_MEM_LIMIT];
-	CURL 	        *curl;
 	struct ast_root *ast;
 	struct kevent    changes[3];
 	struct kevent    events[3];
@@ -109,22 +104,14 @@ main(int argc, char *argv[])
 	if (0 == getuid())
 		drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
 
-	/* initialize libcurl */
-	curl_global_init((long)CURL_GLOBAL_ALL);
-	curl = curl_easy_init();
-	if (NULL == curl)
-		errx(EXIT_FAILURE, AT("curl_easy_init(3): failed to initialze libcurl"));
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
-		err(EXIT_FAILURE, AT("curl_easy_setopt(3)"));
-	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
-		err(EXIT_FAILURE, AT("curl_easy_setopt(3)"));
-
 	if (!optd)
 	if (-1 == daemon(0, 0))
 		err(EXIT_FAILURE, AT("daemon(3)"));
 
+	/*
 	if (-1 == pledge("stdio rpath inet dns", NULL))
 		die(LOG_ERR, "pledge(2): %m");
+	*/
 
 	/* set up event handler */
 	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
@@ -174,10 +161,9 @@ main(int argc, char *argv[])
 			/* RTM_NEWADDR event */
 			else {
 				ssize_t numread;
-				char *ifname;
-				const char *ipaddr, *hostname, *domain, *tld;
+				char *ifname, *ipaddr;
 				char rtmbuf[RTM_MEM_LIMIT];
-				char urlbuf[URL_MEM_LIMIT];
+				struct ast_iface *aif;
 
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
@@ -186,35 +172,40 @@ main(int argc, char *argv[])
 				ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
 				ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
 
-				for(size_t i = 0; i < ast->iface_len; i++) {
-					struct ast_iface *aif = ast->iface[i];
-
-					if (0 != strcmp(aif->if_name, ifname))
-						continue;
-
-					for(size_t j = 0; j < aif->domain_len; j++) {
-						struct ast_domain *ad = aif->domain[j];
-
-						strlcpy(urlbuf, ad->url, sizeof(urlbuf));
-						parse_fqdn(ad->domain, &hostname, &domain, &tld);
-						strsub(urlbuf, sizeof(urlbuf), "${FQDN}", ad->domain);
-						strsub(urlbuf, sizeof(urlbuf), "${HOSTNAME}", hostname);
-						strsub(urlbuf, sizeof(urlbuf), "${DOMAIN}", domain);
-						strsub(urlbuf, sizeof(urlbuf), "${TLD}", tld);
-						strsub(urlbuf, sizeof(urlbuf), "${IPv4_ADDRESS}", ipaddr);
-
-						if (httpget(curl, urlbuf))
-							syslog(LOG_INFO, "%s %s %s %s", ifname, ad->domain, ipaddr, logbuf);
-					}
-				}
+				aif = find_ast_iface(ast, ifname);
+				if (NULL == aif)
+					continue;
 
 				free(ifname);
+
+				for(size_t j = 0; j < aif->domain_len; j++) {
+					FILE *fd;
+					char *cmd;
+					struct ast_domain *ad;
+
+					ad = aif->domain[j];
+					cmd = interpolate(ad->run, ad->domain, ipaddr);
+
+					syslog(LOG_DEBUG, "run [%s]", cmd);
+
+					fd = popen(cmd, "r");
+					if (NULL == fd) {
+						syslog(LOG_ERR, "cannot run command: popen(3): %m");
+					} else {
+						char output[512];
+						fgets(output, sizeof(output), fd);
+						syslog(LOG_INFO, "%s %s %s: %s",
+						       aif->if_name, ad->domain, ipaddr, output);
+					}
+
+					free(cmd);
+					pclose(fd);
+				}
 			}
 		}
 	}
 
 end:
-	curl_easy_cleanup(curl);
 	close(routefd);
 	closelog();
 }
@@ -288,18 +279,6 @@ usage(void)
 	exit(EXIT_SUCCESS);
 }
 
-static bool
-httpget(CURL *curl, const char *url)
-{
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	CURLcode err = curl_easy_perform(curl);
-	if (err) {
-		syslog(LOG_ERR, AT("curl_easy_perform(3): %s"), curl_easy_strerror(err));
-		return false;
-	}
-	return true;
-}
-
 static void
 strsub(char *scope, size_t len, const char *search, const char *replace)
 {
@@ -327,7 +306,7 @@ strsub(char *scope, size_t len, const char *search, const char *replace)
 }
 
 static void
-parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const char **tld)
+parse_fqdn(char *fqdn, char **hostname, char **domain, char **tld)
 {
 	size_t n;
 	const char *i, *j;
@@ -350,22 +329,6 @@ parse_fqdn(const char *fqdn, const char **hostname, const char **domain, const c
 	*hostname = strndup(fqdn, n);
 }
 
-static size_t
-httplog(char *response, size_t size, size_t nmemb, void *userptr)
-{
-	char *log;
-	size_t realsize, copysize;
-
-	log = (char *)userptr;
-	realsize = size * nmemb;
-	copysize = realsize < (LOG_MEM_LIMIT - 1) ? realsize : (LOG_MEM_LIMIT - 1);
-
-	memcpy(log, response, copysize);
-	log[copysize] = '\0';
-
-	return realsize;
-}
-
 static void
 drop_privilege(char *username, char *groupname)
 {
@@ -385,4 +348,36 @@ drop_privilege(char *username, char *groupname)
 		die(LOG_ERR, "cannot set UID: getpwnam(3): %m");
 	if (-1 == setuid(newuser->pw_uid))
 		die(LOG_ERR, "cannot set UID: setuid(2): %m");
+}
+
+static char *
+interpolate(char *cmd, char *fqdn, char *ipaddr)
+{
+	char buf[RUN_BUF_LIMIT];
+	char *hostname, *domain, *tld;
+
+	strlcpy(buf, cmd, sizeof(buf));
+	parse_fqdn(fqdn, &hostname, &domain, &tld);
+	strsub(buf, sizeof(buf), "${FQDN}", fqdn);
+	strsub(buf, sizeof(buf), "${HOSTNAME}", hostname);
+	strsub(buf, sizeof(buf), "${DOMAIN}", domain);
+	strsub(buf, sizeof(buf), "${TLD}", tld);
+	strsub(buf, sizeof(buf), "${IPv4_ADDRESS}", ipaddr);
+
+	cmd = strndup(buf, sizeof(buf));
+	if (NULL == cmd)
+		die(LOG_CRIT, AT("strndup(3): %m"));
+
+	return cmd;
+}
+
+static struct ast_iface *
+find_ast_iface(struct ast_root *ast, char *ifname)
+{
+	for(size_t i = 0; i < ast->iface_len; i++) {
+		struct ast_iface *aif = ast->iface[i];
+		if (0 == strcmp(ifname, aif->if_name))
+			return aif;
+	}
+	return NULL;
 }

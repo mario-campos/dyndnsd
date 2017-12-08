@@ -5,7 +5,7 @@
 
 struct ast_domain {
 	char *domain;
-	char *url;
+	char *run;
 };
 
 struct ast_iface {

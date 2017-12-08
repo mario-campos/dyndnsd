@@ -30,7 +30,7 @@ user			return USER;
 group			return GROUP;
 interface		return INTERFACE;
 domain			return DOMAIN;
-update	 		return UPDATE;
+run			return RUN;
 "{"			return '{';
 "}"			return '}';
 {comment}		/* ignore */ ;
@@ -55,10 +55,7 @@ update	 		return UPDATE;
 void
 yyerror(struct ast_root **ast, const char *msg)
 {
-	const char *fmtstr;
-	if (yyleng > YYMAXLENG)
-		fmtstr = "error: %s (%.*s...)";
-	else
-		fmtstr = "error: %s (%.*s)";
+	const char *fmtstr =
+		yyleng > YYMAXLENG ? "error: %s (%.*s...)" : "error: %s (%.*s)";
 	syslog(LOG_ERR, fmtstr, msg, YYMAXLENG, yytext);
 }

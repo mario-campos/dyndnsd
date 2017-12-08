@@ -32,11 +32,11 @@ static struct ast_root *cst2ast(struct cst_node *);
 	struct cst_node *cst_node;
 }
 
-%token USER GROUP INTERFACE DOMAIN UPDATE
+%token USER GROUP INTERFACE DOMAIN RUN
 %token <string> STRING
 %type <cst_node> config config_statements config_statement
 %type <cst_node> interface interface_statements interface_statement
-%type <cst_node> domain update user group
+%type <cst_node> domain run user group
 
 %locations
 %parse-param {struct ast_root **ast}
@@ -70,7 +70,7 @@ config_statements
 
 config_statement
 	: interface
-	| update
+	| run
 	| user
 	| group
 	;
@@ -104,17 +104,17 @@ interface_statements
 
 interface_statement
 	: domain
-	| update
+	| run
 	;
 
 domain	: DOMAIN STRING					{ $$ = cst_node_new(DOMAIN, $2, 0); }
-	| DOMAIN STRING '{' update '}'		        {
+	| DOMAIN STRING '{' run '}'		        {
 								$$ = cst_node_new(DOMAIN, $2, 1); 
 								$$->child[0] = $4;
 							}
 	;
 
-update	: UPDATE STRING					{ $$ = cst_node_new(UPDATE, $2, 0); }
+run	: RUN STRING					{ $$ = cst_node_new(RUN, $2, 0); }
 	;
 
 %%
@@ -138,8 +138,8 @@ cst_valid(struct cst_node *cst)
 	/* check for extraneous top-scope nodes */
 	for (size_t i = 0; i < cst->len; i++) {
 		switch (cst->child[i]->type) {
-		case UPDATE:
-			topcount[UPDATE]++; break;
+		case RUN:
+			topcount[RUN]++; break;
 		case USER:
 			topcount[USER]++; break;
 		case GROUP:
@@ -148,9 +148,9 @@ cst_valid(struct cst_node *cst)
 		}
 	}
 
-	if (topcount[UPDATE] > 1) {
+	if (topcount[RUN] > 1) {
 		cst_valid = false;
-		fputs("error: too many 'update' statements in top scope; limit one.", stderr);
+		fputs("error: too many 'run' statements in top scope; limit one.", stderr);
 	}
 	if (topcount[USER] > 1) {
 		cst_valid = false;
@@ -167,11 +167,11 @@ cst_valid(struct cst_node *cst)
 
 		const struct cst_node *node = cst->child[i];
 		for (size_t j = 0; j < node->len; j++)
-			if (UPDATE == node->child[j]->type) n++;
+			if (RUN == node->child[j]->type) n++;
 
 		if (n > 1) {
 			cst_valid = false;
-			fprintf(stderr, "error: too many 'update' statements in interface (%s) scope; limit one.", node->string);
+			fprintf(stderr, "error: too many 'run' statements in interface (%s) scope; limit one.", node->string);
 		}
 	}
 
@@ -208,9 +208,9 @@ static struct ast_root *
 cst2ast(struct cst_node *cst)
 {
 	struct ast_root *ast;
-	char *url1, *url2, *url3;
+	char *run1, *run2, *run3;
 
-	url1 = url2 = url3 = NULL;
+	run1 = run2 = run3 = NULL;
 
 	ast = calloc(sizeof(*ast) + cst->len * sizeof(struct ast_iface *), (size_t)1);
 	if (NULL == ast) die(LOG_CRIT, AT("calloc(3): %m"));
@@ -220,8 +220,8 @@ cst2ast(struct cst_node *cst)
 			ast->user = cst->child[i]->string;
 		else if (GROUP == cst->child[i]->type)
 			ast->group = cst->child[i]->string;
-		else if (UPDATE == cst->child[i]->type)
-			url1 = cst->child[i]->string;
+		else if (RUN == cst->child[i]->type)
+			run1 = cst->child[i]->string;
 	}
 
 	for (size_t i = 0; i < cst->len; i++) {
@@ -236,22 +236,22 @@ cst2ast(struct cst_node *cst)
 		ast->iface[ast->iface_len++] = aif;
 
 		for (size_t j = 0; j < inode->len; j++) {
-			if (UPDATE == inode->child[j]->type)
-				url2 = inode->child[j]->string;
+			if (RUN == inode->child[j]->type)
+				run2 = inode->child[j]->string;
 			else {
 				struct ast_domain *ad;
 				struct cst_node *dnode;
 
 				dnode = inode->child[j];
 				if (1 == dnode->len)
-					url3 = dnode->child[0]->string; 
-				ad = ast_domain_new(dnode->string, url3 ?: url2 ?: url1);
+					run3 = dnode->child[0]->string; 
+				ad = ast_domain_new(dnode->string, run3 ?: run2 ?: run1);
 				aif->domain[aif->domain_len++] = ad;
-				url3 = NULL;
+				run3 = NULL;
 			}
 		}
 
-		url2 = NULL;
+		run2 = NULL;
 	}
 
 	return ast;
