@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			puts(VERSION);
-			exit(0);
+			exit(EXIT_SUCCESS);
 		default:
 			usage();
 		}
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 		die(LOG_ERR, "cannot parse configuration file");
 
 	if (optn)
-		exit(0);
+		exit(EXIT_SUCCESS);
 
 	if (0 == getuid())
 		drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
@@ -282,7 +282,7 @@ static __dead void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 static bool
