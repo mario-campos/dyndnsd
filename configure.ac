@@ -51,7 +51,5 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset pledge daemon getifaddrs explicit_bzero])
 
-PKG_CHECK_MODULES([CURL], [libcurl])
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

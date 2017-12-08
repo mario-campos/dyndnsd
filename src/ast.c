@@ -21,7 +21,7 @@ ast_free(struct ast_root *ast)
 		for(size_t j = 0; j < aif->domain_len; j++) {
 			struct ast_domain *ad = aif->domain[j];
 			free(ad->domain);
-			free(ad->url);
+			free(ad->run);
 			free(ad);
 		}
 
@@ -53,15 +53,15 @@ ast_load(struct ast_root **ast, FILE *file)
 }
 
 struct ast_domain *
-ast_domain_new(char *domain, char *url)
+ast_domain_new(char *domain, char *run)
 {
 	assert(domain);
-	assert(url);
+	assert(run);
 
 	struct ast_domain *ad = malloc(sizeof(*ad));
 	if (NULL == ad) die(LOG_CRIT, AT("malloc(3)"));
 	ad->domain = domain;
-	ad->url = url;
+	ad->run = run;
 	return ad;
 }
 
