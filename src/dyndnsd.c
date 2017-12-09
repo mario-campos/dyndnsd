@@ -201,7 +201,7 @@ rtm_socket(unsigned int flags)
 	int routefd;
 	unsigned int rtfilter;
 
-	routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	routefd = socket(PF_ROUTE, SOCK_CLOEXEC|SOCK_RAW, AF_INET);
 	if (-1 == routefd)
 		return -1;
 
