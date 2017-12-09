@@ -127,8 +127,11 @@ main(int argc, char *argv[])
 		die(LOG_ERR, "pledge(2): %m");
 
 	/* set up event handler */
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
+	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
+	if (-1 == sigaction(SIGHUP, &sa, NULL)	||
+	    -1 == sigaction(SIGTERM, &sa, NULL)	||
+	    -1 == sigaction(SIGCHLD, &sa, NULL))
+		die(LOG_CRIT, AT("sigaction(2): %m"));
 
 	kq = kqueue();
 	if (-1 == kq)
