@@ -150,15 +150,15 @@ cst_valid(struct cst_node *cst)
 
 	if (topcount[UPDATE] > 1) {
 		cst_valid = false;
-		syslog(LOG_ERR, "error: too many 'update' statements in top scope; limit one.");
+		fputs("error: too many 'update' statements in top scope; limit one.", stderr);
 	}
 	if (topcount[USER] > 1) {
 		cst_valid = false;
-		syslog(LOG_ERR, "error: too many 'user' statements; limit one.");
+		fputs("error: too many 'user' statements; limit one.", stderr);
 	}
 	if (topcount[GROUP] > 1) {
 		cst_valid = false;
-		syslog(LOG_ERR, "error: too many 'group' statements; limit one.");
+		fputs("error: too many 'group' statements; limit one.", stderr);
 	}
 
 	for (size_t i = 0, n = 0; i < cst->len; i++, n = 0) {
@@ -171,7 +171,7 @@ cst_valid(struct cst_node *cst)
 
 		if (n > 1) {
 			cst_valid = false;
-			syslog(LOG_ERR, "error: too many 'update' statements in interface (%s) scope; limit one.", node->string);
+			fprintf(stderr, "error: too many 'update' statements in interface (%s) scope; limit one.", node->string);
 		}
 	}
 

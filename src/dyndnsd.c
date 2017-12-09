@@ -69,11 +69,11 @@ main(int argc, char *argv[])
 	/* allocate route(4) socket first... */
 	routefd = rtm_socket(RTM_NEWADDR);
 	if (-1 == routefd)
-		die(LOG_ERR, "cannot create route(4) socket");
+		errx(EXIT_FAILURE, "cannot create route(4) socket");
 
 	/* ...to pledge(2) ASAP */
 	if (-1 == pledge("stdio rpath inet dns proc id getpw", NULL))
-		die(LOG_ERR, "pledge(2): %m");
+		err(EXIT_FAILURE, "pledge(2)");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -98,10 +98,10 @@ main(int argc, char *argv[])
 
 	conf = fopen(optf, "r");
 	if (NULL == conf)
-		die(LOG_ERR, "cannot open file '%s': fopen(3): %m", optf);
+		err(EXIT_FAILURE, "cannot open file '%s': fopen(3)", optf);
 
 	if (!ast_load(&ast, conf))
-		die(LOG_ERR, "cannot parse configuration file");
+		errx(EXIT_FAILURE, "cannot parse configuration file");
 
 	if (optn)
 		exit(EXIT_SUCCESS);
@@ -113,15 +113,15 @@ main(int argc, char *argv[])
 	curl_global_init((long)CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (NULL == curl)
-		die(LOG_CRIT, AT("curl_easy_init(3): failed to initialize libcurl"));
+		errx(EXIT_FAILURE, AT("curl_easy_init(3): failed to initialze libcurl"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, httplog))
-		die(LOG_CRIT, AT("curl_easy_setopt(3): %m"));
+		err(EXIT_FAILURE, AT("curl_easy_setopt(3)"));
 	if (CURLE_OK != curl_easy_setopt(curl, CURLOPT_WRITEDATA, logbuf))
-		die(LOG_CRIT, AT("curl_easy_setopt(3): %m"));
+		err(EXIT_FAILURE, AT("curl_easy_setopt(3)"));
 
 	if (!optd)
 	if (-1 == daemon(0, 0))
-		die(LOG_CRIT, AT("daemon(3): %m"));
+		err(EXIT_FAILURE, AT("daemon(3)"));
 
 	if (-1 == pledge("stdio rpath inet dns", NULL))
 		die(LOG_ERR, "pledge(2): %m");
