@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "cannot create route(4) socket");
 
 	/* ...to pledge(2) ASAP */
-	if (-1 == pledge("stdio rpath inet dns proc id getpw", NULL))
+	if (-1 == pledge("stdio rpath proc exec id getpw", NULL))
 		err(EXIT_FAILURE, "pledge(2)");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
@@ -108,10 +108,8 @@ main(int argc, char *argv[])
 	if (-1 == daemon(0, 0))
 		err(EXIT_FAILURE, AT("daemon(3)"));
 
-	/*
-	if (-1 == pledge("stdio rpath inet dns", NULL))
+	if (-1 == pledge("stdio proc exec", NULL))
 		die(LOG_ERR, "pledge(2): %m");
-	*/
 
 	/* set up event handler */
 	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
