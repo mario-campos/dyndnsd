@@ -7,7 +7,6 @@
 #include <net/route.h>
 #include <netinet/in.h>
 
-#include <assert.h>
 #include <err.h>
 #include <grp.h>
 #include <ifaddrs.h>
@@ -141,8 +140,6 @@ main(int argc, char *argv[])
 		nev = kevent(kq, NULL, 0, events, 3, NULL);
 		if (-1 == nev)
 			die(LOG_CRIT, AT("kevent(2): %m"));
-
-		assert(nev != 0);
 
 		for (ssize_t i = 0; i < nev; i++) {
 
@@ -305,9 +302,6 @@ parse_fqdn(char *fqdn, char **hostname, char **domain, char **tld)
 static void
 drop_privilege(char *username, char *groupname)
 {
-	assert(username);
-	assert(groupname);
-
 	struct passwd *newuser;
 	struct group *newgroup;
 
