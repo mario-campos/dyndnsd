@@ -2,6 +2,7 @@
 #include <sys/queue.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ast.h"
 #include "die.h"
 
@@ -201,6 +202,7 @@ cst_free(struct cst_node *cst)
 {
 	for (size_t i = 0; i < cst->len; i++)
 		cst_free(cst->child[i]);
+	free(cst->string);
 	free(cst);
 }
 
@@ -217,11 +219,11 @@ cst2ast(struct cst_node *cst)
 
 	for (size_t i = 0; i < cst->len; i++) {
 		if (USER == cst->child[i]->type)
-			ast->user = cst->child[i]->string;
+			ast->user = strdup(cst->child[i]->string);
 		else if (GROUP == cst->child[i]->type)
-			ast->group = cst->child[i]->string;
+			ast->group = strdup(cst->child[i]->string);
 		else if (RUN == cst->child[i]->type)
-			run1 = cst->child[i]->string;
+			run1 = strdup(cst->child[i]->string);
 	}
 
 	for (size_t i = 0; i < cst->len; i++) {
@@ -232,7 +234,7 @@ cst2ast(struct cst_node *cst)
 		struct cst_node *inode;
 
 		inode = cst->child[i];
-		aif = ast_iface_new(inode->string, inode->len);
+		aif = ast_iface_new(strdup(inode->string), inode->len);
 		ast->iface[ast->iface_len++] = aif;
 
 		for (size_t j = 0; j < inode->len; j++) {
@@ -245,7 +247,7 @@ cst2ast(struct cst_node *cst)
 				dnode = inode->child[j];
 				if (1 == dnode->len)
 					run3 = dnode->child[0]->string; 
-				ad = ast_domain_new(dnode->string, run3 ?: run2 ?: run1);
+				ad = ast_domain_new(strdup(dnode->string), strdup(run3 ?: run2 ?: run1));
 				aif->domain[aif->domain_len++] = ad;
 				run3 = NULL;
 			}
