@@ -36,7 +36,7 @@ static char    *rtm_getifname(struct rt_msghdr *);
 static char    *rtm_getipaddr(struct ifa_msghdr *);
 static struct sockaddr *rtm_getsa(uint8_t *, int);
 
-static __dead void usage(void);
+static void __dead usage(void);
 static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
 static void	set_dyndnsd_env(char *, char *);
@@ -268,7 +268,7 @@ rtm_getsa(uint8_t *cp, int flags)
 	return NULL;
 }
 
-static __dead void
+static void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
