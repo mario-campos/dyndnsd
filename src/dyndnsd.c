@@ -35,7 +35,7 @@ static int	rtm_socket(unsigned int);
 static char    *rtm_getifname(struct rt_msghdr *);
 static char    *rtm_getipaddr(struct ifa_msghdr *);
 static struct sockaddr *rtm_getsa(uint8_t *, int);
-static int	spawn(char *);
+static pid_t	spawn(char *);
 static void __dead usage(void);
 static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
@@ -344,7 +344,7 @@ getshell(void)
 	return getenv("SHELL") ?: "/bin/sh";
 }
 
-static int
+static pid_t
 spawn(char *cmd)
 {
 	pid_t pid;
