@@ -35,7 +35,7 @@ static int	rtm_socket(unsigned int);
 static char    *rtm_getifname(struct rt_msghdr *);
 static char    *rtm_getipaddr(struct ifa_msghdr *);
 static struct sockaddr *rtm_getsa(uint8_t *, int);
-
+static int	spawn(char *);
 static void __dead usage(void);
 static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
@@ -183,19 +183,11 @@ main(int argc, char *argv[])
 					ad = aif->domain[j];
 					set_dyndnsd_env(ad->domain, ipaddr);
 
-					pid = fork();
-					if (-1 == pid) {
-						syslog(LOG_ERR, "cannot run command: fork(2): %m");
-						continue;
-					}
-
-					if (0 == pid &&
-					   -1 == execl(getshell(), getshell(), "-c", ad->run, NULL)) {
-						syslog(LOG_ERR, "cannot run command: execl(3): %m");
-						continue;
-					}
-
-					syslog(LOG_INFO, "%s %s %s %d", ad->domain, aif->if_name, ipaddr, pid);
+					pid = spawn(ad->run);
+					if (-1 == pid)
+						syslog(LOG_ERR, "cannot run command: %m");
+					else
+						syslog(LOG_INFO, "%s %s %s %d", ad->domain, aif->if_name, ipaddr, pid);
 				}
 			}
 		}
@@ -350,4 +342,24 @@ static char *
 getshell(void)
 {
 	return getenv("SHELL") ?: "/bin/sh";
+}
+
+static int
+spawn(char *cmd)
+{
+	pid_t pid;
+
+	pid = fork();
+	if (-1 == pid) {
+		syslog(LOG_DEBUG, AT("fork(2): %m"));
+		return -1;
+	}
+
+	if (0 == pid &&
+	   -1 == execl(getshell(), getshell(), "-c", cmd, NULL)) {
+		syslog(LOG_DEBUG, AT("execl(3): %m"));
+		return -1;
+	}
+
+	return pid;
 }
