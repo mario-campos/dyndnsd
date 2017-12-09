@@ -357,10 +357,11 @@ spawn(char *cmd)
 		return -1;
 	}
 
-	if (0 == pid &&
-	   -1 == execl(getshell(), getshell(), "-c", cmd, NULL)) {
-		syslog(LOG_DEBUG, AT("execl(3): %m"));
-		return -1;
+	if (0 == pid) {
+		freopen("/dev/null", "r", stdin);
+		freopen("/dev/null", "w", stdout);
+		freopen("/dev/null", "w", stderr);
+		execl(getshell(), getshell(), "-c", cmd, NULL);
 	}
 
 	return pid;
