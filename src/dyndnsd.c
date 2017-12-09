@@ -329,11 +329,12 @@ set_dyndnsd_env(char *fqdn, char *ipaddr)
 	char *hostname, *domain, *tld;
 	parse_fqdn(fqdn, &hostname, &domain, &tld);
 
-	setenv("DYNDNSD_FQDN", fqdn, true);
-	setenv("DYNDNSD_HOSTNAME", hostname, true);
-	setenv("DYNDNSD_DOMAIN", domain, true);
-	setenv("DYNDNSD_TLD", tld, true);
-	setenv("DYNDNSD_IPv4_ADDRESS", ipaddr, true);
+	if (-1 == setenv("DYNDNSD_FQDN", fqdn, true) 		||
+	    -1 == setenv("DYNDNSD_HOSTNAME", hostname, true) 	||
+	    -1 == setenv("DYNDNSD_DOMAIN", domain, true) 	||
+	    -1 == setenv("DYNDNSD_TLD", tld, true)		||
+	    -1 == setenv("DYNDNSD_IPv4_ADDRESS", ipaddr, true))
+		die(LOG_CRIT, AT("setenv(3): %m"));
 
 	free(hostname);
 	free(domain);
