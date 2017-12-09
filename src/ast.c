@@ -42,6 +42,7 @@ ast_load(struct ast_root **ast, FILE *file)
 
 	struct ast_root *tmp;
 
+	rewind(file);
 	yyin = file;
 	if (yyparse(&tmp)) {
 		if (*ast) ast_free(*ast);

@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <ifaddrs.h>
 #include <pwd.h>
@@ -46,9 +47,9 @@ static char *	getshell(void);
 int
 main(int argc, char *argv[])
 {
-	FILE 	        *conf;
+	FILE		*etcfstream;
 	bool 		 optd, optn;
-	int 		 opt, routefd, kq;
+	int 		 opt, routefd, kq, etcfd;
 	const char      *optf;
 	struct ast_root *ast;
 	struct kevent    changes[3];
@@ -91,11 +92,15 @@ main(int argc, char *argv[])
 		}
 	}
 
-	conf = fopen(optf, "r");
-	if (NULL == conf)
-		err(EXIT_FAILURE, "cannot open file '%s': fopen(3)", optf);
+	etcfd = open(optf, O_RDONLY|O_CLOEXEC);
+	if (-1 == etcfd)
+		err(EXIT_FAILURE, "cannot open file '%s': open(2)", optf);
 
-	if (!ast_load(&ast, conf))
+	etcfstream = fdopen(etcfd, "r");
+	if (NULL == etcfstream)
+		err(EXIT_FAILURE, "cannot open file '%s': fdopen(3)", optf);
+
+	if (!ast_load(&ast, etcfstream))
 		errx(EXIT_FAILURE, "cannot parse configuration file");
 
 	if (optn)
@@ -149,8 +154,7 @@ main(int argc, char *argv[])
 			/* SIGHUP event */
 			else if (events[i].ident == SIGHUP) {
 				syslog(LOG_NOTICE, "SIGHUP received. Reloading the configuration file...");
-				rewind(conf);
-				ast_load(&ast, conf);
+				ast_load(&ast, etcfstream);
 			}
 
 			/* RTM_NEWADDR event */
@@ -191,6 +195,7 @@ main(int argc, char *argv[])
 	}
 
 end:
+	fclose(etcfstream);
 	close(routefd);
 	closelog();
 }
