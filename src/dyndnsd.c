@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 
 #include <assert.h>
+#include <err.h>
 #include <grp.h>
 #include <ifaddrs.h>
 #include <pwd.h>
@@ -143,7 +144,7 @@ main(int argc, char *argv[])
 
 		assert(nev != 0);
 
-		for (int i = 0; i < nev; i++) {
+		for (ssize_t i = 0; i < nev; i++) {
 
 			/* SIGTERM event */
 			if (events[i].ident == SIGTERM) {
