@@ -104,8 +104,7 @@ main(int argc, char *argv[])
 	if (0 == getuid())
 		drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
 
-	if (!optd)
-	if (-1 == daemon(0, 0))
+	if (!optd && -1 == daemon(0, 0))
 		err(EXIT_FAILURE, AT("daemon(3)"));
 
 	if (-1 == pledge("stdio proc exec", NULL))
