@@ -37,11 +37,11 @@ static char    *rtm_getipaddr(struct ifa_msghdr *);
 static struct sockaddr *rtm_getsa(uint8_t *, int);
 
 static __dead void usage(void);
-static void 	strsub(char *, size_t, const char *, const char *);
 static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
-static char *	interpolate(char *, char *, char *);
+static void	set_dyndnsd_env(char *, char *);
 static struct ast_iface *find_ast_iface(struct ast_root *, char *);
+static char *	getshell(void);
 
 int
 main(int argc, char *argv[])
@@ -179,27 +179,25 @@ main(int argc, char *argv[])
 				free(ifname);
 
 				for(size_t j = 0; j < aif->domain_len; j++) {
-					FILE *fd;
-					char *cmd;
+					pid_t pid;
 					struct ast_domain *ad;
 
 					ad = aif->domain[j];
-					cmd = interpolate(ad->run, ad->domain, ipaddr);
+					set_dyndnsd_env(ad->domain, ipaddr);
 
-					syslog(LOG_DEBUG, "run [%s]", cmd);
-
-					fd = popen(cmd, "r");
-					if (NULL == fd) {
-						syslog(LOG_ERR, "cannot run command: popen(3): %m");
-					} else {
-						char output[512];
-						fgets(output, sizeof(output), fd);
-						syslog(LOG_INFO, "%s %s %s: %s",
-						       aif->if_name, ad->domain, ipaddr, output);
+					pid = fork();
+					if (-1 == pid) {
+						syslog(LOG_ERR, "cannot run command: fork(2): %m");
+						continue;
 					}
 
-					free(cmd);
-					pclose(fd);
+					if (0 == pid &&
+					   -1 == execl(getshell(), getshell(), "-c", ad->run, NULL)) {
+						syslog(LOG_ERR, "cannot run command: execl(3): %m");
+						continue;
+					}
+
+					syslog(LOG_INFO, "%s %s %s %d", ad->domain, aif->if_name, ipaddr, pid);
 				}
 			}
 		}
@@ -280,32 +278,6 @@ usage(void)
 }
 
 static void
-strsub(char *scope, size_t len, const char *search, const char *replace)
-{
-	size_t n;
-	char *start, *end;
-	char buf[len];
-
-	start = scope;
-	explicit_bzero(buf, len);
-
-	while ((end = strstr(start, search))) {
-		n = end - start;
-
-		/* copy the substring before the search string */
-		strncat(buf, start, n);
-		start = end;
-
-		/* insert the replacement string */
-		strlcat(buf, replace, len);
-		start += strlen(search);
-	}
-
-	strlcat(buf, start, len);
-	memcpy(scope, buf, len);
-}
-
-static void
 parse_fqdn(char *fqdn, char **hostname, char **domain, char **tld)
 {
 	size_t n;
@@ -350,25 +322,21 @@ drop_privilege(char *username, char *groupname)
 		die(LOG_ERR, "cannot set UID: setuid(2): %m");
 }
 
-static char *
-interpolate(char *cmd, char *fqdn, char *ipaddr)
+static void
+set_dyndnsd_env(char *fqdn, char *ipaddr)
 {
-	char buf[RUN_BUF_LIMIT];
 	char *hostname, *domain, *tld;
-
-	strlcpy(buf, cmd, sizeof(buf));
 	parse_fqdn(fqdn, &hostname, &domain, &tld);
-	strsub(buf, sizeof(buf), "${FQDN}", fqdn);
-	strsub(buf, sizeof(buf), "${HOSTNAME}", hostname);
-	strsub(buf, sizeof(buf), "${DOMAIN}", domain);
-	strsub(buf, sizeof(buf), "${TLD}", tld);
-	strsub(buf, sizeof(buf), "${IPv4_ADDRESS}", ipaddr);
 
-	cmd = strndup(buf, sizeof(buf));
-	if (NULL == cmd)
-		die(LOG_CRIT, AT("strndup(3): %m"));
+	setenv("DYNDNSD_FQDN", fqdn, true);
+	setenv("DYNDNSD_HOSTNAME", hostname, true);
+	setenv("DYNDNSD_DOMAIN", domain, true);
+	setenv("DYNDNSD_TLD", tld, true);
+	setenv("DYNDNSD_IPv4_ADDRESS", ipaddr, true);
 
-	return cmd;
+	free(hostname);
+	free(domain);
+	free(tld);
 }
 
 static struct ast_iface *
@@ -380,4 +348,10 @@ find_ast_iface(struct ast_root *ast, char *ifname)
 			return aif;
 	}
 	return NULL;
+}
+
+static char *
+getshell(void)
+{
+	return getenv("SHELL") ?: "/bin/sh";
 }
