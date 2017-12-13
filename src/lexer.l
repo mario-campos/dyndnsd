@@ -9,8 +9,7 @@
 
 #define YYMAXLENG 15
 
-extern bool ast_error;
-bool ast_error = false;
+extern char *__progname;
 
 void yyerror(struct ast_root **, const char *);
 %}
@@ -19,9 +18,9 @@ void yyerror(struct ast_root **, const char *);
 %option noyywrap
 %option yylineno
 
+newline			\n+
 comment			#.*
-whitespace		[ \t\n]+
-quoted_string		\"([^"\\]|\\.)*\"
+whitespace		[ \t]+
 unquoted_string		[^ \n\t]+
 
 %%
@@ -33,29 +32,15 @@ domain			return DOMAIN;
 run			return RUN;
 "{"			return '{';
 "}"			return '}';
+{newline}		return '\n';
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
-{quoted_string}		{ yylval.string = strndup(yytext+1, yyleng-2); return STRING; }
-\"{unquoted_string}	{
-				yyerror(NULL, "this string lacks an closing quotation character");
-				yylval.string = strdup(yytext+1);
-				ast_error = true;
-				return STRING;
-			}
-{unquoted_string}\"	{
-				yyerror(NULL, "this string lacks an opening quotation character");
-				yylval.string = strndup(yytext, yyleng-1);
-				ast_error = true;
-				return STRING;
-			}
-{unquoted_string}	{ yylval.string = strndup(yytext, yyleng); return STRING; }
+{unquoted_string}	{ yylval.string = strdup(yytext); return STRING; }
 
 %%
 
 void
 yyerror(struct ast_root **ast, const char *msg)
 {
-	const char *fmtstr =
-		yyleng > YYMAXLENG ? "error: %s (%.*s...)" : "error: %s (%.*s)";
-	syslog(LOG_ERR, fmtstr, msg, YYMAXLENG, yytext);
+	fprintf(stderr, "%s: %s (line %d)\n", __progname, msg, yylineno);
 }
