@@ -357,12 +357,8 @@ spawn(char *cmd)
 		return -1;
 	}
 
-	if (0 == pid) {
-		freopen("/dev/null", "r", stdin);
-		freopen("/dev/null", "w", stdout);
-		freopen("/dev/null", "w", stderr);
+	if (0 == pid)
 		execl(getshell(), getshell(), "-c", cmd, NULL);
-	}
 
 	return pid;
 }
