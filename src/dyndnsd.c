@@ -357,8 +357,13 @@ spawn(char *cmd)
 		return -1;
 	}
 
-	if (0 == pid)
+	if (0 == pid) {
+		int fd = open("/dev/null", O_WRONLY);
+		dup2(fd, 1);
+		dup2(fd, 2);
+		close(fd);
 		execl(getshell(), getshell(), "-c", cmd, NULL);
+	}
 
 	return pid;
 }
