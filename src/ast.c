@@ -59,8 +59,12 @@ ast_domain_new(char *domain, char *run)
 	assert(domain);
 	assert(run);
 
-	struct ast_domain *ad = malloc(sizeof(*ad));
-	if (NULL == ad) die(LOG_CRIT, AT("malloc(3)"));
+	struct ast_domain *ad;
+
+	ad = malloc(sizeof(*ad));
+	if (NULL == ad)
+		die(LOG_CRIT, AT("malloc(3): %m"));
+
 	ad->domain = domain;
 	ad->run = run;
 	return ad;
@@ -72,8 +76,12 @@ ast_iface_new(char *name, size_t ndomains)
 	assert(name);
 	assert(ndomains > 0);
 
-	struct ast_iface *aif = calloc(sizeof(*aif) + ndomains * sizeof(aif), (size_t)1);
-	if (NULL == aif) die(LOG_CRIT, AT("calloc(3)"));
+	struct ast_iface *aif;
+
+	aif = calloc(sizeof(*aif) + ndomains * sizeof(aif), (size_t)1);
+	if (NULL == aif)
+		die(LOG_CRIT, AT("calloc(3): %m"));
+
 	aif->if_name = name;
 	return aif;
 }

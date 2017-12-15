@@ -20,7 +20,6 @@ struct cst_node {
 };
 
 static struct cst_node *cst_node(int, char *, struct cst_node *);
-static struct cst_node *prepend(struct cst_node *, struct cst_node *);
 static void cst_free(struct cst_node *);
 static struct ast_root *cst2ast(struct cst_node *);
 static char *strjoin(char *, char *, char *);
@@ -53,7 +52,7 @@ config : config_statements				{
 
 config_statements
 	: config_statement
-	| config_statements config_statement		{ $$ = prepend($2, $1); }
+	| config_statements config_statement		{ $$ = $2; SLIST_NEXT($2, next) = $1; }
 	;
 
 config_statement
@@ -76,7 +75,7 @@ interface
 
 interface_statements
 	: interface_statement
-	| interface_statements interface_statement	{ $$ = prepend($2, $1); }
+	| interface_statements interface_statement	{ $$ = $2; SLIST_NEXT($2, next) = $1; }
 	;
 
 interface_statement
@@ -114,13 +113,6 @@ cst_node(int type, char *string, struct cst_node *children)
 	SLIST_NEXT(node, next) = NULL;
 	SLIST_FIRST(&node->children) = children;
 	return node;
-}
-
-static struct cst_node *
-prepend(struct cst_node *head, struct cst_node *tail)
-{
-	SLIST_NEXT(head, next) = tail;
-	return head;
 }
 
 static void
@@ -183,13 +175,12 @@ cst2ast(struct cst_node *cst)
 					break;
 				}
 
-			SLIST_FOREACH(b, &a->children, next) {
+			SLIST_FOREACH(b, &a->children, next)
 				if (DOMAIN == b->type) {
 					run3 = SLIST_EMPTY(&b->children) ? NULL : SLIST_FIRST(&b->children)->string;
 					ad = ast_domain_new(strdup(b->string), strdup(run3 ?: run2 ?: run1));
 					aif->domain[aif->domain_len++] = ad;
 				}
-			}
 		}
 	}
 
@@ -205,7 +196,7 @@ strjoin(char *a, char *c, char *b)
 	len = strlen(a) + strlen(b) + strlen(c) + 1;
 	buf = malloc(len);
 	if (NULL == buf)
-		die(LOG_CRIT, AT("malloc(3)"));
+		die(LOG_CRIT, AT("malloc(3): %m"));
 
 	strlcpy(buf, a, len);
 	strlcat(buf, b, len);

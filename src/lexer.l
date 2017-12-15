@@ -1,13 +1,8 @@
 %{
-#include <stdarg.h>
 #include <stdbool.h>
-#include <string.h>
-#include <syslog.h>
 
 #include "ast.h"
 #include "parser.h"
-
-#define YYMAXLENG 15
 
 extern char *__progname;
 
