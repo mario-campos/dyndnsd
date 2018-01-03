@@ -35,7 +35,7 @@ run			return RUN;
 %%
 
 void
-yyerror(struct ast_root **ast, const char *msg)
+yyerror(__unused struct ast_root **ast, const char *msg)
 {
 	fprintf(stderr, "%s: %s (line %d)\n", __progname, msg, yylineno);
 }
