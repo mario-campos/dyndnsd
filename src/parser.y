@@ -80,14 +80,10 @@ interface_statements
 
 interface_statement
 	: '\n'						{ $$ = cst_node('\n', NULL, NULL); }
-	| run '\n'
 	| domain
 	;
 
 domain	: DOMAIN STRING 				{ $$ = cst_node(DOMAIN, $2, NULL); }
-	| DOMAIN STRING '{' '\n' '}'			{ $$ = cst_node(DOMAIN, $2, NULL); }
-	| DOMAIN STRING '{' run '}'			{ $$ = cst_node(DOMAIN, $2, $4); }
-	| DOMAIN STRING '{' '\n' run '\n' '}'		{ $$ = cst_node(DOMAIN, $2, $5); }
 	;
 
 run	: RUN strings 		 			{ $$ = cst_node(RUN, $2, NULL); }
@@ -135,11 +131,7 @@ cst2ast(struct cst_node *cst)
 	size_t n;
 	struct ast_root *ast;
 	struct ast_iface *aif;
-	struct ast_domain *ad;
 	struct cst_node *a, *b;
-	char *run1, *run2, *run3;
-
-	run1 = run2 = run3 = NULL;
 
 	n = sllist_counttype(&cst->children, INTERFACE);
 	ast = calloc(sizeof(*ast) + n * sizeof(struct ast_iface *), (size_t)1);
@@ -158,7 +150,7 @@ cst2ast(struct cst_node *cst)
 
 	SLIST_FOREACH(a, &cst->children, next)
 		if (RUN == a->type) {
-			run1 = a->string; // note: not duplicating just yet
+			ast->cmd = strdup(a->string);
 			break;
 		}
 
@@ -168,19 +160,9 @@ cst2ast(struct cst_node *cst)
 			aif = ast_iface_new(strdup(a->string), n);
 			ast->iface[ast->iface_len++] = aif;
 
-			run2 = NULL;
 			SLIST_FOREACH(b, &a->children, next)
-				if (RUN == b->type) {
-					run2 = b->string;
-					break;
-				}
-
-			SLIST_FOREACH(b, &a->children, next)
-				if (DOMAIN == b->type) {
-					run3 = SLIST_EMPTY(&b->children) ? NULL : SLIST_FIRST(&b->children)->string;
-					ad = ast_domain_new(strdup(b->string), strdup(run3 ?: run2 ?: run1));
-					aif->domain[aif->domain_len++] = ad;
-				}
+				if (DOMAIN == b->type)
+					aif->domain[aif->domain_len++] = strdup(b->string);
 		}
 	}
 

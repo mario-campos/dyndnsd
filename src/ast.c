@@ -18,13 +18,8 @@ ast_free(struct ast_root *ast)
 	for(size_t i = 0; i < ast->iface_len; i++) {
 		struct ast_iface *aif = ast->iface[i];
 
-		for(size_t j = 0; j < aif->domain_len; j++) {
-			struct ast_domain *ad = aif->domain[j];
-			free(ad->domain);
-			free(ad->run);
-			free(ad);
-		}
-
+		for(size_t j = 0; j < aif->domain_len; j++)
+			free(aif->domain[j]);
 		free(aif->if_name);
 		free(aif);
 	}
@@ -51,23 +46,6 @@ ast_load(struct ast_root **ast, FILE *file)
 	}
 
 	return false;
-}
-
-struct ast_domain *
-ast_domain_new(char *domain, char *run)
-{
-	assert(domain);
-	assert(run);
-
-	struct ast_domain *ad;
-
-	ad = malloc(sizeof(*ad));
-	if (NULL == ad)
-		die(LOG_CRIT, AT("malloc(3): %m"));
-
-	ad->domain = domain;
-	ad->run = run;
-	return ad;
 }
 
 struct ast_iface *

@@ -9,7 +9,7 @@ First, create the configuration file, */etc/dyndnsd.conf*:
 user dyndnsd
 group dyndnsd
 
-update https://www.duckdns.org/update?domains=${FQDN}&token=sometoken&ip=${IPv4_ADDRESS}
+run curl https://www.duckdns.org/update?domains=${DYNDNSD_FQDN}&token=sometoken&ip=${DYNDNSD_ADDRESS}
 
 interface em0 {
 	domain example.com
@@ -37,15 +37,11 @@ $
 
 - [x] route(4)
 - [x] kqueue(2)
-- [x] IPv4
-- [ ] IPv6
-- [ ] Unicode
 - [x] pledge(2)
 - [x] drop privilege
 
 ### Code Quality
 
-- [ ] Unit Testing
 - [ ] Fuzz Testing
 - [ ] Valgrind
 - [ ] Other Static Analyzers 

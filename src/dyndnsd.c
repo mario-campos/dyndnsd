@@ -178,16 +178,14 @@ main(int argc, char *argv[])
 
 				for(size_t j = 0; j < aif->domain_len; j++) {
 					pid_t pid;
-					struct ast_domain *ad;
 
-					ad = aif->domain[j];
-					set_dyndnsd_env(ad->domain, ipaddr);
+					set_dyndnsd_env(aif->domain[j], ipaddr);
 
-					pid = spawn(ad->run);
+					pid = spawn(ast->cmd);
 					if (-1 == pid)
 						syslog(LOG_ERR, "cannot run command: %m");
 					else
-						syslog(LOG_INFO, "%s %s %s %d", ad->domain, aif->if_name, ipaddr, pid);
+						syslog(LOG_INFO, "%s %s %s %d", aif->domain[j], aif->if_name, ipaddr, pid);
 				}
 			}
 		}
