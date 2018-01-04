@@ -318,7 +318,7 @@ set_dyndnsd_env(char *fqdn, char *ipaddr)
 	    -1 == setenv("DYNDNSD_HOSTNAME", hostname, true) 	||
 	    -1 == setenv("DYNDNSD_DOMAIN", domain, true) 	||
 	    -1 == setenv("DYNDNSD_TLD", tld, true)		||
-	    -1 == setenv("DYNDNSD_IPv4_ADDRESS", ipaddr, true))
+	    -1 == setenv("DYNDNSD_ADDRESS", ipaddr, true))
 		die(LOG_CRIT, AT("setenv(3): %m"));
 
 	free(hostname);
