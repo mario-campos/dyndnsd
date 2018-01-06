@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
 	if (-1 == sigaction(SIGHUP, &sa, NULL)	||
 	    -1 == sigaction(SIGTERM, &sa, NULL)	||
-	    -1 == sigaction(SIGCHLD, &sa, NULL))  // implying O_NOCLDWAIT
+	    -1 == sigaction(SIGCHLD, &sa, NULL))  // implying SA_NOCLDWAIT
 		die(LOG_CRIT, AT("sigaction(2): %m"));
 
 	kq = kqueue();
