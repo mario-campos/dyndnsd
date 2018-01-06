@@ -17,6 +17,7 @@ newline			\n+
 comment			#.*
 whitespace		[ \t]+
 unquoted_string		[^ \n\t]+
+lineescape		\\.*\n
 
 %%
 
@@ -28,6 +29,7 @@ run			return RUN;
 {newline}		return '\n';
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
+{lineescape}		/* ignore */ ;
 {unquoted_string}	{ yylval.string = strdup(yytext); return STRING; }
 
 %%
