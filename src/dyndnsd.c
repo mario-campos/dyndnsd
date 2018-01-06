@@ -24,8 +24,6 @@
 #include "die.h"
 #include "dyndnsd.h"
 
-#define RTM_MEM_LIMIT 1024
-#define RUN_BUF_LIMIT 1024
 #define ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
@@ -160,7 +158,7 @@ main(int argc, char *argv[])
 			else {
 				ssize_t numread;
 				char *ifname, *ipaddr;
-				char rtmbuf[RTM_MEM_LIMIT];
+				char rtmbuf[1024];
 				struct ast_iface *aif;
 
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
