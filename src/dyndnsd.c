@@ -34,7 +34,7 @@ static int	rtm_socket(unsigned int);
 static char    *rtm_getifname(struct rt_msghdr *);
 static char    *rtm_getipaddr(struct ifa_msghdr *);
 static struct sockaddr *rtm_getsa(uint8_t *, int);
-static pid_t	spawn(char *);
+static pid_t	spawn(char *, int);
 static void __dead usage(void);
 static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
@@ -46,7 +46,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE		*etcfstream;
-	int 		 opt, routefd, kq, etcfd;
+	int 		 opt, routefd, kq, etcfd, devnullfd;
 	unsigned	 opts;
 	const char      *optf;
 	struct ast_root *ast;
@@ -88,6 +88,10 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	devnullfd = open("/dev/null", O_WRONLY|O_CLOEXEC);
+	if (-1 == devnullfd)
+		err(EXIT_FAILURE, "cannopt open file '/dev/null': open(2)");
 
 	etcfd = open(optf, O_RDONLY|O_CLOEXEC);
 	if (-1 == etcfd)
@@ -179,7 +183,7 @@ main(int argc, char *argv[])
 
 					set_dyndnsd_env(aif->domain[j], ipaddr);
 
-					pid = spawn(ast->cmd);
+					pid = spawn(ast->cmd, devnullfd);
 					if (-1 == pid)
 						syslog(LOG_ERR, "cannot run command: %m");
 					else
@@ -191,6 +195,7 @@ main(int argc, char *argv[])
 
 end:
 	fclose(etcfstream);
+	close(devnullfd);
 	close(routefd);
 	closelog();
 }
@@ -342,7 +347,7 @@ getshell(void)
 }
 
 static pid_t
-spawn(char *cmd)
+spawn(char *cmd, int fd)
 {
 	pid_t pid;
 
@@ -353,11 +358,9 @@ spawn(char *cmd)
 	}
 
 	if (0 == pid) {
-		int fd = open("/dev/null", O_WRONLY);
 		dup2(fd, 0);
 		dup2(fd, 1);
 		dup2(fd, 2);
-		close(fd);
 		setsid();
 		execl(getshell(), getshell(), "-c", cmd, NULL);
 	}
