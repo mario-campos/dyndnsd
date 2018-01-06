@@ -41,7 +41,7 @@ static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
 static void	set_dyndnsd_env(char *, char *);
 static struct ast_iface *find_ast_iface(struct ast_root *, char *);
-static char *	getshell(void);
+static char    *getshell(void);
 
 int
 main(int argc, char *argv[])
