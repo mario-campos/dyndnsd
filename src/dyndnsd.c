@@ -46,7 +46,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE		*etcfstream;
-	int 		 opt, routefd, kq, etcfd, devnullfd;
+	int 		 opt, routefd, kq, etcfd, devnull;
 	unsigned	 opts;
 	const char      *optf;
 	struct ast_root *ast;
@@ -89,8 +89,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	devnullfd = open("/dev/null", O_WRONLY|O_CLOEXEC);
-	if (-1 == devnullfd)
+	devnull = open("/dev/null", O_WRONLY|O_CLOEXEC);
+	if (-1 == devnull)
 		err(EXIT_FAILURE, "cannopt open file '/dev/null': open(2)");
 
 	etcfd = open(optf, O_RDONLY|O_CLOEXEC);
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 
 					set_dyndnsd_env(aif->domain[j], ipaddr);
 
-					pid = spawn(ast->cmd, devnullfd);
+					pid = spawn(ast->cmd, devnull);
 					if (-1 == pid)
 						syslog(LOG_ERR, "cannot run command: %m");
 					else
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 
 end:
 	fclose(etcfstream);
-	close(devnullfd);
+	close(devnull);
 	close(routefd);
 	closelog();
 }
