@@ -355,16 +355,12 @@ spawn(char *cmd)
 	}
 
 	if (0 == pid) {
-		/* nullify stdin, stdout, stderr */
 		int fd = open("/dev/null", O_WRONLY);
 		dup2(fd, 0);
 		dup2(fd, 1);
 		dup2(fd, 2);
 		close(fd);
-
-		/* create new process group and session */
 		setsid();
-
 		execl(getshell(), getshell(), "-c", cmd, NULL);
 	}
 
