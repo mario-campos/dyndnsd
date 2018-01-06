@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 
 	if (0 == getuid())
-		drop_privilege(ast->user ?: DYNDNSD_USER, ast->group ?: DYNDNSD_GROUP);
+		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
 	if (!optd && -1 == daemon(0, 0))
 		err(EXIT_FAILURE, AT("daemon(3)"));

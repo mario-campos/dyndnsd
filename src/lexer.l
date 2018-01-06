@@ -6,7 +6,7 @@
 
 extern char *__progname;
 
-void yyerror(struct ast_root **, const char *);
+void yyerror(__unused struct ast_root **, const char *);
 %}
 
 %option nounput
@@ -20,8 +20,6 @@ unquoted_string		[^ \n\t]+
 
 %%
 
-user			return USER;
-group			return GROUP;
 interface		return INTERFACE;
 domain			return DOMAIN;
 run			return RUN;

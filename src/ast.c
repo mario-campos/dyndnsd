@@ -24,8 +24,6 @@ ast_free(struct ast_root *ast)
 		free(aif);
 	}
 
-	free(ast->user);
-	free(ast->group);
 	free(ast);
 }
 

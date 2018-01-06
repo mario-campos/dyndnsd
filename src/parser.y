@@ -36,7 +36,7 @@ static size_t sllist_counttype(struct cst_list *, int);
 %type <string> strings
 %type <cst_node> config config_statements config_statement
 %type <cst_node> interface interface_statements interface_statement
-%type <cst_node> domain run user group '\n'
+%type <cst_node> domain run '\n'
 
 %locations
 %parse-param {struct ast_root **ast}
@@ -57,16 +57,8 @@ config_statements
 
 config_statement
 	: '\n'						{ $$ = cst_node('\n', NULL, NULL); }
-	| user
-	| group
 	| run
 	| interface
-	;
-
-user	: USER STRING 					{ $$ = cst_node(USER, $2, NULL); }
-	;
-
-group	: GROUP STRING 					{ $$ = cst_node(GROUP, $2, NULL); }
 	;
 
 interface
@@ -135,18 +127,6 @@ cst2ast(struct cst_node *cst)
 
 	n = sllist_counttype(&cst->children, INTERFACE);
 	ast = calloc(sizeof(*ast) + n * sizeof(struct ast_iface *), (size_t)1);
-
-	SLIST_FOREACH(a, &cst->children, next)
-		if (USER == a->type) {
-			ast->user = strdup(a->string);
-			break;
-		}
-
-	SLIST_FOREACH(a, &cst->children, next)
-		if (GROUP == a->type) {
-			ast->group = strdup(a->string);
-			break;
-		}
 
 	SLIST_FOREACH(a, &cst->children, next)
 		if (RUN == a->type) {

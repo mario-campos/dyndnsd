@@ -11,8 +11,6 @@ struct ast_iface {
 
 struct ast_root {
 	char *cmd;
-	char *user;
-	char *group;
 	size_t iface_len;
 	struct ast_iface *iface[];
 };
