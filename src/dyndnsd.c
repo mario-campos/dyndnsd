@@ -22,6 +22,7 @@
 #include "ast.h"
 #include "config.h"
 #include "die.h"
+#include "dyndnsd.h"
 
 #define RTM_MEM_LIMIT 1024
 #define RUN_BUF_LIMIT 1024
@@ -47,16 +48,15 @@ int
 main(int argc, char *argv[])
 {
 	FILE		*etcfstream;
-	bool 		 optd, optn;
 	int 		 opt, routefd, kq, etcfd;
+	unsigned	 opts;
 	const char      *optf;
 	struct ast_root *ast;
 	struct kevent    changes[3];
 	struct kevent    events[3];
 
 	ast = NULL;
-	optn = false;
-	optd = false;
+	opts = 0;
 	optf = DYNDNSD_CONF_PATH;
 
 	openlog(__progname, LOG_PERROR | LOG_PID, LOG_DAEMON);
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
 		case 'd':
-			optd = true;
+			opts |= DYNDNSD_DEBUG_MODE;
 			break;
 		case 'h':
 			usage();
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 			optf = optarg;
 			break;
 		case 'n':
-			optn = true;
+			opts |= DYNDNSD_VALID_MODE;
 			break;
 		case 'v':
 			puts(VERSION);
@@ -102,13 +102,13 @@ main(int argc, char *argv[])
 	if (!ast_load(&ast, etcfstream))
 		errx(EXIT_FAILURE, "cannot parse configuration file");
 
-	if (optn)
+	if (opts & DYNDNSD_VALID_MODE)
 		exit(EXIT_SUCCESS);
 
 	if (0 == getuid())
 		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
-	if (!optd && -1 == daemon(0, 0))
+	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
 		err(EXIT_FAILURE, AT("daemon(3)"));
 
 	if (-1 == pledge("stdio proc exec", NULL))
