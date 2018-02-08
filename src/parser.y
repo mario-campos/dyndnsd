@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "ast.h"
 #include "die.h"
@@ -22,7 +23,6 @@ struct cst_node {
 static struct cst_node *cst_node(int, char *, struct cst_node *);
 static void cst_free(struct cst_node *);
 static struct ast_root *cst2ast(struct cst_node *);
-static char *strjoin(char *, char *, char *);
 static size_t sllist_counttype(struct cst_list *, int);
 %}
 
@@ -82,7 +82,12 @@ run	: RUN strings 		 			{ $$ = cst_node(RUN, $2, NULL); }
 	;
 
 strings	: STRING
-	| strings STRING				{ $$ = strjoin($1, $2, " "); free($1); free($2); }
+	| strings STRING				{
+								if (-1 == asprintf(&$$, "%s %s", $1, $2))
+									die(LOG_CRIT, AT("asprintf(3)"));
+								free($1);
+								free($2);
+							}
 	;
 
 %%
@@ -147,23 +152,6 @@ cst2ast(struct cst_node *cst)
 	}
 
 	return ast;
-}
-
-static char *
-strjoin(char *a, char *c, char *b)
-{
-	char *buf;
-	size_t len;
-
-	len = strlen(a) + strlen(b) + strlen(c) + 1;
-	buf = malloc(len);
-	if (NULL == buf)
-		die(LOG_CRIT, AT("malloc(3): %m"));
-
-	strlcpy(buf, a, len);
-	strlcat(buf, b, len);
-	strlcat(buf, c, len);
-	return buf;
 }
 
 static size_t
