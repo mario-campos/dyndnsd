@@ -1,10 +1,9 @@
 %{
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "ast.h"
 #include "parser.h"
-
-extern char *__progname;
 
 void yyerror(__unused struct ast_root **, const char *);
 %}
@@ -37,5 +36,5 @@ run			return RUN;
 void
 yyerror(__unused struct ast_root **ast, const char *msg)
 {
-	fprintf(stderr, "%s: %s (line %d)\n", __progname, msg, yylineno);
+	fprintf(stderr, "%s: %s (line %d)\n", getprogname(), msg, yylineno);
 }

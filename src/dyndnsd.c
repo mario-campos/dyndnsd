@@ -28,8 +28,6 @@
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-extern char    *__progname;
-
 static int	rtm_socket(unsigned int);
 static char    *rtm_getifname(struct rt_msghdr *);
 static char    *rtm_getipaddr(struct ifa_msghdr *);
@@ -57,7 +55,7 @@ main(int argc, char *argv[])
 	opts = 0;
 	optf = DYNDNSD_CONF_PATH;
 
-	openlog(__progname, LOG_PERROR | LOG_PID, LOG_DAEMON);
+	openlog(getprogname(), LOG_PERROR | LOG_PID, LOG_DAEMON);
 
 	/* allocate route(4) socket first... */
 	routefd = rtm_socket(RTM_NEWADDR);
@@ -265,7 +263,7 @@ rtm_getsa(uint8_t *cp, int flags)
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", getprogname());
 	exit(EXIT_SUCCESS);
 }
 
