@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <ifaddrs.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -87,7 +88,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	devnull = open("/dev/null", O_WRONLY|O_CLOEXEC);
+	devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
 	if (-1 == devnull)
 		err(EXIT_FAILURE, "cannopt open file '/dev/null': open(2)");
 
