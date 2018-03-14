@@ -2,9 +2,6 @@
 #include <sys/event.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
-#include <net/route.h>
-
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -159,8 +156,8 @@ main(int argc, char *argv[])
 				if (-1 == numread)
 					break;
 
-				ifname = rtm_getifname((struct rt_msghdr *)rtmbuf);
-				ipaddr = rtm_getipaddr((struct ifa_msghdr *)rtmbuf);
+				ifname = rtm_getifname(rtmbuf);
+				ipaddr = rtm_getipaddr(rtmbuf);
 
 				aif = find_ast_iface(ast, ifname);
 				if (NULL == aif)

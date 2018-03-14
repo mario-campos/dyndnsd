@@ -33,20 +33,22 @@ rtm_socket()
 }
 
 char *
-rtm_getifname(struct rt_msghdr *rtm)
+rtm_getifname(void *ptr)
 {
-	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
+	struct ifa_msghdr *ifam = ptr;
 	char *buf = malloc((size_t)IF_NAMESIZE);
 	return if_indextoname(ifam->ifam_index, buf);
 }
 
 char *
-rtm_getipaddr(struct ifa_msghdr *ifam)
+rtm_getipaddr(void *ptr)
 {
 	struct in_addr addr;
 	struct sockaddr *sa;
 	struct sockaddr_in *sin;
+	struct ifa_msghdr *ifam;
 
+	ifam = ptr;
 	sa = rtm_getsa((uint8_t *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
 	sin = (struct sockaddr_in *)sa;
 
