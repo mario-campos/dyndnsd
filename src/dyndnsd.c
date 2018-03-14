@@ -2,15 +2,12 @@
 #include <sys/event.h>
 #include <sys/socket.h>
 
-#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/route.h>
-#include <netinet/in.h>
 
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <ifaddrs.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -23,16 +20,10 @@
 #include "ast.h"
 #include "config.h"
 #include "die.h"
+#include "rtm.h"
+
 #include "dyndnsd.h"
 
-#define ROUNDUP(a) \
-	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
-
-static int	rtm_socket(unsigned int);
-static char    *rtm_getifname(struct rt_msghdr *);
-static char    *rtm_getipaddr(struct ifa_msghdr *);
-static struct sockaddr *rtm_getsa(uint8_t *, int);
 static pid_t	spawn(char *, int);
 static void __dead usage(void);
 static void 	parse_fqdn(char *, char **, char **, char **);
@@ -59,7 +50,7 @@ main(int argc, char *argv[])
 	openlog(getprogname(), LOG_PERROR | LOG_PID, LOG_DAEMON);
 
 	/* allocate route(4) socket first... */
-	routefd = rtm_socket(RTM_NEWADDR);
+	routefd = rtm_socket();
 	if (-1 == routefd)
 		errx(EXIT_FAILURE, "cannot create route(4) socket");
 
@@ -197,68 +188,6 @@ end:
 	close(devnull);
 	close(routefd);
 	closelog();
-}
-
-static int
-rtm_socket(unsigned int flags)
-{
-	int routefd;
-	unsigned int rtfilter;
-
-	routefd = socket(PF_ROUTE, SOCK_CLOEXEC|SOCK_RAW, AF_INET);
-	if (-1 == routefd)
-		return -1;
-
-	rtfilter = ROUTE_FILTER(flags);
-	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
-			     &rtfilter, (socklen_t)sizeof(rtfilter)))
-		return -1;
-
-	return routefd;
-}
-
-static char *
-rtm_getifname(struct rt_msghdr *rtm)
-{
-	struct ifa_msghdr *ifam = (struct ifa_msghdr *)rtm;
-	char *buf = malloc((size_t)IF_NAMESIZE);
-	return if_indextoname(ifam->ifam_index, buf);
-}
-
-static char *
-rtm_getipaddr(struct ifa_msghdr *ifam)
-{
-	struct in_addr addr;
-	struct sockaddr *sa;
-	struct sockaddr_in *sin;
-
-	sa = rtm_getsa((uint8_t *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
-	sin = (struct sockaddr_in *)sa;
-
-	memcpy(&addr, &sin->sin_addr, sizeof(addr));
-
-	return inet_ntoa(addr);
-}
-
-static struct sockaddr *
-rtm_getsa(uint8_t *cp, int flags)
-{
-	int i;
-	struct sockaddr *sa;
-
-	if (0 == flags)
-		return NULL;
-
-	for (i = 1; i; i <<= 1) {
-		if (flags & i) {
-			sa = (struct sockaddr *)cp;
-			if (i == RTA_IFA)
-				return sa;
-			ADVANCE(cp, sa);
-		}
-	}
-
-	return NULL;
 }
 
 static void __dead
