@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm dyndnsd
-.Nd Dynamic DNS Daemon
+.Nd Dynamic DNS daemon
 .Sh SYNOPSIS
 .Nm 
 .Op Fl dhnv
@@ -11,42 +11,36 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon is a generic Dynamic-DNS client. That is, in order to dynamically update the public IP address of a domain's A record,
+daemon is a generic dynamic-DNS client. It will execute a given shell command when the IPv4 address of a monitored interface changes.
+.Pp
+If
 .Nm
-will send an HTTP(S) GET request to the configured DNS provider if the configured network interface's IP address has changed.
+is executed as root, then it will drop its privilege to the user/group configured at compile-time.
+.Pp
+Upon receiving
+.Dv SIGHUP ,
+.Nm
+reloads the configuration file.
 .Ss OPTIONS 
 .Bl -tag -width Ds
 .It Fl d
-Enable debug mode, which prevents
-.Nm
-from forking into the background, and prints
-.Xr syslog 3
-messages to standard error.
+Do not daemonize and log to stdout.
 .It Fl f Ar file
-Use
-.Em file
-as the configuration file.
+Specify an alternate location,
+.Ar file ,
+for the configuration file.
 .It Fl h
 Print usage.
 .It Fl n
-Validate the configuration file, then terminate.
+Config-test mode. Validate the configuration file, then terminate.
 .It Fl v
 Print version number.
 .El
-.Ss DROPPING PRIVILEGE
-If
-.Nm
-is executed as a non-root user, then it will not attempt to change its process user and group.
-.Pp
-However, if
-.Nm
-is started as the root user, then it will drop privilege by first attempting to set its user/group to that which was specified in the configuration file. If no user/group was specified in the configuration file, then
-.Nm
-will attempt to set the user/group to the compile-time-configured user and group.
 .Sh FILES
-.Bl -tag
+.Bl -tag -width "/etc/dyndnsd.conf" -compact
 .It Pa /etc/dyndnsd.conf
-Default configuration file
+.Nm
+configuration file
 .El
 .Sh EXIT STATUS
 .Ex
