@@ -2,6 +2,7 @@
 #define AST_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 struct ast_iface {
 	char *if_name;
