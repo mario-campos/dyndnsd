@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ast.h"
 #include "parser.h"
@@ -60,4 +61,15 @@ ast_iface_new(char *name, size_t ndomains)
 
 	aif->if_name = name;
 	return aif;
+}
+
+struct ast_iface *
+find_ast_iface(struct ast_root *ast, char *ifname)
+{
+	for(size_t i = 0; i < ast->iface_len; i++) {
+		struct ast_iface *aif = ast->iface[i];
+		if (0 == strcmp(ifname, aif->if_name))
+			return aif;
+	}
+	return NULL;
 }

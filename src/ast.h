@@ -15,6 +15,7 @@ struct ast_root {
 	struct ast_iface *iface[];
 };
 
+struct ast_iface *find_ast_iface(struct ast_root *, char *);
 struct ast_iface *ast_iface_new(char *, size_t);
 bool ast_load(struct ast_root **, FILE *);
 

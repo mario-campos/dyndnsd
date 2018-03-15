@@ -26,7 +26,6 @@ static void __dead usage(void);
 static void 	parse_fqdn(char *, char **, char **, char **);
 static void	drop_privilege(char *, char *);
 static void	set_dyndnsd_env(char *, char *);
-static struct ast_iface *find_ast_iface(struct ast_root *, char *);
 static char    *getshell(void);
 
 int
@@ -254,16 +253,6 @@ set_dyndnsd_env(char *fqdn, char *ipaddr)
 	free(tld);
 }
 
-static struct ast_iface *
-find_ast_iface(struct ast_root *ast, char *ifname)
-{
-	for(size_t i = 0; i < ast->iface_len; i++) {
-		struct ast_iface *aif = ast->iface[i];
-		if (0 == strcmp(ifname, aif->if_name))
-			return aif;
-	}
-	return NULL;
-}
 
 static char *
 getshell(void)
