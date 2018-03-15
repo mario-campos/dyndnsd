@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 				ifname = rtm_getifname(rtmbuf);
 				ipaddr = rtm_getipaddr(rtmbuf);
 
-				aif = find_ast_iface(ast, ifname);
+				aif = ast_iface_find(ast, ifname);
 				if (NULL == aif)
 					continue;
 

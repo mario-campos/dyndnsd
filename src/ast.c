@@ -64,7 +64,7 @@ ast_iface_new(char *name, size_t ndomains)
 }
 
 struct ast_iface *
-find_ast_iface(struct ast_root *ast, char *ifname)
+ast_iface_find(struct ast_root *ast, char *ifname)
 {
 	for(size_t i = 0; i < ast->iface_len; i++) {
 		struct ast_iface *aif = ast->iface[i];
