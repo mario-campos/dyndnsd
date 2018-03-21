@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "ast.h"
-#include "y.tab.h"
 #include "die.h"
 
 extern FILE *yyin;

@@ -1,7 +1,7 @@
 dyndnsd: ast.o die.o dyndnsd.o y.tab.o lex.yy.o
 	$(CC) $(CFLAGS) -o dyndnsd ast.o die.o dyndnsd.o y.tab.o lex.yy.o
 
-ast.o: src/ast.c src/ast.h y.tab.h
+ast.o: src/ast.c src/ast.h
 	$(CC) $(CFLAGS) -I . -I src -o ast.o -c src/ast.c
 
 die.o: src/die.c src/die.h
