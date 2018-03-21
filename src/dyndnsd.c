@@ -21,7 +21,6 @@
 #include <unistd.h>
 
 #include "ast.h"
-#include "config.h"
 #include "die.h"
 #include "dyndnsd.h"
 
@@ -81,7 +80,7 @@ main(int argc, char *argv[])
 			opts |= DYNDNSD_VALID_MODE;
 			break;
 		case 'v':
-			puts(VERSION);
+			puts(DYNDNSD_VERSION);
 			exit(EXIT_SUCCESS);
 		default:
 			usage();
@@ -130,7 +129,7 @@ main(int argc, char *argv[])
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[2], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 
-	syslog(LOG_INFO, "starting dyndnsd-%s", VERSION);
+	syslog(LOG_INFO, "starting dyndnsd-%s", DYNDNSD_VERSION);
 
 	while (true) {
 		int nev;

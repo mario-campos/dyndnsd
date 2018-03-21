@@ -18,4 +18,6 @@ struct ast_root {
 struct ast_iface *ast_iface_new(char *, size_t);
 bool ast_load(struct ast_root **, FILE *);
 
+extern struct ast_root **ast;
+
 #endif /* AST_H */

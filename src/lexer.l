@@ -3,9 +3,9 @@
 #include <stdlib.h>
 
 #include "ast.h"
-#include "parser.h"
+#include "y.tab.h"
 
-void yyerror(__unused struct ast_root **, const char *);
+void yyerror(const char *);
 %}
 
 %option nounput
@@ -34,7 +34,7 @@ run			return RUN;
 %%
 
 void
-yyerror(__unused struct ast_root **ast, const char *msg)
+yyerror(const char *msg)
 {
 	fprintf(stderr, "%s: %s (line %d)\n", getprogname(), msg, yylineno);
 }

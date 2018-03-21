@@ -38,9 +38,6 @@ static size_t sllist_counttype(struct cst_list *, int);
 %type <cst_node> interface interface_statements interface_statement
 %type <cst_node> domain run '\n'
 
-%locations
-%parse-param {struct ast_root **ast}
-
 %%
 
 config : config_statements				{
