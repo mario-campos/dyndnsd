@@ -4,11 +4,12 @@
 #include <string.h>
 
 #include "ast.h"
-#include "parser.h"
 #include "die.h"
 
 extern FILE *yyin;
 extern int   yyparse();
+
+struct ast_root **ast;
 
 static void
 ast_free(struct ast_root *ast)
