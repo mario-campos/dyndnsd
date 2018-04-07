@@ -6,10 +6,10 @@ CFLAGS   +!= pkg-config --cflags cmocka
 LDFLAGS  +!= pkg-config --libs cmocka
 
 dyndnsd: ${MAIN_OBJS}
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${MAIN_OBJS}
+	${CC} ${LDFLAGS} -o $@ ${MAIN_OBJS}
 
 check: ${TEST_OBJS}
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${TEST_SRCS}
+	${CC} ${LDFLAGS} -o $@ ${TEST_OBJS}
 	./$@
 
 .PHONY: clean
