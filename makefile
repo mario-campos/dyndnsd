@@ -8,11 +8,13 @@ LDFLAGS  +!= pkg-config --libs cmocka
 dyndnsd: ${MAIN_OBJS}
 	${CC} ${LDFLAGS} -o $@ ${MAIN_OBJS}
 
-check: ${TEST_OBJS}
+dyndnsd-test: ${TEST_OBJS}
 	${CC} ${LDFLAGS} -o $@ ${TEST_OBJS}
-	./$@
+
+check: dyndnsd-test
+	./dyndnsd-test
 
 .PHONY: clean
 
 clean:
-	rm -f dyndnsd check *.o y.tab.h
+	rm -f dyndnsd dyndnsd-test *.o y.tab.h
