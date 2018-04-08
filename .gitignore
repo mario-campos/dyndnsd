@@ -1,4 +1,5 @@
 dyndnsd
+dyndnsd-test
 dyndnsd.core
 dyndnsd.conf
 *.o

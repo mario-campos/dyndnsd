@@ -11,7 +11,7 @@ dyndnsd: ${MAIN_OBJS}
 dyndnsd-test: ${TEST_OBJS}
 	${CC} ${LDFLAGS} -o $@ ${TEST_OBJS}
 
-check: dyndnsd-test
+check! dyndnsd-test
 	./dyndnsd-test
 
 .PHONY: clean
