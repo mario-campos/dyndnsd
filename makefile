@@ -31,7 +31,7 @@ dyndnsd.o: src/dyndnsd.h src/dyndnsd.c
 	${CC} ${CFLAGS} -c src/dyndnsd.c
 
 dyndnsd: ast.o die.o process.o rtm.o y.tab.o lex.yy.o
-	${CC} ${LDFLAGS} -o $@ dyndnsd.o ast.o die.o process.o rtm.o y.tab..o lex.yy.o
+	${CC} ${LDFLAGS} -o $@ dyndnsd.o ast.o die.o process.o rtm.o y.tab.o lex.yy.o
 
 test.o: test/test.c
 	${CC} ${CFLAGS} -c test/test.c
@@ -45,4 +45,4 @@ check! dyndnsd-test
 .PHONY: clean
 
 clean:
-	rm -f *.o dyndnsd dyndnsd-test y.tab.h
+	rm -f dyndnsd dyndnsd-test *.o y.tab.* lex.yy.c
