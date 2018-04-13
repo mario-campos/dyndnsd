@@ -3,36 +3,38 @@ LDFLAGS  +!= pkg-config --libs cmocka
 
 all: dyndnsd
 
-parser.o: src/parser.y
-	${YACC} -d -o parser.c src/parser.y
-	${CC} ${CFLAGS} -c -o $@ parser.c
-	rm -f parser.c
+lex.yy.c: src/lexer.l
+	${LEX} ${LFLAGS} src/lexer.l
 
-lexer.o: src/lexer.l src/parser.y
-	${LEX} -o lexer.c src/lexer.l
-	${CC} ${CFLAGS} -c -o $@ lexer.c
-	rm -f lexer.c
+lex.yy.o: lex.yy.c y.tab.h
+	${CC} ${CFLAGS} lex.yy.c
+	
+y.tab.c y.tab.h: src/parser.y
+	${YACC} ${YFLAGS} src/parser.y
+
+y.tab.o: y.tab.c y.tab.h
+	${CC} ${CFLAGS} -c y.tab.c
 
 rtm.o: src/rtm.h src/rtm.c
-	${CC} ${CFLAGS} -c -o $@ src/rtm.c
+	${CC} ${CFLAGS} -c src/rtm.c
 
 process.o: src/process.h src/process.c
-	${CC} ${CFLAGS} -c -o $@ src/process.c
+	${CC} ${CFLAGS} -c src/process.c
 
 die.o: src/die.h src/die.c
-	${CC} ${CFLAGS} -c -o $@ src/die.c
+	${CC} ${CFLAGS} -c src/die.c
 
 ast.o: src/ast.h src/ast.c
-	${CC} ${CFLAGS} -c -o $@ src/ast.c
+	${CC} ${CFLAGS} -c src/ast.c
 
 dyndnsd.o: src/dyndnsd.h src/dyndnsd.c
-	${CC} ${CFLAGS} -c -o $@ src/dyndnsd.c
+	${CC} ${CFLAGS} -c src/dyndnsd.c
 
-dyndnsd: ast.o die.o process.o rtm.o parser.o lexer.o
-	${CC} ${LDFLAGS} -o $@ dyndnsd.o ast.o die.o process.o rtm.o parser.o lexer.o
+dyndnsd: ast.o die.o process.o rtm.o y.tab.o lex.yy.o
+	${CC} ${LDFLAGS} -o $@ dyndnsd.o ast.o die.o process.o rtm.o y.tab..o lex.yy.o
 
 test.o: test/test.c
-	${CC} ${CFLAGS} -c -o $@ test/test.c
+	${CC} ${CFLAGS} -c test/test.c
 
 dyndnsd-test: test.o die.o
 	${CC} ${LDFLAGS} -o $@ test.o die.o
