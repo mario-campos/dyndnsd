@@ -15,6 +15,7 @@ test_ast_iface_new(void **state) {
 	aif = ast_iface_new("foo", 1);
 	assert_string_equal(aif->if_name, "foo");
 	assert_int_equal(aif->domain_len, 0);
+	assert_null(aif->domain[0]);
 	free(aif);
 }
 
