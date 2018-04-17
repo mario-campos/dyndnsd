@@ -4,10 +4,10 @@ LDFLAGS +!= pkg-config --libs cmocka
 
 all: dyndnsd
 
-lex.yy.c: src/lexer.l src/ast.h
-	${LEX} ${LFLAGS} src/lexer.l
-y.tab.c y.tab.h: src/parser.y src/ast.h
-	${YACC} ${YFLAGS} src/parser.y
+lex.yy.c: src/lex.l src/ast.h
+	${LEX} ${LFLAGS} src/lex.l
+y.tab.c y.tab.h: src/parse.y src/ast.h
+	${YACC} ${YFLAGS} src/parse.y
 lex.yy.o: lex.yy.c y.tab.h
 y.tab.o: y.tab.c y.tab.h
 rtm.o: src/rtm.h src/rtm.c
