@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 				for(size_t j = 0; j < aif->domain_len; j++) {
 					pid_t pid;
 
-					set_dyndnsd_env(aif->domain[j], ipaddr);
+					set_dyndnsd_env(aif->domain[j], ipaddr, aif->if_name);
 
 					pid = spawn(ast->cmd, devnull);
 					if (-1 == pid)

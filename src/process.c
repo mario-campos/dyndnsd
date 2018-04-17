@@ -36,7 +36,7 @@ getshell(void)
 }
 
 void
-set_dyndnsd_env(char *fqdn, char *ipaddr)
+set_dyndnsd_env(char *fqdn, char *ipaddr, char *iface)
 {
 	char *hostname, *domain, *tld;
 	parse_fqdn(fqdn, &hostname, &domain, &tld);
@@ -51,6 +51,8 @@ set_dyndnsd_env(char *fqdn, char *ipaddr)
 		syslog(LOG_WARNING, "cannot set DYNDNSD_TLD: setenv(3): %m");
 	if (-1 == setenv("DYNDNSD_IPADDR", ipaddr, true))
 		syslog(LOG_WARNING, "cannot set DYNDNSD_IPADDR: setenv(3): %m");
+	if (-1 == setenv("DYNDNSD_INTERFACE", iface, true))
+		syslog(LOG_WARNING, "cannot set DYNDNSD_INTERFACE: setenv(3): %m");
 
 	free(hostname);
 	free(domain);
