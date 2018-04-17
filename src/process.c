@@ -41,12 +41,16 @@ set_dyndnsd_env(char *fqdn, char *ipaddr)
 	char *hostname, *domain, *tld;
 	parse_fqdn(fqdn, &hostname, &domain, &tld);
 
-	if (-1 == setenv("DYNDNSD_FQDN", fqdn, true) 		||
-	    -1 == setenv("DYNDNSD_HOSTNAME", hostname, true) 	||
-	    -1 == setenv("DYNDNSD_DOMAIN", domain, true) 	||
-	    -1 == setenv("DYNDNSD_TLD", tld, true)		||
-	    -1 == setenv("DYNDNSD_IPADDR", ipaddr, true))
-		die(LOG_CRIT, AT("setenv(3): %m"));
+	if (-1 == setenv("DYNDNSD_FQDN", fqdn, true))
+		syslog(LOG_WARNING, "cannot set DYNDNSD_FQDN: setenv(3): %m");
+	if (-1 == setenv("DYNDNSD_HOSTNAME", hostname, true))
+		syslog(LOG_WARNING, "cannot set DYNDNSD_HOSTNAME: setenv(3): %m");
+	if (-1 == setenv("DYNDNSD_DOMAIN", domain, true))
+		syslog(LOG_WARNING, "cannot set DYNDNSD_DOMAIN: setenv(3): %m");
+	if (-1 == setenv("DYNDNSD_TLD", tld, true))
+		syslog(LOG_WARNING, "cannot set DYNDNSD_TLD: setenv(3): %m");
+	if (-1 == setenv("DYNDNSD_IPADDR", ipaddr, true))
+		syslog(LOG_WARNING, "cannot set DYNDNSD_IPADDR: setenv(3): %m");
 
 	free(hostname);
 	free(domain);
