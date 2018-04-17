@@ -19,8 +19,8 @@ dyndnsd.o: src/dyndnsd.h src/dyndnsd.c
 
 dyndnsd: dyndnsd.o ast.o die.o process.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o ast.o die.o process.o rtm.o y.tab.o lex.yy.o
-dyndnsd-test: test.o die.o
-	${CC} ${LDFLAGS} -o $@ test.o die.o
+dyndnsd-test: test.o die.o y.tab.o lex.yy.o
+	${CC} ${LDFLAGS} -o $@ test.o die.o y.tab.o lex.yy.o
 
 check! dyndnsd-test
 	./dyndnsd-test

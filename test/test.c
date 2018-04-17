@@ -3,7 +3,20 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
+#include "ast.h"
+#include "ast.c"
 #include "process.c"
+
+extern int yyparse();
+
+void
+test_ast_iface_new(void **state) {
+	struct ast_iface *aif;
+	aif = ast_iface_new("foo", 1);
+	assert_string_equal(aif->if_name, "foo");
+	assert_int_equal(aif->domain_len, 0);
+	free(aif);
+}
 
 void
 test_parse_fqdn_2d(void **state) {
@@ -41,7 +54,8 @@ test_parse_fqdn_4d(void **state) {
 const struct CMUnitTest cmocka_tests[] = {
 	cmocka_unit_test(test_parse_fqdn_2d),
 	cmocka_unit_test(test_parse_fqdn_3d),
-	cmocka_unit_test(test_parse_fqdn_4d)
+	cmocka_unit_test(test_parse_fqdn_4d),
+	cmocka_unit_test(test_ast_iface_new)
 };
 
 int
