@@ -1,7 +1,7 @@
-USER      = _dyndnsd
-GROUP     = _dyndnsd
-CONF_PATH = /etc/dyndnsd.conf
-CPPFLAGS += -DDYNDNSD_USER=\"${USER}\" -DDYNDNSD_GROUP=\"${GROUP}\" -DDYNDNSD_CONF_PATH=\"${CONF_PATH}\"
+DYNDNSD_USER      = _dyndnsd
+DYNDNSD_GROUP     = _dyndnsd
+DYNDNSD_CONF_PATH = /etc/dyndnsd.conf
+CPPFLAGS += -DDYNDNSD_USER=\"${DYNDNSD_USER}\" -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\" -DDYNDNSD_CONF_PATH=\"${DYNDNSD_CONF_PATH}\"
 CFLAGS   += -I. -Isrc
 CMOCKA_CFLAGS  +!= pkg-config --cflags cmocka
 CMOCKA_LDFLAGS +!= pkg-config --libs cmocka
