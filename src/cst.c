@@ -141,6 +141,7 @@ cst_free(struct cst_node *cst)
 		cst_free(n);
 	}
 
+	free(cst->string);
 	free(cst);
 }
 
