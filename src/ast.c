@@ -9,7 +9,7 @@
 extern FILE *yyin;
 extern int   yyparse();
 
-struct ast_root **ast;
+struct ast_root *ast;
 
 static void
 ast_free(struct ast_root *ast)
@@ -28,23 +28,12 @@ ast_free(struct ast_root *ast)
 	free(ast);
 }
 
-bool
-ast_load(struct ast_root **ast, FILE *file)
+void
+ast_load(FILE *file)
 {
-	assert(ast);
-	assert(file);
-
-	struct ast_root *tmp;
-
 	rewind(file);
 	yyin = file;
-	if (0 == yyparse(&tmp)) { // successful
-		if (*ast) ast_free(*ast);
-		*ast = tmp;
-		return true;
-	}
-
-	return false;
+	yyparse();
 }
 
 struct ast_iface *

@@ -22,7 +22,7 @@ extern int yyerror();
 
 config : config_statements				{
 								struct cst_node *cst = cst_node(0, NULL, NULL, $1);
-								*ast = cst_convert(cst);
+								ast = cst_convert(cst);
 								cst_free(cst);
 							}
 	;
