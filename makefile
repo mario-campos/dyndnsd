@@ -1,4 +1,4 @@
-CFLAGS += -I. -Isrc
+CFLAGS += -g -I. -Isrc
 CMOCKA_CFLAGS  +!= pkg-config --cflags cmocka
 CMOCKA_LDFLAGS +!= pkg-config --libs cmocka
 
