@@ -48,22 +48,6 @@ ast_load(struct ast_root **ast, FILE *file)
 }
 
 struct ast_iface *
-ast_iface_new(char *name, size_t ndomains)
-{
-	assert(name);
-	assert(ndomains > 0);
-
-	struct ast_iface *aif;
-
-	aif = calloc(sizeof(*aif) + ndomains * sizeof(aif), (size_t)1);
-	if (NULL == aif)
-		die(LOG_CRIT, AT("calloc(3): %m"));
-
-	aif->if_name = name;
-	return aif;
-}
-
-struct ast_iface *
 ast_iface_find(struct ast_root *ast, char *ifname)
 {
 	for(size_t i = 0; i < ast->iface_len; i++) {

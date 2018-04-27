@@ -13,17 +13,16 @@ extern int yyerror();
 }
 
 %token USER GROUP INTERFACE DOMAIN RUN
-%token <string> STRING
-%type <string> strings
+%token <string> STRING QUOTE
 %type <cst_node> config config_statements config_statement
 %type <cst_node> interface interface_statements interface_statement
-%type <cst_node> domain run '\n'
+%type <cst_node> domain run exprs expr '\n'
 
 %%
 
 config : config_statements				{
-								struct cst_node *cst = cst_node(0, NULL, $1);
-								*ast = cst2ast(cst);
+								struct cst_node *cst = cst_node(0, NULL, NULL, $1);
+								*ast = cst_convert(cst);
 								cst_free(cst);
 							}
 	;
@@ -34,13 +33,13 @@ config_statements
 	;
 
 config_statement
-	: '\n'						{ $$ = cst_node('\n', NULL, NULL); }
+	: '\n'						{ $$ = cst_node('\n', NULL, NULL, NULL); }
 	| run
 	| interface
 	;
 
 interface
-	: INTERFACE STRING '{' interface_statements '}'	{ $$ = cst_node(INTERFACE, $2, $4); }
+	: INTERFACE expr '{' interface_statements '}'	{ $$ = cst_node(INTERFACE, NULL, $2, $4); }
 	;
 
 interface_statements
@@ -49,21 +48,20 @@ interface_statements
 	;
 
 interface_statement
-	: '\n'						{ $$ = cst_node('\n', NULL, NULL); }
+	: '\n'						{ $$ = cst_node('\n', NULL, NULL, NULL); }
 	| domain
 	;
 
-domain	: DOMAIN STRING 				{ $$ = cst_node(DOMAIN, $2, NULL); }
+domain	: DOMAIN expr					{ $$ = cst_node(DOMAIN, NULL, $2, NULL); }
 	;
 
-run	: RUN strings 		 			{ $$ = cst_node(RUN, $2, NULL); }
+run	: RUN exprs					{ $$ = cst_node(RUN, NULL, $2, NULL); }
 	;
 
-strings	: STRING
-	| strings STRING				{
-								if (-1 == asprintf(&$$, "%s %s", $1, $2))
-									die(LOG_CRIT, AT("asprintf(3)"));
-								free($1);
-								free($2);
-							}
+exprs	: expr
+	| exprs expr					{ $$ = $2; SLIST_NEXT($2, next) = $1; }
+	;
+
+expr	: STRING					{ $$ = cst_node(STRING, $1, NULL, NULL); }
+	| QUOTE						{ $$ = cst_node(QUOTE, $1, NULL, NULL); }
 	;

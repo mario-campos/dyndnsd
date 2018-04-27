@@ -15,6 +15,7 @@ void yyerror(const char *);
 newline			\n+
 comment			#.*
 whitespace		[ \t]+
+quoted_string		\"([^"\\]|\\.)*\"
 unquoted_string		[^ \n\t]+
 lineescape		\\.*\n
 
@@ -29,6 +30,7 @@ run			return RUN;
 {comment}		/* ignore */ ;
 {whitespace}		/* ignore */ ;
 {lineescape}		/* ignore */ ;
+{quoted_string}		{ yylval.string = strdup(yytext); return QUOTE; }
 {unquoted_string}	{ yylval.string = strdup(yytext); return STRING; }
 
 %%
