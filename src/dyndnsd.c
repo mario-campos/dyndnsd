@@ -97,8 +97,7 @@ main(int argc, char *argv[])
 	if (NULL == etcfstream)
 		err(EXIT_FAILURE, "cannot open file '%s': fdopen(3)", optf);
 
-	if (!ast_load(&ast, etcfstream))
-		errx(EXIT_FAILURE, "cannot parse configuration file");
+	ast_load(etcfstream);
 
 	if (opts & DYNDNSD_VALID_MODE)
 		exit(EXIT_SUCCESS);
@@ -151,7 +150,7 @@ main(int argc, char *argv[])
 			/* SIGHUP event */
 			else if (events[i].ident == SIGHUP) {
 				syslog(LOG_NOTICE, "SIGHUP received. Reloading the configuration file...");
-				ast_load(&ast, etcfstream);
+				ast_load(etcfstream);
 			}
 
 			/* RTM_NEWADDR event */
