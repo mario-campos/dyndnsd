@@ -113,8 +113,7 @@ main(int argc, char *argv[])
 
 	/* set up event handler */
 	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
-	if (-1 == sigaction(SIGHUP, &sa, NULL)	||
-	    -1 == sigaction(SIGTERM, &sa, NULL)	||
+	if (-1 == sigaction(SIGTERM, &sa, NULL)	||
 	    -1 == sigaction(SIGCHLD, &sa, NULL))  // implying SA_NOCLDWAIT
 		die(LOG_CRIT, AT("sigaction(2): %m"));
 
@@ -145,12 +144,6 @@ main(int argc, char *argv[])
 			if (events[i].ident == SIGTERM) {
 				syslog(LOG_NOTICE, "SIGTERM received. Terminating...");
 				goto end;
-			}
-
-			/* SIGHUP event */
-			else if (events[i].ident == SIGHUP) {
-				syslog(LOG_NOTICE, "SIGHUP received. Reloading the configuration file...");
-				ast_load(etcfstream);
 			}
 
 			/* RTM_NEWADDR event */
