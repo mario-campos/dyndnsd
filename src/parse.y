@@ -1,7 +1,6 @@
 %{
 #include "ast.h"
 #include "cst.h"
-#include "die.h"
 
 extern int yylex();
 extern int yyerror();

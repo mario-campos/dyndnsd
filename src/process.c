@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "die.h"
 #include "process.h"
 
 static void parse_fqdn(char *, char **, char **, char **);

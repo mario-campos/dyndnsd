@@ -17,10 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "ast.h"
-#include "die.h"
 #include "dyndnsd.h"
 
 #define ROUNDUP(a) \
@@ -110,20 +110,26 @@ main(int argc, char *argv[])
 		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
 	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
-		err(EXIT_FAILURE, AT("daemon(3)"));
+		err(EXIT_FAILURE, "daemon(3)");
 
-	if (-1 == pledge("stdio proc exec", NULL))
-		die(LOG_ERR, "pledge(2): %m");
+	if (-1 == pledge("stdio proc exec", NULL)) {
+		syslog(LOG_ERR, "pledge(2): %m");
+		exit(EXIT_FAILURE);
+	}
 
 	/* set up event handler */
 	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
 	if (-1 == sigaction(SIGTERM, &sa, NULL)	||
-	    -1 == sigaction(SIGCHLD, &sa, NULL))  // implying SA_NOCLDWAIT
-		die(LOG_CRIT, AT("sigaction(2): %m"));
+	    -1 == sigaction(SIGCHLD, &sa, NULL))  { // implying SA_NOCLDWAIT
+		syslog(LOG_CRIT, "sigaction(2): %m");
+		exit(EXIT_FAILURE);
+	}
 
 	kq = kqueue();
-	if (-1 == kq)
-		die(LOG_CRIT, AT("kqueue(2): %m"));
+	if (-1 == kq) {
+		syslog(LOG_CRIT, "kqueue(2): %m");
+		exit(EXIT_FAILURE);
+	}
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -135,12 +141,16 @@ main(int argc, char *argv[])
 		int nev;
 
 		nev = kevent(kq, changes, 3, NULL, 0, NULL);
-		if (-1 == nev)
-			die(LOG_CRIT, AT("kevent(2): %m"));
+		if (-1 == nev) {
+			syslog(LOG_CRIT, "kevent(2): %m");
+			exit(EXIT_FAILURE);
+		}
 
 		nev = kevent(kq, NULL, 0, events, 3, NULL);
-		if (-1 == nev)
-			die(LOG_CRIT, AT("kevent(2): %m"));
+		if (-1 == nev) {
+			syslog(LOG_CRIT, "kevent(2): %m");
+			exit(EXIT_FAILURE);
+		}
 
 		for (ssize_t i = 0; i < nev; i++) {
 
@@ -206,15 +216,15 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (NULL == (newgroup = getgrnam(groupname)))
-		die(LOG_ERR, "cannot set GID: getgrnam(3): %m");
+		err(EXIT_FAILURE, "cannot set GID: getgrnam(3)");
 	if (-1 == setgid(newgroup->gr_gid))
-		die(LOG_ERR, "cannot set GID: setgid(2): %m");
+		err(EXIT_FAILURE, "cannot set GID: setgid(2)");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		die(LOG_ERR, "cannot set groups: setgroups(2): %m");
+		err(EXIT_FAILURE, "cannot set groups: setgroups(2)");
 	if (NULL == (newuser = getpwnam(username)))
-		die(LOG_ERR, "cannot set UID: getpwnam(3): %m");
+		err(EXIT_FAILURE, "cannot set UID: getpwnam(3)");
 	if (-1 == setuid(newuser->pw_uid))
-		die(LOG_ERR, "cannot set UID: setuid(2): %m");
+		err(EXIT_FAILURE, "cannot set UID: setuid(2)");
 }
 
 static int
@@ -288,7 +298,7 @@ spawn(char *cmd, int fd)
 
 	pid = fork();
 	if (-1 == pid) {
-		syslog(LOG_DEBUG, AT("fork(2): %m"));
+		syslog(LOG_DEBUG, "fork(2): %m");
 		return -1;
 	}
 
