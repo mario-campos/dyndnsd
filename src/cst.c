@@ -39,7 +39,7 @@ cst_convert_run(struct cst_node *node)
 
 	buf = calloc(len, (size_t)1);
 	if (NULL == buf)
-		err(EXIT_FAILURE, "cannot parse file: calloc(3): %m");
+		err(EXIT_FAILURE, "cannot parse file: calloc(3)");
 
 	SLIST_FOREACH(i, &node->label, next) {
 		(void)strlcat(buf, i->string, len);
