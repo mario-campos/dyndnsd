@@ -37,6 +37,9 @@ static pid_t spawn(char *, int);
 static void set_dyndnsd_env(char *, char *, char *);
 static char *getshell(void);
 static void parse_fqdn(char *, char **, char **, char **);
+static struct ast_iface *find_iface(struct ast_root *, char *);
+
+struct ast_root *ast;
 
 int
 main(int argc, char *argv[])
@@ -97,7 +100,8 @@ main(int argc, char *argv[])
 	if (NULL == etcfstream)
 		err(EXIT_FAILURE, "cannot open file '%s': fdopen(3)", optf);
 
-	ast_load(etcfstream);
+	yyin = etcfstream;
+	yyparse();
 
 	if (opts & DYNDNSD_VALID_MODE)
 		exit(EXIT_SUCCESS);
@@ -160,7 +164,7 @@ main(int argc, char *argv[])
 				ifname = rtm_getifname(rtmbuf);
 				ipaddr = rtm_getipaddr(rtmbuf);
 
-				aif = ast_iface_find(ast, ifname);
+				aif = find_iface(ast, ifname);
 				if (NULL == aif)
 					continue;
 
@@ -351,4 +355,15 @@ parse_fqdn(char *fqdn, char **hostname, char **domain, char **tld)
 	n = i - fqdn;
 	*domain = strdup(i + 1);
 	*hostname = strndup(fqdn, n);
+}
+
+static struct ast_iface *
+find_iface(struct ast_root *ast, char *ifname)
+{
+	for(size_t i = 0; i < ast->iface_len; i++) {
+		struct ast_iface *aif = ast->iface[i];
+		if (0 == strcmp(ifname, aif->if_name))
+			return aif;
+	}
+	return NULL;
 }
