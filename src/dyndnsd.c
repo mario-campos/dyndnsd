@@ -101,7 +101,8 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "cannot open file '%s': fdopen(3)", optf);
 
 	yyin = etcfstream;
-	yyparse();
+	if (1 == yyparse())
+		exit(EXIT_FAILURE);
 
 	if (opts & DYNDNSD_VALID_MODE)
 		exit(EXIT_SUCCESS);
