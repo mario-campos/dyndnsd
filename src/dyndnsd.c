@@ -140,14 +140,8 @@ main(int argc, char *argv[])
 	while (true) {
 		int nev;
 
-		nev = kevent(kq, changes, 3, NULL, 0, NULL);
-		if (-1 == nev) {
-			syslog(LOG_CRIT, "kevent(2): %m");
-			exit(EXIT_FAILURE);
-		}
-
-		nev = kevent(kq, NULL, 0, events, 3, NULL);
-		if (-1 == nev) {
+		if (-1 == kevent(kq, changes, 3, NULL, 0, NULL) ||
+		    -1 == (nev = kevent(kq, NULL, 0, events, 3, NULL))) {
 			syslog(LOG_CRIT, "kevent(2): %m");
 			exit(EXIT_FAILURE);
 		}
