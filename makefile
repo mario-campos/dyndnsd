@@ -12,12 +12,11 @@ y.tab.c y.tab.h: src/parse.y src/cst.h
 	${YACC} ${YFLAGS} src/parse.y
 lex.yy.o: lex.yy.c y.tab.h
 y.tab.o: y.tab.c y.tab.h
-die.o: src/die.h src/die.c
 cst.o: src/cst.h src/cst.c y.tab.h
 dyndnsd.o: src/dyndnsd.h src/dyndnsd.c
 
-dyndnsd: dyndnsd.o cst.o die.o y.tab.o lex.yy.o
-	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o die.o y.tab.o lex.yy.o
+dyndnsd: dyndnsd.o cst.o y.tab.o lex.yy.o
+	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o y.tab.o lex.yy.o
 
 .PHONY: clean
 
