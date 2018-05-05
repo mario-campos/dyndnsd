@@ -61,11 +61,11 @@ main(int argc, char *argv[])
 	/* allocate route(4) socket first... */
 	routefd = rtm_socket();
 	if (-1 == routefd)
-		errx(EXIT_FAILURE, "cannot create route(4) socket");
+		errx(1, "cannot create route(4) socket");
 
 	/* ...to pledge(2) ASAP */
 	if (-1 == pledge("stdio rpath proc exec id getpw", NULL))
-		err(EXIT_FAILURE, "pledge(2)");
+		err(1, "pledge(2)");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			puts(DYNDNSD_VERSION);
-			exit(EXIT_SUCCESS);
+			exit(0);
 		default:
 			usage();
 		}
@@ -90,32 +90,32 @@ main(int argc, char *argv[])
 
 	devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
 	if (-1 == devnull)
-		err(EXIT_FAILURE, "cannopt open file '/dev/null': open(2)");
+		err(1, "cannopt open file '/dev/null': open(2)");
 
 	etcfd = open(optf, O_RDONLY|O_CLOEXEC);
 	if (-1 == etcfd)
-		err(EXIT_FAILURE, "cannot open file '%s': open(2)", optf);
+		err(1, "cannot open file '%s': open(2)", optf);
 
 	etcfstream = fdopen(etcfd, "r");
 	if (NULL == etcfstream)
-		err(EXIT_FAILURE, "cannot open file '%s': fdopen(3)", optf);
+		err(1, "cannot open file '%s': fdopen(3)", optf);
 
 	yyin = etcfstream;
 	if (1 == yyparse())
-		exit(EXIT_FAILURE);
+		exit(1);
 
 	if (opts & DYNDNSD_VALID_MODE)
-		exit(EXIT_SUCCESS);
+		exit(0);
 
 	if (0 == getuid())
 		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
 	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
-		err(EXIT_FAILURE, "daemon(3)");
+		err(1, "daemon(3)");
 
 	if (-1 == pledge("stdio proc exec", NULL)) {
 		syslog(LOG_ERR, "pledge(2): %m");
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
 	/* set up event handler */
@@ -123,13 +123,13 @@ main(int argc, char *argv[])
 	if (-1 == sigaction(SIGTERM, &sa, NULL)	||
 	    -1 == sigaction(SIGCHLD, &sa, NULL))  { // implying SA_NOCLDWAIT
 		syslog(LOG_CRIT, "sigaction(2): %m");
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
 	kq = kqueue();
 	if (-1 == kq) {
 		syslog(LOG_CRIT, "kqueue(2): %m");
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
 	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 		if (-1 == kevent(kq, changes, 3, NULL, 0, NULL) ||
 		    -1 == (nev = kevent(kq, NULL, 0, events, 3, NULL))) {
 			syslog(LOG_CRIT, "kevent(2): %m");
-			exit(EXIT_FAILURE);
+			exit(1);
 		}
 
 		for (ssize_t i = 0; i < nev; i++) {
@@ -201,7 +201,7 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", getprogname());
-	exit(EXIT_SUCCESS);
+	exit(0);
 }
 
 static void
@@ -211,15 +211,15 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (NULL == (newgroup = getgrnam(groupname)))
-		err(EXIT_FAILURE, "cannot set GID: getgrnam(3)");
+		err(1, "cannot set GID: getgrnam(3)");
 	if (-1 == setgid(newgroup->gr_gid))
-		err(EXIT_FAILURE, "cannot set GID: setgid(2)");
+		err(1, "cannot set GID: setgid(2)");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		err(EXIT_FAILURE, "cannot set groups: setgroups(2)");
+		err(1, "cannot set groups: setgroups(2)");
 	if (NULL == (newuser = getpwnam(username)))
-		err(EXIT_FAILURE, "cannot set UID: getpwnam(3)");
+		err(1, "cannot set UID: getpwnam(3)");
 	if (-1 == setuid(newuser->pw_uid))
-		err(EXIT_FAILURE, "cannot set UID: setuid(2)");
+		err(1, "cannot set UID: setuid(2)");
 }
 
 static int
