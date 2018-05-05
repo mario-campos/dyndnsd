@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 
 	/* ...to pledge(2) ASAP */
 	if (-1 == pledge("stdio rpath proc exec id getpw", NULL))
-		err(1, "pledge(2)");
+		err(1, "pledge");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -90,15 +90,15 @@ main(int argc, char *argv[])
 
 	devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
 	if (-1 == devnull)
-		err(1, "cannopt open file '/dev/null': open(2)");
+		err(1, "open");
 
 	etcfd = open(optf, O_RDONLY|O_CLOEXEC);
 	if (-1 == etcfd)
-		err(1, "cannot open file '%s': open(2)", optf);
+		err(1, "open");
 
 	etcfstream = fdopen(etcfd, "r");
 	if (NULL == etcfstream)
-		err(1, "cannot open file '%s': fdopen(3)", optf);
+		err(1, "fdopen");
 
 	yyin = etcfstream;
 	if (1 == yyparse())
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
 	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
-		err(1, "daemon(3)");
+		err(1, "daemon");
 
 	if (-1 == pledge("stdio proc exec", NULL)) {
 		syslog(LOG_ERR, "pledge(2): %m");
@@ -211,15 +211,15 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (NULL == (newgroup = getgrnam(groupname)))
-		err(1, "cannot set GID: getgrnam(3)");
+		err(1, "getgrnam");
 	if (-1 == setgid(newgroup->gr_gid))
-		err(1, "cannot set GID: setgid(2)");
+		err(1, "setgid");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		err(1, "cannot set groups: setgroups(2)");
+		err(1, "setgroups");
 	if (NULL == (newuser = getpwnam(username)))
-		err(1, "cannot set UID: getpwnam(3)");
+		err(1, "getpwnam");
 	if (-1 == setuid(newuser->pw_uid))
-		err(1, "cannot set UID: setuid(2)");
+		err(1, "setuid");
 }
 
 static int

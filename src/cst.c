@@ -21,7 +21,7 @@ dequote(char *quoted)
        
 	dequoted = strndup(quoted+1, strlen(quoted)-1);
 	if (NULL == dequoted)
-		err(1, "cannot parse file: strndup(3)");
+		err(1, "strndup");
 
 	return dequoted;
 }
@@ -39,7 +39,7 @@ cst_convert_run(struct cst_node *node)
 
 	buf = calloc(len, (size_t)1);
 	if (NULL == buf)
-		err(1, "cannot parse file: calloc(3)");
+		err(1, "calloc");
 
 	SLIST_FOREACH(i, &node->label, next) {
 		(void)strlcat(buf, i->string, len);
@@ -85,7 +85,7 @@ cst_convert_iface(struct cst_node *node)
 
 	aif = calloc(sizeof(*aif) + n * sizeof(aif), (size_t)1);
 	if (NULL == aif)
-		err(1, "cannot parse file: calloc(3)");
+		err(1, "calloc");
 
 	label = SLIST_FIRST(&node->label);
 	switch (label->type) {
@@ -114,7 +114,7 @@ cst_node(int type, char *string, struct cst_node *label, struct cst_node *childr
 
 	node = malloc(sizeof(*node));
 	if (NULL == node)
-		err(1, "malloc(3)");
+		err(1, "malloc");
 
 	node->type = type;
 	node->string = string;
@@ -158,7 +158,7 @@ cst_convert(struct cst_node *cst)
 
 	ast = calloc(sizeof(*ast) + n*sizeof(ast), (size_t)1);
 	if (NULL == ast)
-		err(1, "cannot parse file: calloc(3)");
+		err(1, "calloc");
 
 	SLIST_FOREACH(i, &cst->children, next) {
 		if (RUN == i->type)
