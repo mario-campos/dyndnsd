@@ -59,7 +59,11 @@ run	: RUN exprs					{ $$ = cst_node(RUN, NULL, $2, NULL); }
 	;
 
 exprs	: expr
-	| exprs expr					{ $$ = $2; SLIST_NEXT($2, next) = $1; }
+	| exprs expr					{
+								for($$ = $1; SLIST_NEXT($$, next); $$ = SLIST_NEXT($$, next));
+								SLIST_NEXT($$, next) = $2;
+								$$ = $1;
+							}
 	;
 
 expr	: STRING					{ $$ = cst_node(STRING, $1, NULL, NULL); }
