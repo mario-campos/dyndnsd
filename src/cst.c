@@ -9,17 +9,16 @@
 
 #define RUNBUFSIZ 1024
 
-static char *dequote(char *);
 static char *cst_convert_run(struct cst_node *);
 static char *cst_convert_domain(struct cst_node *);
 static struct ast_iface *cst_convert_iface(struct cst_node *);
 
-static char *
+char *
 dequote(char *quoted)
 {
 	char *dequoted;
        
-	dequoted = strndup(quoted+1, strlen(quoted)-1);
+	dequoted = strndup(quoted+1, strlen(quoted)-2);
 	if (NULL == dequoted)
 		err(1, NULL);
 

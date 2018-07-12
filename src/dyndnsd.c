@@ -39,6 +39,7 @@ static char *getshell(void);
 static void parse_fqdn(char *, char **, char **, char **);
 static struct ast_iface *find_iface(struct ast_root *, char *);
 
+char *filename;
 struct ast_root *ast;
 
 int
@@ -47,24 +48,22 @@ main(int argc, char *argv[])
 	FILE		*etcfstream;
 	int 		 opt, routefd, kq, etcfd, devnull;
 	unsigned	 opts;
-	const char      *optf;
 	struct ast_root *ast;
 	struct kevent    changes[3];
 	struct kevent    events[3];
 
 	ast = NULL;
 	opts = 0;
-	optf = DYNDNSD_CONF_PATH;
+	filename = DYNDNSD_CONF_PATH;
 
 	openlog(getprogname(), LOG_PERROR | LOG_PID, LOG_DAEMON);
 
-	/* allocate route(4) socket first... */
+	/* allocate route(4) socket before pledge(2) */
 	routefd = rtm_socket();
 	if (-1 == routefd)
 		errx(1, "cannot create route(4) socket");
 
-	/* ...to pledge(2) ASAP */
-	if (-1 == pledge("stdio rpath proc exec id getpw", NULL))
+	if (-1 == pledge("stdio rpath proc exec id getpw inet", NULL))
 		err(1, "pledge");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
@@ -75,7 +74,7 @@ main(int argc, char *argv[])
 		case 'h':
 			usage();
 		case 'f':
-			optf = optarg;
+			filename = optarg;
 			break;
 		case 'n':
 			opts |= DYNDNSD_VALID_MODE;
@@ -92,7 +91,7 @@ main(int argc, char *argv[])
 	if (-1 == devnull)
 		err(1, "open");
 
-	etcfd = open(optf, O_RDONLY|O_CLOEXEC);
+	etcfd = open(filename, O_RDONLY|O_CLOEXEC);
 	if (-1 == etcfd)
 		err(1, "open");
 

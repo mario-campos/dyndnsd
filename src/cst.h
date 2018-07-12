@@ -12,6 +12,7 @@ struct cst_node {
 	SLIST_ENTRY(cst_node) next;
 };
 
+char *dequote(char *);
 struct cst_node *cst_node(int, char *, struct cst_node *, struct cst_node *);
 void cst_free(struct cst_node *);
 struct ast_root *cst_convert(struct cst_node *);
