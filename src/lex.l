@@ -1,11 +1,15 @@
 %{
+#include <err.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "ast.h"
 #include "y.tab.h"
 
-void yyerror(const char *);
+extern char *filename;
+bool error = false;
 %}
 
 %option nounput
@@ -15,15 +19,16 @@ void yyerror(const char *);
 newline			\n+
 comment			#.*
 whitespace		[ \t]+
-quoted_string		\"([^"\\]|\\.)*\"
+quoted_string		\"([^"\n\\]|\\.)*\"
+lunquoted_string	[^" \n\t]+\"
+runquoted_string	\"[^" \n\t]+
 unquoted_string		[^ \n\t]+
 lineescape		\\.*\n
 
 %%
-
-interface		return INTERFACE;
-domain			return DOMAIN;
-run			return RUN;
+interface		{ yylval.lineno = yylineno; return INTERFACE; }
+domain			{ yylval.lineno = yylineno; return DOMAIN; }
+run			{ yylval.lineno = yylineno; return RUN; }
 "{"			return '{';
 "}"			return '}';
 {newline}		return '\n';
@@ -31,12 +36,39 @@ run			return RUN;
 {whitespace}		/* ignore */ ;
 {lineescape}		/* ignore */ ;
 {quoted_string}		{ yylval.string = strdup(yytext); return QUOTE; }
+{lunquoted_string}	{ yylval.string = strdup(yytext); return LUNQUOTE; }
+{runquoted_string}	{ yylval.string = strdup(yytext); return RUNQUOTE; }
 {unquoted_string}	{ yylval.string = strdup(yytext); return STRING; }
 
 %%
 
 void
-yyerror(const char *msg)
+yyerror(const char *fmt, ...)
 {
-	fprintf(stderr, "%s: %s (line %d)\n", getprogname(), msg, yylineno);
+	va_list ap;
+	char *msg;
+
+	va_start(ap, fmt);
+	if (-1 == vasprintf(&msg, fmt, ap))
+		err(1, "vasprintf");
+	va_end(ap);
+
+	error = true;
+
+	if (0 == strcmp(msg, "syntax error"))
+		/*
+		   If yyerror() is invoked by yacc, the lexer's line
+		   number is likely the most accurate indicator of the
+		   the error.
+		*/
+		fprintf(stderr, "%s:%d: error: syntax error\n", filename, yylineno);
+	else
+		/*
+		   However, if yyerror() is self-invoked, then the lexer's
+		   line number is likely too far ahead; the accurate line
+		   number will be provided in 'msg'.
+		*/
+		fprintf(stderr, "%s\n", msg);
+
+	free(msg);
 }
