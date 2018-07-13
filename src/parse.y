@@ -1,10 +1,10 @@
 %{
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
 #include <ifaddrs.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "ast.h"
@@ -35,7 +35,7 @@ int nrun = 0;
 %%
 
 config : config_statements				{
-								struct cst_node *i, *cst;
+								struct cst_node *cst;
 								if (error) return 1;
 								cst = cst_node(0, NULL, NULL, $1);
 								ast = cst_convert(cst);

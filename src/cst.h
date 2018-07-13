@@ -1,5 +1,6 @@
 #ifndef CST_H
 #define CST_H
+
 #include <sys/queue.h>
 
 SLIST_HEAD(cst_list, cst_node);
