@@ -16,8 +16,6 @@ extern int yylex();
 extern void yyerror(const char *, ...);
 
 static struct ifaddrs *getif(struct ifaddrs *, const char *);
-static bool isup(struct ifaddrs *);
-static bool isinet(struct ifaddrs *);
 
 int nrun = 0;
 %}
@@ -71,9 +69,9 @@ interface
 								if (0 == getifaddrs(&ifas)) {
 									if (!(ifa = getif(ifas, ifname)))
 										fprintf(stderr, "%s:%d: warning: interface not found: %s\n", filename, $1, ifname);
-									if (ifa && !isup(ifa))
+									if (ifa && !(ifa->ifa_flags & IFF_UP))
 										fprintf(stderr, "%s:%d: warning: interface is down: %s\n", filename, $1, ifname);
-									if (ifa && !isinet(ifa))
+									if (ifa && !(ifa->ifa_addr->sa_family & AF_INET))
 										fprintf(stderr, "%s:%d: warning: interface does not support IPv4: %s\n", filename, $1, ifname);
 									freeifaddrs(ifas);
 								}
@@ -150,14 +148,4 @@ getif(struct ifaddrs *ifa, const char *ifname)
 			return ifa;
 	}
 	return NULL;
-}
-
-static bool
-isup(struct ifaddrs *ifa) {
-	return ifa->ifa_flags & IFF_UP;
-}
-
-static bool
-isinet(struct ifaddrs *ifa) {
-	return ifa->ifa_addr->sa_family & AF_INET;
 }
