@@ -3,7 +3,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "ast.h"
 #include "y.tab.h"
@@ -12,6 +11,7 @@ extern char *filename;
 bool error = false;
 %}
 
+%option noinput
 %option nounput
 %option noyywrap
 %option yylineno
