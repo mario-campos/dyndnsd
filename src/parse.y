@@ -80,7 +80,7 @@ interface
 			freeifaddrs(ifas);
 		}
 
-		free(ifname);
+		if (QUOTE == $2->type) free(ifname);
 		$$ = cst_node(INTERFACE, NULL, $2, $4);
 	}
 	| INTERFACE LUNQUOTE '{' interface_statements '}' {
