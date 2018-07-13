@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 		err(1, "daemon");
 
 	if (-1 == pledge("stdio proc exec", NULL)) {
-		syslog(LOG_ERR, "pledge(2): %m");
+		syslog(LOG_ERR, "pledge: %m");
 		exit(1);
 	}
 
@@ -122,13 +122,13 @@ main(int argc, char *argv[])
 	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
 	if (-1 == sigaction(SIGTERM, &sa, NULL)	||
 	    -1 == sigaction(SIGCHLD, &sa, NULL))  { // implying SA_NOCLDWAIT
-		syslog(LOG_CRIT, "sigaction(2): %m");
+		syslog(LOG_CRIT, "sigaction: %m");
 		exit(1);
 	}
 
 	kq = kqueue();
 	if (-1 == kq) {
-		syslog(LOG_CRIT, "kqueue(2): %m");
+		syslog(LOG_CRIT, "kqueue: %m");
 		exit(1);
 	}
 
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 
 		if (-1 == kevent(kq, changes, 3, NULL, 0, NULL) ||
 		    -1 == (nev = kevent(kq, NULL, 0, events, 3, NULL))) {
-			syslog(LOG_CRIT, "kevent(2): %m");
+			syslog(LOG_CRIT, "kevent: %m");
 			exit(1);
 		}
 
@@ -293,7 +293,7 @@ spawn(char *cmd, int fd)
 
 	pid = fork();
 	if (-1 == pid) {
-		syslog(LOG_DEBUG, "fork(2): %m");
+		syslog(LOG_DEBUG, "fork: %m");
 		return -1;
 	}
 
