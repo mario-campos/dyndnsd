@@ -134,8 +134,6 @@ main(int argc, char *argv[])
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&changes[2], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 
-	syslog(LOG_INFO, "starting dyndnsd-%s", DYNDNSD_VERSION);
-
 	while (true) {
 		int nev;
 
