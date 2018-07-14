@@ -34,10 +34,8 @@ static int rtm_socket();
 static char *rtm_getifname(void*);
 static char *rtm_getipaddr(void*);
 static struct sockaddr *rtm_getsa(uint8_t*, int);
-static pid_t spawn(char *, int);
-static void set_dyndnsd_env(char *, char *, char *);
+static pid_t spawn(char *, int, char *, char *, char *);
 static char *getshell(void);
-static void parse_fqdn(char *, char **, char **, char **);
 static struct ast_iface *find_iface(struct ast_root *, char *);
 
 char *filename;
@@ -176,11 +174,7 @@ main(int argc, char *argv[])
 				free(ifname);
 
 				for(size_t j = 0; j < aif->domain_len; j++) {
-					pid_t pid;
-
-					set_dyndnsd_env(aif->domain[j], ipaddr, aif->if_name);
-
-					pid = spawn(ast->cmd, devnull);
+					pid_t pid = spawn(ast->cmd, devnull, aif->domain[j], ipaddr, aif->if_name);
 					if (-1 == pid)
 						syslog(LOG_ERR, "cannot run command: %m");
 					else
@@ -287,7 +281,7 @@ rtm_getsa(uint8_t *cp, int flags)
 }
 
 static pid_t
-spawn(char *cmd, int fd)
+spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 {
 	pid_t pid;
 
@@ -302,6 +296,9 @@ spawn(char *cmd, int fd)
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
 		setsid();
+		setenv("DYNDNSD_DOMAIN", domain, true);
+		setenv("DYNDNSD_IPADDR", ipaddr, true);
+		setenv("DYNDNSD_INTERFACE", iface, true);
 		execl(getshell(), getshell(), "-c", cmd, NULL);
 	}
 
@@ -312,54 +309,6 @@ static char *
 getshell(void)
 {
 	return getenv("SHELL") ?: "/bin/sh";
-}
-
-static void
-set_dyndnsd_env(char *fqdn, char *ipaddr, char *iface)
-{
-	char *hostname, *domain, *tld;
-	parse_fqdn(fqdn, &hostname, &domain, &tld);
-
-	if (-1 == setenv("DYNDNSD_FQDN", fqdn, true))
-		syslog(LOG_WARNING, "cannot set DYNDNSD_FQDN: setenv(3): %m");
-	if (-1 == setenv("DYNDNSD_HOSTNAME", hostname, true))
-		syslog(LOG_WARNING, "cannot set DYNDNSD_HOSTNAME: setenv(3): %m");
-	if (-1 == setenv("DYNDNSD_DOMAIN", domain, true))
-		syslog(LOG_WARNING, "cannot set DYNDNSD_DOMAIN: setenv(3): %m");
-	if (-1 == setenv("DYNDNSD_TLD", tld, true))
-		syslog(LOG_WARNING, "cannot set DYNDNSD_TLD: setenv(3): %m");
-	if (-1 == setenv("DYNDNSD_IPADDR", ipaddr, true))
-		syslog(LOG_WARNING, "cannot set DYNDNSD_IPADDR: setenv(3): %m");
-	if (-1 == setenv("DYNDNSD_INTERFACE", iface, true))
-		syslog(LOG_WARNING, "cannot set DYNDNSD_INTERFACE: setenv(3): %m");
-
-	free(hostname);
-	free(domain);
-	free(tld);
-}
-
-static void
-parse_fqdn(char *fqdn, char **hostname, char **domain, char **tld)
-{
-	size_t n;
-	const char *i, *j;
-
-	/* parse TLD */
-	for (j = fqdn + strlen(fqdn); '.' != *j; j--);
-	*tld = strdup(j + 1);
-
-	/* parse 2-label FQDN */
-	for (i = fqdn; '.' != *i; i++);
-	if (i == j) {
-		*hostname = strdup("@");
-		*domain = strdup(fqdn);
-		return;
-	}
-
-	/* parse FQDNs with more than 3 labels */
-	n = i - fqdn;
-	*domain = strdup(i + 1);
-	*hostname = strndup(fqdn, n);
 }
 
 static struct ast_iface *
