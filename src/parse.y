@@ -30,7 +30,7 @@ int nrun = 0;
 %token <string> STRING QUOTE LUNQUOTE RUNQUOTE
 %type <cst_node> config config_statements config_statement
 %type <cst_node> interface interface_statements interface_statement
-%type <cst_node> domain run exprs expr value '\n'
+%type <cst_node> domain run exprs expr value lf
 
 %%
 
@@ -51,9 +51,7 @@ config_statements
 	;
 
 config_statement
-	: '\n' {
-		$$ = cst_node('\n', NULL, NULL, NULL);
-	}
+	: lf
 	| run
 	| interface
 	;
@@ -102,9 +100,7 @@ interface_statements
 	;
 
 interface_statement
-	: '\n' {
-		$$ = cst_node('\n', NULL, NULL, NULL);
-	}
+	: lf
 	| domain
 	;
 
@@ -156,6 +152,11 @@ expr	: STRING {
 	}
 	| RUNQUOTE {
 		$$ = cst_node(RUNQUOTE, $1, NULL, NULL);
+	}
+	;
+
+lf	: '\n' {
+		$$ = cst_node('\n', NULL, NULL, NULL);
 	}
 	;
 
