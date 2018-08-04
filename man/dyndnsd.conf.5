@@ -13,11 +13,11 @@ is the configuration file for this daemon.
 .Pp
 A
 .Nm
-configuration consists of two high-level statements:
-.Ic interface ,
-which defines a network interface to monitor; and
-.Ic run ,
-which defines the shell command to execute when one of those interfaces obtains a new IPv4 address.
+configuration consists of a
+.Ic run
+statement and one or more
+.Ic interface
+statements.
 .Ss QUOTING
 Arguments may be double-quoted. However, note that arguments to
 .Ic run
