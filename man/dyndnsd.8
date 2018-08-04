@@ -9,26 +9,30 @@
 .Op Fl dhnv
 .Op Fl f Ar file
 .Sh DESCRIPTION
-The
 .Nm
-daemon is a generic dynamic-DNS client. It will execute a given shell command when the IPv4 address of a monitored interface changes.
+is a generic dynamic-DNS client. As a daemon, it will listen on a
+.Xr route 4
+socket for
+.Dv RTM_NEWADDR
+events that match a network interface specified in
+.Xr dyndnsd.conf 5 .
+On such an event, it will then execute the shell command specified in
+.Xr dyndnsd.conf 5 .
 .Pp
 If
 .Nm
-is executed as root, then it will drop its privilege to the user/group configured at compile-time.
+is executed as root, it will drop its privilege to the user/group that was defined at compile-time.
 .Pp
-Upon receiving
-.Dv SIGHUP ,
 .Nm
-reloads the configuration file.
+logs to 
+.Xr syslog 3 .
 .Ss OPTIONS 
 .Bl -tag -width Ds
 .It Fl d
 Do not daemonize and log to stdout.
 .It Fl f Ar file
-Specify an alternate location,
-.Ar file ,
-for the configuration file.
+Specifies the configuration file. The default is
+.Pa /etc/dyndnsd.conf .
 .It Fl h
 Print usage.
 .It Fl n
@@ -47,4 +51,4 @@ configuration file
 .Sh SEE ALSO
 .Xr dyndnsd.conf 5
 .Sh AUTHORS
-.An Mario Campos Aq Mt mario@mariocampos.io
+.An Mario Campos Aq Mt mario.andres.campos@gmail.com

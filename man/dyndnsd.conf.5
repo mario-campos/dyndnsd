@@ -10,47 +10,74 @@ The
 daemon is a generic dynamic-DNS client.
 .Nm
 is the configuration file for this daemon.
+.Pp
+A
+.Nm
+configuration consists of two high-level statements:
+.Ic interface ,
+which defines a network interface to monitor; and
+.Ic run ,
+which defines the shell command to execute when one of those interfaces obtains a new IPv4 address.
+.Ss QUOTING
+Arguments may be double-quoted. However, note that arguments to
+.Ic run
+are passed to
+.Em $SHELL
+verbatim, including quotes.
+.Pp
+If an argument is a reserved word (such as
+.Ic interface ,
+.Ic domain , 
+.Ic run Ns ),
+then it must be double-quoted.
 .Ss COMMENTS
 Comments begin with 
 .Sq #
 and continue to the end of the line.
 .Ss STATEMENTS
 .Bl -tag -width Ds
-.It Sy domain Ar fqdn
-This statement identifies a DNS domain,
-.Ar fqdn .
-This statement may be placed, without limit, within
-.Sy interface
-statements only.
-.It Sy interface Ar name Sy { No ... Sy }
-This statement identifies a network interface to monitor for IPv4-address changes. It's single argument,
-.Ar name ,
-is the name of the network interface to monitor. At least one
-.Sy interface
-statement is required.
-.It Sy run Ar command
-This statement defines the shell command to execute when a monitored-interface's IPv4-address changes.
+.It Ic interface Ar name Brq ...
+This statement identifies a network interface to monitor for IPv4-address changes. The argument
+.Ar name
+is the name of the network interface.
 .Pp
-This statement takes a single, newline-delimited argument:
-.Ar command ,
-the shell command to execute, which will be passed verbatim to
-.Em $SHELL
+This statement may be plural.
+.Pp
+The following statement(s) are valid inside of the scope of the
+.Ic interface
+statement (between the curly brackets):
+.Bl -tag -width Ds
+.It Ic domain Ar name
+This statement identifies a DNS domain by the argument
+.Ar name .
+This statement may be plural.
+.El
+.It Ic run Ar command Oo Ar arg1 Oc Oo Ar arg2 Oc Op ...
+This statement defines the shell command to execute when an interface's IPv4 address changes. As argument, this statement takes a command line. The command line is passed verbatim to
+.Ev SHELL
 (or
 .Pa /bin/sh
 if
-.Em $SHELL
+.Ev SHELL
 is undefined).
-.El
-.Ss ENVIRONMENT VARIABLES
-.Bl -tag -width Ds
+.Pp
+This statement cannot be plural; there can be only one
+.Ic run
+statement.
+.Pp
+Line continuation is supported. The command line may be split into two (or more) lines by placing a backslash character at the end of the line that is to be split.
+.Pp
+These environment variables are made available to
+.Ar command :
+.Pp
+.Bl -tag -width DYNDNSD_INTERFACE -compact
 .It Ev DYNDNSD_IPADDR
-Contains the new IPv4 address.
+The new IPv4 address.
 .It Ev DYNDNSD_DOMAIN
-.It Ev DYNDNSD_FQDN
-.It Ev DYNDNSD_HOSTNAME
+The domain name currently in execution.
 .It Ev DYNDNSD_INTERFACE
-Contains the name of the monitored interface.
-.It Ev DYNDNSD_TLD
+The name of the interface whose IPv4 address changed.
+.El
 .El
 .Sh FILES
 .Bl -tag -width "/etc/dyndnsd.conf" -compact
@@ -59,19 +86,20 @@ Contains the name of the monitored interface.
 configuration file.
 .El
 .Sh EXAMPLES
-.Bd -literal -offset Ds
-run curl https://www.duckdns.org/update?domains=${DYNDNSD_FQDN}&token=secret&ip=${DYNDNSD_IPADDR}
+.Bd -literal -offset indent
+run curl "https://www.duckdns.org/update?token=secret&domains=${DYNDNSD_DOMAIN}&ip=${DYNDNSD_IPADDR}"
 
 interface em0 {
+    domain example.com
     domain www.example.com
 }
 
-interface em1 {
-    domain ftp.example.com
+interface "em1" {
+    domain "ftp.example.com"
 }
 
 .Ed
 .Sh SEE ALSO
 .Xr dyndnsd 8
 .Sh AUTHORS
-.An Mario Campos Aq Mt mario@mariocampos.io
+.An Mario Campos Aq Mt mario.andres.campos@gmail.com
