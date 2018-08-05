@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 		for (ssize_t i = 0; i < nev; i++) {
 
 			/* SIGTERM event */
-			if (events[i].ident == SIGTERM) {
+			if (SIGTERM == events[i].ident) {
 				syslog(LOG_NOTICE, "SIGTERM received. Terminating...");
 				goto end;
 			}
@@ -269,7 +269,7 @@ rtm_getsa(uint8_t *cp, int flags)
 	for (i = 1; i; i <<= 1) {
 		if (flags & i) {
 			sa = (struct sockaddr *)cp;
-			if (i == RTA_IFA)
+			if (RTA_IFA == i)
 				return sa;
 			ADVANCE(cp, sa);
 		}
