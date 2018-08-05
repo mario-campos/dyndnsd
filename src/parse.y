@@ -69,7 +69,7 @@ interface
 			ifname = $2->string;
 
 		if (0 == getifaddrs(&ifas)) {
-			if (!(ifa = getif(ifas, ifname)))
+			if (NULL == (ifa = getif(ifas, ifname)))
 				fprintf(stderr, "%s:%d: warning: interface not found: %s\n", filename, $1, ifname);
 			if (ifa && !(ifa->ifa_flags & IFF_UP))
 				fprintf(stderr, "%s:%d: warning: interface is down: %s\n", filename, $1, ifname);
