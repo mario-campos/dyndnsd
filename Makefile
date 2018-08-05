@@ -1,6 +1,5 @@
-DYNDNSD_USER      = nobody
-DYNDNSD_GROUP     = nobody
-DYNDNSD_CONF_PATH = /etc/dyndnsd.conf
+DYNDNSD_USER  = nobody
+DYNDNSD_GROUP = nobody
 CPPFLAGS += -DDYNDNSD_USER=\"${DYNDNSD_USER}\" -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\"
 CFLAGS   += -I. -Isrc -g
 
