@@ -1,11 +1,11 @@
 %{
 #include <sys/socket.h>
-
 #include <net/if.h>
+
 #include <ifaddrs.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ast.h"
 #include "cst.h"
