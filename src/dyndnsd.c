@@ -22,6 +22,7 @@
 
 #include "ast.h"
 #include "dyndnsd.h"
+#include "pathnames.h"
 
 #define ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
