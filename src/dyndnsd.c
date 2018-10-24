@@ -6,6 +6,7 @@
 #include <net/route.h>
 #include <netinet/in.h>
 
+#include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -197,6 +198,9 @@ usage(void)
 static void
 drop_privilege(char *username, char *groupname)
 {
+	assert(username);
+	assert(groupname);
+
 	struct passwd *newuser;
 	struct group *newgroup;
 
@@ -233,6 +237,8 @@ rtm_socket()
 static char *
 rtm_getifname(void *ptr)
 {
+	assert(ptr);
+
 	struct ifa_msghdr *ifam = ptr;
 	char *buf = malloc((size_t)IF_NAMESIZE);
 	return if_indextoname(ifam->ifam_index, buf);
@@ -241,6 +247,8 @@ rtm_getifname(void *ptr)
 static char *
 rtm_getipaddr(void *ptr)
 {
+	assert(ptr);
+
 	struct in_addr addr;
 	struct sockaddr *sa;
 	struct sockaddr_in *sin;
@@ -258,6 +266,9 @@ rtm_getipaddr(void *ptr)
 static struct sockaddr *
 rtm_getsa(uint8_t *cp, int flags)
 {
+	assert(cp);
+	assert(flags);
+
 	int i;
 	struct sockaddr *sa;
 
@@ -279,6 +290,12 @@ rtm_getsa(uint8_t *cp, int flags)
 static pid_t
 spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 {
+	assert(cmd);
+	assert(fd >= 0);
+	assert(domain);
+	assert(ipaddr);
+	assert(iface);
+
 	pid_t pid;
 
 	pid = fork();
@@ -310,6 +327,9 @@ getshell(void)
 static struct ast_iface *
 find_iface(struct ast_root *ast, char *ifname)
 {
+	assert(ast);
+	assert(ifname);
+
 	for(size_t i = 0; i < ast->iface_len; i++) {
 		struct ast_iface *aif = ast->iface[i];
 		if (0 == strcmp(ifname, aif->if_name))

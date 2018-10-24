@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,8 @@ static struct ast_iface *cst_convert_iface(struct cst_node *);
 char *
 dequote(char *quoted)
 {
+	assert(quoted);
+
 	char *dequoted;
        
 	dequoted = strndup(quoted+1, strlen(quoted)-2);
@@ -27,6 +30,8 @@ dequote(char *quoted)
 static char *
 cst_convert_run(struct cst_node *node)
 {
+	assert(node);
+
 	char *buf;
 	size_t len;
 	struct cst_node *i;
@@ -50,6 +55,8 @@ cst_convert_run(struct cst_node *node)
 static char *
 cst_convert_domain(struct cst_node *node)
 {
+	assert(node);
+
 	char *domain;
 	struct cst_node *label;
 
@@ -73,6 +80,8 @@ cst_convert_domain(struct cst_node *node)
 static struct ast_iface *
 cst_convert_iface(struct cst_node *node)
 {
+	assert(node);
+
 	size_t n;
 	struct cst_node *i, *label;
 	struct ast_iface *aif;
@@ -108,6 +117,10 @@ cst_convert_iface(struct cst_node *node)
 struct cst_node *
 cst_node(int type, char *string, struct cst_node *label, struct cst_node *children)
 {
+	assert(string);
+	assert(label);
+	assert(children);
+
 	struct cst_node *node;
 
 	node = malloc(sizeof(*node));
@@ -125,6 +138,8 @@ cst_node(int type, char *string, struct cst_node *label, struct cst_node *childr
 void
 cst_free(struct cst_node *cst)
 {
+	assert(cst);
+
 	struct cst_node *n;
 
 	while (!SLIST_EMPTY(&cst->children)) {
@@ -146,6 +161,8 @@ cst_free(struct cst_node *cst)
 struct ast_root *
 cst_convert(struct cst_node *cst)
 {
+	assert(cst);
+
 	size_t n;
 	struct cst_node *i;
 	struct ast_root *ast;
