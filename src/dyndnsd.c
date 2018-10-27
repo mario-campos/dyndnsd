@@ -48,8 +48,8 @@ main(int argc, char *argv[])
 	FILE		*etcfstream;
 	int 		 opt, routefd, kq, etcfd, devnull;
 	unsigned	 opts;
-	struct kevent    changes[3];
-	struct kevent    events[3];
+	struct kevent    changes[2];
+	struct kevent    events[2];
 
 	ast = NULL;
 	opts = 0;
@@ -130,14 +130,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	EV_SET(&changes[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&changes[1], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&changes[2], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&changes[0], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 	while (true) {
 		int nev;
-		if ((-1 == kevent(kq, changes, 3, NULL, 0, NULL)) ||
-		    (-1 == (nev = kevent(kq, NULL, 0, events, 3, NULL)))) {
+		if ((-1 == kevent(kq, changes, 2, NULL, 0, NULL)) ||
+		    (-1 == (nev = kevent(kq, NULL, 0, events, 2, NULL)))) {
 			syslog(LOG_CRIT, "kevent: %m");
 			exit(1);
 		}
