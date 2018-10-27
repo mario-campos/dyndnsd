@@ -117,10 +117,6 @@ cst_convert_iface(struct cst_node *node)
 struct cst_node *
 cst_node(int type, char *string, struct cst_node *label, struct cst_node *children)
 {
-	assert(string);
-	assert(label);
-	assert(children);
-
 	struct cst_node *node;
 
 	node = malloc(sizeof(*node));
