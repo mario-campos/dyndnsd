@@ -228,8 +228,10 @@ rtm_socket()
 
 	rtfilter = ROUTE_FILTER(RTM_NEWADDR);
 	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
-			     &rtfilter, (socklen_t)sizeof(rtfilter)))
+			     &rtfilter, (socklen_t)sizeof(rtfilter))) {
+		close(routefd);
 		return -1;
+	}
 
 	return routefd;
 }
