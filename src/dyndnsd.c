@@ -32,7 +32,7 @@
 static void __dead usage(void);
 static void drop_privilege(char *, char *);
 static int rtm_socket();
-static char *rtm_getifname(void*);
+static void rtm_getifname(struct ifa_msghdr *, char *);
 static char *rtm_getipaddr(void*);
 static struct sockaddr *rtm_getsa(uint8_t*, int);
 static pid_t spawn(char *, int, char *, char *, char *);
@@ -152,22 +152,21 @@ main(int argc, char *argv[])
 			/* RTM_NEWADDR event */
 			else {
 				ssize_t numread;
-				char *ifname, *ipaddr;
+				char *ipaddr;
 				char rtmbuf[1024];
+				char ifname[IF_NAMESIZE];
 				struct ast_iface *aif;
 
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
 					break;
 
-				ifname = rtm_getifname(rtmbuf);
+				rtm_getifname((struct ifa_msghdr *)rtmbuf, ifname);
 				ipaddr = rtm_getipaddr(rtmbuf);
 
 				aif = find_iface(ast, ifname);
 				if (NULL == aif)
 					continue;
-
-				free(ifname);
 
 				for(size_t j = 0; j < aif->domain_len; j++) {
 					pid_t pid = spawn(ast->cmd, devnull, aif->domain[j], ipaddr, aif->if_name);
@@ -235,14 +234,13 @@ rtm_socket()
 	return routefd;
 }
 
-static char *
-rtm_getifname(void *ptr)
+static void
+rtm_getifname(struct ifa_msghdr *ifam, char *namebuf)
 {
-	assert(ptr);
+	assert(ifam);
+	assert(namebuf);
 
-	struct ifa_msghdr *ifam = ptr;
-	char *buf = malloc((size_t)IF_NAMESIZE);
-	return if_indextoname(ifam->ifam_index, buf);
+	if_indextoname(ifam->ifam_index, namebuf);
 }
 
 static char *
