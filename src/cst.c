@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+
 #include <assert.h>
 #include <err.h>
 #include <stdlib.h>
@@ -106,6 +110,8 @@ cst_convert_iface(struct cst_node *node)
 		label->string = NULL;
 		break;
 	}
+
+	aif->if_index = if_nametoindex(aif->if_name);
 
 	SLIST_FOREACH(i, &node->children, next)
 		if (DOMAIN == i->type)

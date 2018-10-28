@@ -1,6 +1,5 @@
 #include <sys/types.h>
 #include <sys/event.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <net/route.h>
@@ -32,12 +31,11 @@
 static void __dead usage(void);
 static void drop_privilege(char *, char *);
 static int rtm_socket();
-static void rtm_getifname(struct ifa_msghdr *, char *);
 static char *rtm_getipaddr(void*);
 static struct sockaddr *rtm_getsa(uint8_t*, int);
 static pid_t spawn(char *, int, char *, char *, char *);
 static char *getshell(void);
-static struct ast_iface *find_iface(struct ast_root *, char *);
+static struct ast_iface *find_iface(struct ast_root *, unsigned int);
 
 char *filename;
 struct ast_root *ast;
@@ -154,17 +152,15 @@ main(int argc, char *argv[])
 				ssize_t numread;
 				char *ipaddr;
 				char rtmbuf[1024];
-				char ifname[IF_NAMESIZE];
 				struct ast_iface *aif;
 
 				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
 				if (-1 == numread)
 					break;
 
-				rtm_getifname((struct ifa_msghdr *)rtmbuf, ifname);
 				ipaddr = rtm_getipaddr(rtmbuf);
 
-				aif = find_iface(ast, ifname);
+				aif = find_iface(ast, ((struct ifa_msghdr *)rtmbuf)->ifam_index);
 				if (NULL == aif)
 					continue;
 
@@ -232,15 +228,6 @@ rtm_socket()
 	}
 
 	return routefd;
-}
-
-static void
-rtm_getifname(struct ifa_msghdr *ifam, char *namebuf)
-{
-	assert(ifam);
-	assert(namebuf);
-
-	if_indextoname(ifam->ifam_index, namebuf);
 }
 
 static char *
@@ -324,15 +311,15 @@ getshell(void)
 }
 
 static struct ast_iface *
-find_iface(struct ast_root *ast, char *ifname)
+find_iface(struct ast_root *ast, unsigned int index)
 {
 	assert(ast);
-	assert(ifname);
 
 	for(size_t i = 0; i < ast->iface_len; i++) {
 		struct ast_iface *aif = ast->iface[i];
-		if (0 == strcmp(ifname, aif->if_name))
+		if (index == aif->if_index)
 			return aif;
 	}
+
 	return NULL;
 }
