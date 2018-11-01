@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 struct ast_iface {
-	unsigned int if_index;
 	char *if_name;
 	size_t domain_len;
 	char *domain[];

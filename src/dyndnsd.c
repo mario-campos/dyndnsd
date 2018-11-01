@@ -2,14 +2,11 @@
 #include <sys/event.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <net/route.h>
-#include <netinet/in.h>
 
 #include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <ifaddrs.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -21,21 +18,14 @@
 #include <unistd.h>
 
 #include "ast.h"
+#include "rtm.h"
 #include "dyndnsd.h"
 #include "pathnames.h"
 
-#define ROUNDUP(a) \
-	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
-
 static void __dead usage(void);
 static void drop_privilege(char *, char *);
-static int rtm_socket();
-static char *rtm_getipaddr(void*);
-static struct sockaddr *rtm_getsa(uint8_t*, int);
 static pid_t spawn(char *, int, char *, char *, char *);
 static char *getshell(void);
-static struct ast_iface *find_iface(struct ast_root *, unsigned int);
 
 char *filename;
 struct ast_root *ast;
@@ -149,27 +139,18 @@ main(int argc, char *argv[])
 
 			/* RTM_NEWADDR event */
 			else {
-				ssize_t numread;
-				char *ipaddr;
-				char rtmbuf[1024];
 				struct ast_iface *aif;
+				struct rtm_newaddr rtm;
 
-				numread = read(routefd, rtmbuf, sizeof(rtmbuf));
-				if (-1 == numread)
+				if (-1 == rtm_consume(routefd, &rtm))
 					break;
 
-				ipaddr = rtm_getipaddr(rtmbuf);
-
-				aif = find_iface(ast, ((struct ifa_msghdr *)rtmbuf)->ifam_index);
-				if (NULL == aif)
-					continue;
-
-				for(size_t j = 0; j < aif->domain_len; j++) {
-					pid_t pid = spawn(ast->cmd, devnull, aif->domain[j], ipaddr, aif->if_name);
-					if (-1 == pid)
-						syslog(LOG_ERR, "cannot run command: %m");
-					else
-						syslog(LOG_INFO, "%s %s %s %d", aif->domain[j], aif->if_name, ipaddr, pid);
+				for (size_t j = 0; j < ast->iface_len; j++) {
+					aif = ast->iface[j];
+					if (strcmp(rtm.rtm_ifname, aif->if_name))
+						continue;
+					for (size_t k = 0; k < aif->domain_len; k++)
+						spawn(ast->cmd, devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
 				}
 			}
 		}
@@ -210,69 +191,6 @@ drop_privilege(char *username, char *groupname)
 		err(1, "setuid");
 }
 
-static int
-rtm_socket()
-{
-	int routefd;
-	unsigned int rtfilter;
-
-	routefd = socket(PF_ROUTE, SOCK_CLOEXEC|SOCK_RAW, AF_INET);
-	if (-1 == routefd)
-		return -1;
-
-	rtfilter = ROUTE_FILTER(RTM_NEWADDR);
-	if (-1 == setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
-			     &rtfilter, (socklen_t)sizeof(rtfilter))) {
-		close(routefd);
-		return -1;
-	}
-
-	return routefd;
-}
-
-static char *
-rtm_getipaddr(void *ptr)
-{
-	assert(ptr);
-
-	struct in_addr addr;
-	struct sockaddr *sa;
-	struct sockaddr_in *sin;
-	struct ifa_msghdr *ifam;
-
-	ifam = ptr;
-	sa = rtm_getsa((uint8_t *)ifam + ifam->ifam_hdrlen, ifam->ifam_addrs);
-	sin = (struct sockaddr_in *)sa;
-
-	memcpy(&addr, &sin->sin_addr, sizeof(addr));
-
-	return inet_ntoa(addr);
-}
-
-static struct sockaddr *
-rtm_getsa(uint8_t *cp, int flags)
-{
-	assert(cp);
-	assert(flags);
-
-	int i;
-	struct sockaddr *sa;
-
-	if (0 == flags)
-		return NULL;
-
-	for (i = 1; i; i <<= 1) {
-		if (flags & i) {
-			sa = (struct sockaddr *)cp;
-			if (RTA_IFA == i)
-				return sa;
-			ADVANCE(cp, sa);
-		}
-	}
-
-	return NULL;
-}
-
 static pid_t
 spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 {
@@ -308,18 +226,4 @@ static char *
 getshell(void)
 {
 	return getenv("SHELL") ?: "/bin/sh";
-}
-
-static struct ast_iface *
-find_iface(struct ast_root *ast, unsigned int index)
-{
-	assert(ast);
-
-	for(size_t i = 0; i < ast->iface_len; i++) {
-		struct ast_iface *aif = ast->iface[i];
-		if (index == aif->if_index)
-			return aif;
-	}
-
-	return NULL;
 }

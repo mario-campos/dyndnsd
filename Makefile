@@ -3,8 +3,8 @@ DYNDNSD_GROUP = nobody
 CPPFLAGS += -DDYNDNSD_USER=\"${DYNDNSD_USER}\" -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\"
 CFLAGS   += -I. -Isrc -g
 
-dyndnsd: dyndnsd.o cst.o y.tab.o lex.yy.o
-	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o y.tab.o lex.yy.o
+dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
+	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
 dyndnsd.o: src/dyndnsd.h src/dyndnsd.c
 	${CC} -c ${CFLAGS} ${CPPFLAGS} src/dyndnsd.c
@@ -23,6 +23,9 @@ y.tab.c y.tab.h: src/parse.y src/cst.h
 
 cst.o: src/cst.h src/cst.c y.tab.h
 	${CC} -c ${CFLAGS} ${CPPFLAGS} src/cst.c
+
+rtm.o: src/rtm.h src/rtm.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} src/rtm.c
 
 .PHONY: clean
 clean:
