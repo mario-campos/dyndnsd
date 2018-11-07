@@ -34,7 +34,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE		*etcfstream;
-	int 		 opt, routefd, kq, etcfd, devnull;
+	int 		 opt, routefd, kq, etcfd, devnull, nev;
 	unsigned	 opts;
 	struct kevent    changes[2];
 	struct kevent    events[2];
@@ -122,9 +122,8 @@ main(int argc, char *argv[])
 	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 	while (true) {
-		int nev;
-		if ((-1 == kevent(kq, changes, 2, NULL, 0, NULL)) ||
-		    (-1 == (nev = kevent(kq, NULL, 0, events, 2, NULL)))) {
+		nev = kevent(kq, changes, 2, events, 2, NULL);
+		if (-1 == nev) {
 			syslog(LOG_CRIT, "kevent: %m");
 			exit(1);
 		}
