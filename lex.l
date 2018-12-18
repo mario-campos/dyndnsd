@@ -9,6 +9,8 @@
 
 extern char *filename;
 bool error = false;
+
+void yyerror(const char *, ...);
 %}
 
 %option noinput

@@ -1,6 +1,6 @@
 DYNDNSD_USER  = nobody
 DYNDNSD_GROUP = nobody
-CFLAGS += -g -Wall -Wextra -Wpedantic
+CFLAGS += -g -Wall -Wextra -Wpedantic -Wmissing-prototypes
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
