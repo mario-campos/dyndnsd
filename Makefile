@@ -1,6 +1,6 @@
 DYNDNSD_USER  = nobody
 DYNDNSD_GROUP = nobody
-CFLAGS += -g
+CFLAGS += -g -Wall -Wextra
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
