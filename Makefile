@@ -1,31 +1,30 @@
 DYNDNSD_USER  = nobody
 DYNDNSD_GROUP = nobody
-CPPFLAGS += -DDYNDNSD_USER=\"${DYNDNSD_USER}\" -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\"
-CFLAGS   += -I. -Isrc -g
+CFLAGS += -g
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
-dyndnsd.o: src/dyndnsd.h src/dyndnsd.c
-	${CC} -c ${CFLAGS} ${CPPFLAGS} src/dyndnsd.c
+dyndnsd.o: dyndnsd.h dyndnsd.c
+	${CC} -c -DDYNDNSD_USER=\"${DYNDNSD_USER}\" -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\" ${CFLAGS} dyndnsd.c
 
 lex.yy.o: lex.yy.c y.tab.h
-	${CC} -c ${CFLAGS} ${CPPFLAGS} lex.yy.c
+	${CC} -c ${CFLAGS} lex.yy.c
 
-lex.yy.c: src/lex.l
-	${LEX} ${LFLAGS} src/lex.l
+lex.yy.c: lex.l
+	${LEX} ${LFLAGS} lex.l
 
 y.tab.o: y.tab.c y.tab.h
-	${CC} -c ${CFLAGS} ${CPPFLAGS} y.tab.c
+	${CC} -c ${CFLAGS} y.tab.c
 
-y.tab.c y.tab.h: src/parse.y src/cst.h
-	${YACC} ${YFLAGS} src/parse.y
+y.tab.c y.tab.h: parse.y cst.h
+	${YACC} ${YFLAGS} parse.y
 
-cst.o: src/cst.h src/cst.c y.tab.h
-	${CC} -c ${CFLAGS} ${CPPFLAGS} src/cst.c
+cst.o: cst.h cst.c y.tab.h
+	${CC} -c ${CFLAGS} cst.c
 
-rtm.o: src/rtm.h src/rtm.c
-	${CC} -c ${CFLAGS} ${CPPFLAGS} src/rtm.c
+rtm.o: rtm.h rtm.c
+	${CC} -c ${CFLAGS} rtm.c
 
 .PHONY: clean
 clean:
