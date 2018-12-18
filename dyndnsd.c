@@ -201,7 +201,7 @@ spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 	pid_t pid;
 	char *shell;
 
-	shell = getenv("SHELL") ?: "/bin/sh";
+	shell = getenv("SHELL") ? getenv("SHELL") : "/bin/sh";
 
 	pid = fork();
 	if (-1 == pid) {
