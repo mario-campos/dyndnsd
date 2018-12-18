@@ -25,7 +25,6 @@
 static void __dead usage(void);
 static void drop_privilege(char *, char *);
 static pid_t spawn(char *, int, char *, char *, char *);
-static char *getshell(void);
 
 char *filename;
 struct ast_root *ast;
@@ -200,6 +199,9 @@ spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 	assert(iface);
 
 	pid_t pid;
+	char *shell;
+
+	shell = getenv("SHELL") ?: "/bin/sh";
 
 	pid = fork();
 	if (-1 == pid) {
@@ -215,14 +217,8 @@ spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 		setenv("DYNDNSD_DOMAIN", domain, true);
 		setenv("DYNDNSD_IPADDR", ipaddr, true);
 		setenv("DYNDNSD_INTERFACE", iface, true);
-		execl(getshell(), getshell(), "-c", cmd, NULL);
+		execl(shell, shell, "-c", cmd, NULL);
 	}
 
 	return pid;
-}
-
-static char *
-getshell(void)
-{
-	return getenv("SHELL") ?: "/bin/sh";
 }
