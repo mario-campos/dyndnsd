@@ -1,3 +1,4 @@
+DYNDNSD_VERSION   = 1.0.0
 DYNDNSD_USER      = nobody
 DYNDNSD_GROUP     = nobody
 DYNDNSD_CONF_PATH = /etc/dyndnsd.conf
@@ -8,6 +9,7 @@ dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
 dyndnsd.o: dyndnsd.h dyndnsd.c
 	${CC} -c ${CFLAGS} \
+		-DDYNDNSD_VERSION=\"${DYNDNSD_VERSION}\" \
 		-DDYNDNSD_USER=\"${DYNDNSD_USER}\" \
 		-DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\" \
 		-DDYNDNSD_CONF_PATH=\"${DYNDNSD_CONF_PATH}\" \
