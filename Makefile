@@ -7,7 +7,7 @@ CFLAGS += -g -Wall -Wextra -Wpedantic -Wmissing-prototypes
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
-dyndnsd.o: dyndnsd.h dyndnsd.c
+dyndnsd.o: dyndnsd.c
 	${CC} -c ${CFLAGS} \
 		-DDYNDNSD_VERSION=\"${DYNDNSD_VERSION}\" \
 		-DDYNDNSD_USER=\"${DYNDNSD_USER}\" \

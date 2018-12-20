@@ -19,7 +19,12 @@
 
 #include "ast.h"
 #include "rtm.h"
-#include "dyndnsd.h"
+
+#define DYNDNSD_DEBUG_MODE 0x0001
+#define DYNDNSD_VALID_MODE 0x0002
+
+extern FILE *yyin;
+extern int   yyparse();
 
 static void __dead usage(void);
 static void drop_privilege(char *, char *);
