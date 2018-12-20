@@ -1,12 +1,17 @@
-DYNDNSD_USER  = nobody
-DYNDNSD_GROUP = nobody
+DYNDNSD_USER      = nobody
+DYNDNSD_GROUP     = nobody
+DYNDNSD_CONF_PATH = /etc/dyndnsd.conf
 CFLAGS += -g -Wall -Wextra -Wpedantic -Wmissing-prototypes
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
 dyndnsd.o: dyndnsd.h dyndnsd.c
-	${CC} -c -DDYNDNSD_USER=\"${DYNDNSD_USER}\" -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\" ${CFLAGS} dyndnsd.c
+	${CC} -c ${CFLAGS} \
+		-DDYNDNSD_USER=\"${DYNDNSD_USER}\" \
+		-DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\" \
+		-DDYNDNSD_CONF_PATH=\"${DYNDNSD_CONF_PATH}\" \
+		dyndnsd.c
 
 lex.yy.o: lex.yy.c y.tab.h
 	${CC} -c ${CFLAGS} lex.yy.c

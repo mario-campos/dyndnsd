@@ -20,7 +20,6 @@
 #include "ast.h"
 #include "rtm.h"
 #include "dyndnsd.h"
-#include "pathnames.h"
 
 static void __dead usage(void);
 static void drop_privilege(char *, char *);
