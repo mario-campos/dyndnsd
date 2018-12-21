@@ -63,6 +63,7 @@ rtm_consume(int routefd, struct rtm_newaddr *dst)
 			dst->rtm_ifmask.s_addr = (*sin)->sin_addr.s_addr;
 		}
 		else if (RTA_IFP == i) {
+			assert((*sdl)->sdl_nlen < sizeof(dst->rtm_ifname));
 			strncpy(&dst->rtm_ifname[0], (*sdl)->sdl_data, (*sdl)->sdl_nlen);
 			dst->rtm_ifname[(*sdl)->sdl_nlen] = '\0';
 		}
