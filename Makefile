@@ -57,7 +57,8 @@ uninstall:
 dist:
 	mkdir dyndnsd-${DYNDNSD_VERSION}
 	cp ${DIST_FILES} dyndnsd-${DYNDNSD_VERSION}/
-	tar czf dyndnsd-${DYNDNSD_VERSION}.tar.gz dyndnsd-${DYNDNSD_VERSION}/
+	tar czNf dyndnsd-${DYNDNSD_VERSION}.tar.gz dyndnsd-${DYNDNSD_VERSION}/
+	tar cjNf dyndnsd-${DYNDNSD_VERSION}.tar.bz2 dyndnsd-${DYNDNSD_VERSION}/
 	rm -rf dyndnsd-${DYNDNSD_VERSION}
 
 clean:
