@@ -6,3 +6,5 @@ dyndnsd.conf
 y.tab.h
 y.tab.c
 lex.yy.c
+dyndnsd-*.tar.gz
+dyndnsd-*.tar.bz2
