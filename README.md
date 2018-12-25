@@ -1,5 +1,5 @@
 # dyndnsd
-Dynamic DNS Daemon for OpenBSD
+dyndnsd is a dynamic DNS daemon for OpenBSD. It is minimal, lightweight, intuitive, and generic/extensible enough to support any dynamic-dns provider.
 
 ## Example
 
@@ -29,6 +29,12 @@ Then, start the daemon:
 ```bash
 $ dyndnsd
 $
+```
+
+## Build
+
+```bash
+make DYNDNSD_USER=nobody DYNDNSD_GROUP=nobody DYNDNSD_CONF_PATH=/etc/dyndnsd.conf
 ```
 
 ## TODO
