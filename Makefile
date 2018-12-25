@@ -1,8 +1,4 @@
-DYNDNSD_VERSION   = 1.0.0
-DYNDNSD_USER      = nobody
-DYNDNSD_GROUP     = nobody
-DYNDNSD_CONF_PATH = /etc/dyndnsd.conf
-CFLAGS += -g -Wall -Wextra -Wpedantic -Wmissing-prototypes
+DYNDNSD_VERSION = 1.0.0
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
