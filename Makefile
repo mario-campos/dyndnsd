@@ -1,4 +1,4 @@
-DYNDNSD_VERSION = 0.1.1
+DYNDNSD_VERSION = 0.1.0
 DIST_FILES	= LICENSE \
 		  README.md \
 		  Makefile \
@@ -48,9 +48,9 @@ rtm.o: rtm.h rtm.c
 .PHONY: install uninstall dist clean
 
 install: dyndnsd
-	install -D dyndnsd ${DESTDIR}${PREFIX}/bin/
-	install -D -m 0644 dyndnsd.8 ${DESTDIR}${PREFIX}/man/man8/
-	install -D -m 0644 dyndnsd.conf.5 ${DESTDIR}${PREFIX}/man/man5/
+	install -D dyndnsd ${DESTDIR}${PREFIX}/bin/dyndnsd
+	install -D -m 0644 dyndnsd.8 ${DESTDIR}${PREFIX}/man/man8/dyndnsd.8
+	install -D -m 0644 dyndnsd.conf.5 ${DESTDIR}${PREFIX}/man/man5/dyndnsd.conf.5
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/dyndnsd
