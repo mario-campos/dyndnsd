@@ -1,9 +1,25 @@
-DYNDNSD_VERSION = 1.0.0
+DYNDNSD_VERSION = 0.1.0
+DIST_FILES	= LICENSE \
+		  README.md \
+		  Makefile \
+		  parse.y \
+		  dyndnsd.8 \
+		  dyndnsd.conf.5 \
+		  parse.y \
+		  lex.l \
+		  rtm.c \
+		  rtm.h \
+		  cst.c \
+		  cst.h \
+		  ast.h \
+		  dyndnsd.c
+
+all: dyndnsd
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 	${CC} ${LDFLAGS} -o $@ dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
-dyndnsd.o: dyndnsd.c
+dyndnsd.o: dyndnsd.c rtm.h ast.h
 	${CC} -c ${CFLAGS} \
 		-DDYNDNSD_VERSION=\"${DYNDNSD_VERSION}\" \
 		-DDYNDNSD_USER=\"${DYNDNSD_USER}\" \
@@ -29,6 +45,20 @@ cst.o: cst.h cst.c y.tab.h
 rtm.o: rtm.h rtm.c
 	${CC} -c ${CFLAGS} rtm.c
 
-.PHONY: clean
+.PHONY: install uninstall dist clean
+
+install: dyndnsd
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	cp $< ${DESTDIR}${PREFIX}/bin/dyndnsd
+
+uninstall:
+	rm -f ${DESTDIR}${PREFIX}/bin/dyndnsd
+
+dist:
+	mkdir dyndnsd-${DYNDNSD_VERSION}
+	cp ${DIST_FILES} dyndnsd-${DYNDNSD_VERSION}/
+	tar czf dyndnsd-${DYNDNSD_VERSION}.tar.gz dyndnsd-${DYNDNSD_VERSION}/
+	rm -rf dyndnsd-${DYNDNSD_VERSION}
+
 clean:
 	rm -f dyndnsd *.o y.tab.* lex.yy.c
