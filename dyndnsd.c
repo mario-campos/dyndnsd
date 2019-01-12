@@ -141,6 +141,7 @@ main(int argc, char *argv[])
 
 			/* RTM_NEWADDR event */
 			else {
+				pid_t pid;
 				struct ast_iface *aif;
 				struct rtm_newaddr rtm;
 
@@ -151,8 +152,10 @@ main(int argc, char *argv[])
 					aif = ast->iface[j];
 					if (strcmp(rtm.rtm_ifname, aif->if_name))
 						continue;
-					for (size_t k = 0; k < aif->domain_len; k++)
-						spawn(ast->cmd, devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
+					for (size_t k = 0; k < aif->domain_len; k++) {
+						pid = spawn(ast->cmd, devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
+						syslog(LOG_INFO, "%s %s %s %u", aif->if_name, inet_ntoa(rtm.rtm_ifaddr), aif->domain[k], pid);
+					}
 				}
 			}
 		}

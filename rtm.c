@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "rtm.h"
@@ -76,6 +77,17 @@ rtm_consume(int routefd, struct rtm_newaddr *dst)
 
 		p += ROUNDUP((*sa)->sa_len);
 	}
+
+	syslog(LOG_DEBUG,
+	    "RTM_NEWADDR: msglen=%hu version=%hhu type=%hhu hdrlen=%hu index=%hu tableid=%hu addrs=%#x flags=%#x",
+	    ifam->ifam_msglen,
+	    ifam->ifam_version,
+	    ifam->ifam_type,
+	    ifam->ifam_hdrlen,
+	    ifam->ifam_index,
+	    ifam->ifam_tableid,
+	    ifam->ifam_addrs,
+	    ifam->ifam_flags);
 
 	return p - buf;
 }
