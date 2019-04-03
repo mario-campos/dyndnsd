@@ -1,5 +1,3 @@
-DYNDNSD_VERSION = 0.1.0
-
 all: dyndnsd
 
 dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
