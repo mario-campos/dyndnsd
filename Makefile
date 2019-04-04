@@ -7,7 +7,6 @@ dyndnsd: dyndnsd.o cst.o rtm.o y.tab.o lex.yy.o
 
 dyndnsd.o: dyndnsd.c rtm.h ast.h
 	${CC} -c ${CFLAGS} \
-	      -DDYNDNSD_VERSION=\"${DYNDNSD_VERSION}\" \
 	      -DDYNDNSD_USER=\"${DYNDNSD_USER}\" \
 	      -DDYNDNSD_GROUP=\"${DYNDNSD_GROUP}\" \
 	      -DDYNDNSD_CONF_PATH=\"${DYNDNSD_CONF_PATH}\" \
