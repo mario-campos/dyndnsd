@@ -1,4 +1,4 @@
-# dyndnsd
+# dyndnsd [![builds.sr.ht status](https://builds.sr.ht/~mariocampos/dyndnsd.svg)](https://builds.sr.ht/~mariocampos/dyndnsd?)
 dyndnsd is a dynamic DNS daemon for OpenBSD. It is minimal, lightweight, intuitive, and generic/extensible enough to support any dynamic-dns provider.
 
 ## Example

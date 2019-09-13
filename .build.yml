@@ -1,7 +1,7 @@
 image: openbsd/6.5
 sources:
-  - https://github.com/mario-campos/dyndnsd.git
+- https://github.com/mario-campos/dyndnsd.git
 tasks:
-  - build: |
-      cd dyndnsd
-      make DYNDNSD_USER=nobody DYNDNSD_GROUP=nobody DYNDNSD_CONF_PATH=/etc/dyndnsd.conf
+- build: |
+    cd dyndnsd
+    make DYNDNSD_USER=nobody DYNDNSD_GROUP=nobody DYNDNSD_CONF_PATH=/etc/dyndnsd.conf
