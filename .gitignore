@@ -8,3 +8,4 @@ y.tab.c
 lex.yy.c
 dyndnsd-*.tar.gz
 dyndnsd-*.tar.bz2
+dyndnsd.d
