@@ -4,4 +4,5 @@ sources:
 tasks:
 - build: |
     cd dyndnsd
-    make DYNDNSD_USER=nobody DYNDNSD_GROUP=nobody DYNDNSD_CONF_PATH=/etc/dyndnsd.conf
+    yacc -d parse.y
+    make CONF_PATH=/etc/dyndnsd.conf USER=nobody GROUP=nobody
