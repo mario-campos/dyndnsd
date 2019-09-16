@@ -20,10 +20,6 @@
 #include "dyndnsd.h"
 #include "rtm.h"
 
-#define DYNDNSD_VERSION "0.1.0"
-#define DYNDNSD_DEBUG_MODE 0x0001
-#define DYNDNSD_VALID_MODE 0x0002
-
 extern FILE *yyin;
 extern int   yyparse();
 
@@ -35,13 +31,6 @@ static pid_t spawn(char *, int, char *, char *, char *);
 
 char *filename;
 struct ast_root *ast;
-
-struct dyndnsd {
-	FILE   *etcfstream;
-	int	routefd;
-	int	etcfd;
-	int 	devnull;
-};
 
 int
 main(int argc, char *argv[])

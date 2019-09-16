@@ -6,4 +6,11 @@
 #define DYNDNSD_DEBUG_MODE 0x0001
 #define DYNDNSD_VALID_MODE 0x0002
 
+struct dyndnsd {
+	FILE   *etcfstream;
+	int	routefd;
+	int	etcfd;
+	int 	devnull;
+};
+
 #endif /* DYNDNSD_H */
