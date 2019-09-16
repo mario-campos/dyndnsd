@@ -105,10 +105,8 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL)) {
+	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL))
 		syslog(LOG_WARNING, "sigaction: %m");
-		exit(EXIT_FAILURE);
-	}
 
 	event_init();
 
