@@ -1,10 +1,9 @@
-#include <sys/types.h>
-#include <sys/event.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 
 #include <assert.h>
 #include <err.h>
+#include <event.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <paths.h>
@@ -29,20 +28,28 @@ extern FILE *yyin;
 extern int   yyparse();
 
 static void __dead usage(void);
+static void sig_handler(int, short, void *);
+static void process_event(int, short, void *);
 static void drop_privilege(char *, char *);
 static pid_t spawn(char *, int, char *, char *, char *);
 
 char *filename;
 struct ast_root *ast;
 
+struct dyndnsd {
+	FILE   *etcfstream;
+	int	routefd;
+	int	etcfd;
+	int 	devnull;
+};
+
 int
 main(int argc, char *argv[])
 {
-	FILE		*etcfstream;
-	int 		 opt, routefd, kq, etcfd, devnull, nev;
-	unsigned	 opts;
-	struct kevent    changes[2];
-	struct kevent    events[2];
+	int 		opt;
+	unsigned 	opts;
+	struct event	ev_route, ev_signal;
+	struct dyndnsd	this;
 
 	ast = NULL;
 	opts = 0;
@@ -51,8 +58,8 @@ main(int argc, char *argv[])
 	openlog(getprogname(), LOG_PERROR | LOG_PID, LOG_DAEMON);
 
 	/* allocate route(4) socket before pledge(2) */
-	routefd = rtm_socket();
-	if (-1 == routefd)
+	this.routefd = rtm_socket();
+	if (-1 == this.routefd)
 		errx(1, "cannot create route(4) socket");
 
 	if (-1 == pledge("stdio rpath proc exec id getpw inet", NULL))
@@ -79,19 +86,19 @@ main(int argc, char *argv[])
 		}
 	}
 
-	devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
-	if (-1 == devnull)
+	this.devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
+	if (-1 == this.devnull)
 		err(1, "open");
 
-	etcfd = open(filename, O_RDONLY|O_CLOEXEC);
-	if (-1 == etcfd)
+	this.etcfd = open(filename, O_RDONLY|O_CLOEXEC);
+	if (-1 == this.etcfd)
 		err(1, "open");
 
-	etcfstream = fdopen(etcfd, "r");
-	if (NULL == etcfstream)
+	this.etcfstream = fdopen(this.etcfd, "r");
+	if (NULL == this.etcfstream)
 		err(1, "fdopen");
 
-	yyin = etcfstream;
+	yyin = this.etcfstream;
 	if (1 == yyparse())
 		exit(1);
 
@@ -109,71 +116,62 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* set up event handler */
-	struct sigaction sa = { .sa_handler = SIG_IGN, 0, 0 };
-	if (-1 == sigaction(SIGTERM, &sa, NULL)	||
-	    -1 == sigaction(SIGCHLD, &sa, NULL))  { // implying SA_NOCLDWAIT
-		syslog(LOG_CRIT, "sigaction: %m");
+	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL)) {
+		syslog(LOG_WARNING, "sigaction: %m");
 		exit(1);
 	}
 
-	kq = kqueue();
-	if (-1 == kq) {
-		syslog(LOG_CRIT, "kqueue: %m");
-		exit(1);
-	}
+	event_init();
 
-	EV_SET(&changes[0], SIGTERM, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&changes[1], routefd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	event_set(&ev_route, this.routefd, EV_READ|EV_PERSIST, process_event, &this);
+	event_add(&ev_route, NULL);
 
-	while (true) {
-		nev = kevent(kq, changes, 2, events, 2, NULL);
-		if (-1 == nev) {
-			syslog(LOG_CRIT, "kevent: %m");
-			exit(1);
-		}
+	signal_set(&ev_signal, SIGTERM, sig_handler, &this);
+	signal_add(&ev_signal, NULL);
 
-		for (ssize_t i = 0; i < nev; i++) {
+	event_dispatch();
+}
 
-			/* SIGTERM event */
-			if (SIGTERM == events[i].ident) {
-				syslog(LOG_NOTICE, "SIGTERM received. Terminating...");
-				goto end;
-			}
+static void
+process_event(int sig, short event, void *arg)
+{
+	pid_t pid;
+	struct ast_iface *aif;
+	struct rtm_newaddr rtm;
+	struct dyndnsd *this = arg;
 
-			/* RTM_NEWADDR event */
-			else {
-				pid_t pid;
-				struct ast_iface *aif;
-				struct rtm_newaddr rtm;
+	if (-1 == rtm_consume(this->routefd, &rtm))
+		return;
 
-				if (-1 == rtm_consume(routefd, &rtm))
-					break;
-
-				for (size_t j = 0; j < ast->iface_len; j++) {
-					aif = ast->iface[j];
-					if (strcmp(rtm.rtm_ifname, aif->if_name))
-						continue;
-					for (size_t k = 0; k < aif->domain_len; k++) {
-						pid = spawn(ast->cmd, devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
-						syslog(LOG_INFO, "%s %s %s %u", aif->if_name, inet_ntoa(rtm.rtm_ifaddr), aif->domain[k], pid);
-					}
-				}
-			}
+	for (size_t j = 0; j < ast->iface_len; j++) {
+		aif = ast->iface[j];
+		if (strcmp(rtm.rtm_ifname, aif->if_name))
+			continue;
+		for (size_t k = 0; k < aif->domain_len; k++) {
+			pid = spawn(ast->cmd, this->devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
+			syslog(LOG_INFO, "%s %s %s %u", aif->if_name, inet_ntoa(rtm.rtm_ifaddr), aif->domain[k], pid);
 		}
 	}
-
-end:
-	fclose(etcfstream);
-	close(devnull);
-	close(routefd);
-	closelog();
 }
 
 static void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", getprogname());
+	exit(0);
+}
+
+static void __dead
+sig_handler(int sig, short event, void *arg)
+{
+	assert(arg);
+
+	struct dyndnsd *this = arg;
+
+	fclose(this->etcfstream);
+	close(this->devnull);
+	close(this->routefd);
+	closelog();
 	exit(0);
 }
 
