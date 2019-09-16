@@ -34,7 +34,7 @@ $
 ## Build
 
 ```bash
-make DYNDNSD_USER=nobody DYNDNSD_GROUP=nobody DYNDNSD_CONF_PATH=/etc/dyndnsd.conf
+make DYNDNSD_USER=nobody DYNDNSD_GROUP=nobody CONF_PATH=/etc/dyndnsd.conf
 ```
 
 ## TODO
