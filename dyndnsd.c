@@ -49,10 +49,10 @@ main(int argc, char *argv[])
 	/* allocate route(4) socket before pledge(2) */
 	this.routefd = rtm_socket();
 	if (-1 == this.routefd)
-		errx(1, "cannot create route(4) socket");
+		errx(EXIT_FAILURE, "cannot create route(4) socket");
 
 	if (-1 == pledge("stdio rpath proc exec id getpw inet", NULL))
-		err(1, "pledge");
+		err(EXIT_FAILURE, "pledge");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			puts(DYNDNSD_VERSION);
-			exit(0);
+			exit(EXIT_SUCCESS);
 		default:
 			usage();
 		}
@@ -77,37 +77,37 @@ main(int argc, char *argv[])
 
 	this.devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
 	if (-1 == this.devnull)
-		err(1, "open");
+		err(EXIT_FAILURE, "open");
 
 	this.etcfd = open(filename, O_RDONLY|O_CLOEXEC);
 	if (-1 == this.etcfd)
-		err(1, "open");
+		err(EXIT_FAILURE, "open");
 
 	this.etcfstream = fdopen(this.etcfd, "r");
 	if (NULL == this.etcfstream)
-		err(1, "fdopen");
+		err(EXIT_FAILURE, "fdopen");
 
 	yyin = this.etcfstream;
 	if (1 == yyparse())
-		exit(1);
+		exit(EXIT_FAILURE);
 
 	if (opts & DYNDNSD_VALID_MODE)
-		exit(0);
+		exit(EXIT_SUCCESS);
 
 	if (0 == getuid())
 		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
 	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
-		err(1, "daemon");
+		err(EXIT_FAILURE, "daemon");
 
 	if (-1 == pledge("stdio proc exec", NULL)) {
 		syslog(LOG_ERR, "pledge: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL)) {
 		syslog(LOG_WARNING, "sigaction: %m");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	event_init();
@@ -147,7 +147,7 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", getprogname());
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 static void __dead
@@ -161,7 +161,7 @@ sig_handler(int sig, short event, void *arg)
 	close(this->devnull);
 	close(this->routefd);
 	closelog();
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 static void
@@ -174,15 +174,15 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (NULL == (newgroup = getgrnam(groupname)))
-		err(1, "getgrnam");
+		err(EXIT_FAILURE, "getgrnam");
 	if (-1 == setgid(newgroup->gr_gid))
-		err(1, "setgid");
+		err(EXIT_FAILURE, "setgid");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		err(1, "setgroups");
+		err(EXIT_FAILURE, "setgroups");
 	if (NULL == (newuser = getpwnam(username)))
-		err(1, "getpwnam");
+		err(EXIT_FAILURE, "getpwnam");
 	if (-1 == setuid(newuser->pw_uid))
-		err(1, "setuid");
+		err(EXIT_FAILURE, "setuid");
 }
 
 static pid_t
