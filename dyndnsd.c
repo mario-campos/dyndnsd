@@ -194,6 +194,13 @@ spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 
 	pid_t pid;
 	char *shell;
+	char envvar0[2 + strlen("DYNDNSD_DOMAIN") + strlen(domain)]; // +2 bytes for '=', '\0'
+	char envvar1[2 + strlen("DYNDNSD_IPADDR") + strlen(ipaddr)];
+	char envvar2[2 + strlen("DYNDNSD_INTERFACE") + strlen(iface)];
+
+	snprintf(envvar0, sizeof(envvar0), "DYNDNSD_DOMAIN=%s", domain);
+	snprintf(envvar1, sizeof(envvar1), "DYNDNSD_IPADDR=%s", ipaddr);
+	snprintf(envvar2, sizeof(envvar2), "DYNDNSD_INTERFACE=%s", iface);
 
 	shell = getenv("SHELL") ? getenv("SHELL") : _PATH_BSHELL;
 
@@ -208,10 +215,7 @@ spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
 		setsid();
-		setenv("DYNDNSD_DOMAIN", domain, true);
-		setenv("DYNDNSD_IPADDR", ipaddr, true);
-		setenv("DYNDNSD_INTERFACE", iface, true);
-		execl(shell, shell, "-c", cmd, NULL);
+		execle(shell, shell, "-c", cmd, NULL, (char*[]){envvar0, envvar1, envvar2, NULL});
 	}
 
 	return pid;
