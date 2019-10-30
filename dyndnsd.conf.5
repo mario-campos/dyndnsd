@@ -53,13 +53,11 @@ This statement identifies a DNS domain by the argument
 This statement may be plural.
 .El
 .It Ic run Ar command Oo Ar arg1 Oc Oo Ar arg2 Oc Op ...
-This statement defines the shell command to execute when an interface's IPv4 address changes. As argument, this statement takes a command line. The command line is passed verbatim to
-.Ev SHELL
-(or
-.Pa /bin/sh
-if
-.Ev SHELL
-is undefined).
+This statement defines the
+.Xr sh 1
+command to execute when an interface's IPv4 address changes. The command does not block the execution of
+.Xr dyndnsd 8 .
+Nor does the command inherit its environment.
 .Pp
 This statement cannot be plural; there can be only one
 .Ic run
