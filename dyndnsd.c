@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -23,7 +24,7 @@
 extern FILE *yyin;
 extern int   yyparse();
 
-static void __dead usage(void);
+static void usage(void);
 static void sig_handler(int, short, void *);
 static void process_event(int, short, void *);
 static void drop_privilege(char *, char *);
@@ -49,10 +50,10 @@ main(int argc, char *argv[])
 	/* allocate route(4) socket before pledge(2) */
 	this.routefd = rtm_socket();
 	if (-1 == this.routefd)
-		errx(EXIT_FAILURE, "cannot create route(4) socket");
+		errx(EX_UNAVAILABLE, "cannot create route(4) socket");
 
 	if (-1 == pledge("stdio rpath proc exec id getpw inet", NULL))
-		err(EXIT_FAILURE, "pledge");
+		err(EX_OSERR, "pledge");
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -61,6 +62,7 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage();
+			exit(EX_OK);
 		case 'f':
 			filename = optarg;
 			break;
@@ -69,40 +71,41 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			puts(DYNDNSD_VERSION);
-			exit(EXIT_SUCCESS);
+			exit(EX_OK);
 		default:
 			usage();
+			exit(EX_USAGE);
 		}
 	}
 
 	this.devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
 	if (-1 == this.devnull)
-		err(EXIT_FAILURE, "open");
+		err(EX_OSFILE, "open");
 
 	this.etcfd = open(filename, O_RDONLY|O_CLOEXEC);
 	if (-1 == this.etcfd)
-		err(EXIT_FAILURE, "open");
+		err(EX_OSFILE, "open");
 
 	this.etcfstream = fdopen(this.etcfd, "r");
 	if (NULL == this.etcfstream)
-		err(EXIT_FAILURE, "fdopen");
+		err(EX_OSFILE, "fdopen");
 
 	yyin = this.etcfstream;
 	if (1 == yyparse())
-		exit(EXIT_FAILURE);
+		exit(EX_DATAERR);
 
 	if (opts & DYNDNSD_VALID_MODE)
-		exit(EXIT_SUCCESS);
+		exit(EX_OK);
 
 	if (0 == getuid())
 		drop_privilege(DYNDNSD_USER, DYNDNSD_GROUP);
 
 	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
-		err(EXIT_FAILURE, "daemon");
+		err(EX_OSERR, "daemon");
 
 	if (-1 == pledge("stdio proc exec", NULL)) {
 		syslog(LOG_ERR, "pledge: %m");
-		exit(EXIT_FAILURE);
+		exit(EX_OSERR);
 	}
 
 	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL))
@@ -141,11 +144,10 @@ process_event(int sig, short event, void *arg)
 	}
 }
 
-static void __dead
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-dhnv] [-f file]\n", getprogname());
-	exit(EXIT_SUCCESS);
 }
 
 static void __dead
@@ -159,7 +161,7 @@ sig_handler(int sig, short event, void *arg)
 	close(this->devnull);
 	close(this->routefd);
 	closelog();
-	exit(EXIT_SUCCESS);
+	exit(EX_OK);
 }
 
 static void
@@ -172,15 +174,15 @@ drop_privilege(char *username, char *groupname)
 	struct group *newgroup;
 
 	if (NULL == (newgroup = getgrnam(groupname)))
-		err(EXIT_FAILURE, "getgrnam");
+		err(EX_NOUSER, "getgrnam");
 	if (-1 == setgid(newgroup->gr_gid))
-		err(EXIT_FAILURE, "setgid");
+		err(EX_OSERR, "setgid");
 	if (-1 == setgroups(1, &newgroup->gr_gid))
-		err(EXIT_FAILURE, "setgroups");
+		err(EX_OSERR, "setgroups");
 	if (NULL == (newuser = getpwnam(username)))
-		err(EXIT_FAILURE, "getpwnam");
+		err(EX_NOUSER, "getpwnam");
 	if (-1 == setuid(newuser->pw_uid))
-		err(EXIT_FAILURE, "setuid");
+		err(EX_OSERR, "setuid");
 }
 
 static pid_t
