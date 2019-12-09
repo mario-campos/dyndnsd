@@ -1,7 +1,5 @@
-#ifndef AST_H
-#define AST_H
-
-#include <stdio.h>
+#ifndef PARSER_H
+#define PARSER_H
 
 struct ast_iface {
 	char *if_name;
@@ -9,12 +7,13 @@ struct ast_iface {
 	char *domain[];
 };
 
-struct ast_root {
+struct ast {
 	char *cmd;
 	size_t iface_len;
 	struct ast_iface *iface[];
 };
 
-extern struct ast_root *ast;
+struct ast *parse(const char *);
+const char *parse_err(void);
 
-#endif /* AST_H */
+#endif /* PARSER_H */

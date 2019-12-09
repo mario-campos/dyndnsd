@@ -1,5 +1,5 @@
 PROG = dyndnsd
-SRCS = dyndnsd.c cst.c rtm.c parse.y lex.l
+SRCS = dyndnsd.c rtm.c parser.c
 MAN  = dyndnsd.8 dyndnsd.conf.5
 
 CFLAGS += -std=c99
