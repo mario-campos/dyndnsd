@@ -175,16 +175,22 @@ parse(const char *path)
 	FILE *fstream;
 	struct stat stat;
 	struct token token;
+	const char *text;
 
 	if (-1 == (fd = open(path, O_RDONLY|O_CLOEXEC)))
-		err_msg = "open(2)"; // TODO: send to parse_err
+		err_msg = "open(2)";
 
 	if (NULL == (fstream = fdopen(fd, "r")))
-		err_msg = "fdopen(3)"; // TODO: send to parse_err
+		err_msg = "fdopen(3)";
 
-	fstat(fd, &stat); // TODO: handle error case
+	if (-1 == fstat(fd, &stat))
+		err_msg = "fstat(2)";
+
+	if (MAP_FAILED == (text = mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)))
+		err_msg = "mmap(2)";
+
 	lexer.lex_path = path;
-	lexer.lex_text = mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0); // TODO: handle error case
+	lexer.lex_text = text;
 	lexer.lex_size = stat.st_size;
 	lexer.lex_read = 0;
 
@@ -270,8 +276,9 @@ parse(const char *path)
 		}
 	} while (true);
 
-	fclose(fstream); // TODO: handle error
-	return NULL; // TODO: return AST
+	if (EOF == fclose(fstream))
+		err_msg = "fclose(3)";
+	return NULL;
 }
 
 const char *
