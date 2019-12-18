@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 		err(EX_OSFILE, "open");
 
 	if (NULL == (this.ast = parse(filename)))
-		errx(EX_DATAERR, "%s\n", parse_err());
+		errx(EX_DATAERR, "%s\n", parser_error);
 
 	if (opts & DYNDNSD_VALID_MODE)
 		exit(EX_OK);

@@ -1,5 +1,7 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -7,7 +9,7 @@
 
 #include "parser.h"
 
-const char *err_msg;
+char parser_error[100];
 struct lexer lexer;
 
 enum tokentype {
@@ -25,7 +27,6 @@ enum tokentype {
 };
 
 struct lexer {
-	const char *lex_path;
 	const char *lex_text;
 	size_t      lex_size;
 	size_t      lex_read;
@@ -139,33 +140,36 @@ next_token(struct token *t)
 }
 
 static enum tokentype
-next(void)
-{
-	struct token t;
-	next_token(&t);
-	return t.tok_type;
-}
-
-static enum tokentype
 peek(void)
 {
 	size_t offset;
-	enum tokentype tok;
+	struct token token;
 
 	offset = lexer.lex_read;
-	tok = next();
+	next_token(&token);
 	lexer.lex_read = offset;
-	return tok;
+	return token.tok_type;
 }
 
 static bool
-accept(enum tokentype accepted_token)
+accept(enum tokentype t)
 {
-	if (accepted_token == peek()) {
-		next();
+	if (peek() == t) {
+		struct token token;
+		next_token(&token);
 		return true;
 	}
 	return false;
+}
+
+static void
+parse_err(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(parser_error, sizeof(parser_error), fmt, ap);
+	va_end(ap);
 }
 
 struct ast *
@@ -177,19 +181,26 @@ parse(const char *path)
 	struct token token;
 	const char *text;
 
-	if (-1 == (fd = open(path, O_RDONLY|O_CLOEXEC)))
-		err_msg = "open(2)";
+	if (-1 == (fd = open(path, O_RDONLY|O_CLOEXEC))) {
+		parse_err("%s: %s", "open(2)", strerror(errno));
+		goto end;
+	}
 
-	if (NULL == (fstream = fdopen(fd, "r")))
-		err_msg = "fdopen(3)";
+	if (NULL == (fstream = fdopen(fd, "r"))) {
+		parse_err("%s: %s", "fdopen(3)", strerror(errno));
+		goto end;
+	}
 
-	if (-1 == fstat(fd, &stat))
-		err_msg = "fstat(2)";
+	if (-1 == fstat(fd, &stat)) {
+		parse_err("%s: %s", "fstat(2)", strerror(errno));
+		goto end;
+	}
 
-	if (MAP_FAILED == (text = mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)))
-		err_msg = "mmap(2)";
+	if (MAP_FAILED == (text = mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {
+		parse_err("%s: %s", "mmap(2)", strerror(errno));
+		goto end;
+	}
 
-	lexer.lex_path = path;
 	lexer.lex_text = text;
 	lexer.lex_size = stat.st_size;
 	lexer.lex_read = 0;
@@ -199,37 +210,37 @@ parse(const char *path)
 		if (TOKEN_RUN == token.tok_type) {
 			next_token(&token);
 			if (TOKEN_WHITESPACE != token.tok_type) {
-				err_msg = "parsing run: expected TOKEN_WHITESPACE";
-				return NULL;
+				parse_err("%s: %s", path, "expected TOKEN_WHITESPACE");
+				goto end;
 			}
 
 			next_token(&token);
 			if (TOKEN_STRING != token.tok_type &&
 			    TOKEN_QUOTE != token.tok_type) {
-				err_msg = "parsing run: expected TOKEN_STRING or TOKEN_QUOTE";
-				return NULL;
+				parse_err("%s: %s", path, "expected STRING or QUOTE");
+				goto end;
 			}
 		}
 		else if (TOKEN_INTERFACE == token.tok_type) {
 			next_token(&token);
 			if (TOKEN_WHITESPACE != token.tok_type) {
-				err_msg = "parsing interface: expected TOKEN_WHITESPACE";
-				return NULL;
+				parse_err("%s: %s", path, "expected TOKEN_WHITESPACE");
+				goto end;
 			}
 
 			next_token(&token);
 			if (TOKEN_QUOTE != token.tok_type
 			&& TOKEN_STRING != token.tok_type) {
-				err_msg = "parsing interface: expected TOKEN_STRING or TOKEN_QUOTE";
-				return NULL;
+				parse_err("%s: %s", path, "expected STRING or QUOTE");
+				goto end;
 			}
 
 			accept(TOKEN_WHITESPACE);
 
 			next_token(&token);
 			if (TOKEN_LBRACE != token.tok_type) {
-				err_msg = "parsing interface: expected TOKEN_LBRACE";
-				return NULL;
+				parse_err("%s: %s", path, "expected TOKEN_LBRACE");
+				goto end;
 			}
 
 			accept(TOKEN_WHITESPACE);
@@ -239,21 +250,21 @@ parse(const char *path)
 
 				next_token(&token);
 				if (TOKEN_DOMAIN != token.tok_type) {
-					err_msg = "parsing domain: expected TOKEN_DOMAIN";
-					return NULL;
+					parse_err("%s: %s", path, "expected TOKEN_DOMAIN");
+					goto end;
 				}
 
 				next_token(&token);
 				if (TOKEN_WHITESPACE != token.tok_type) {
-					err_msg = "parsing domain: expected TOKEN_WHITESPACE";
-					return NULL;
+					parse_err("%s: %s", path, "expected TOKEN_WHITESPACE");
+					goto end;
 				}
 
 				next_token(&token);
 				if (TOKEN_QUOTE != token.tok_type
 				&& TOKEN_STRING != token.tok_type) {
-					err_msg = "parsing domain: expected TOKEN_STRING or TOKEN_QUOTE";
-					return NULL;
+					parse_err("%s: %s", path, "expected STRING or QUOTE");
+					goto end;
 				}
 
 				accept(TOKEN_WHITESPACE);
@@ -261,8 +272,8 @@ parse(const char *path)
 
 			next_token(&token);
 			if (TOKEN_RBRACE != token.tok_type) {
-				err_msg = "parsing interface: expected TOKEN_RBRACE";
-				return NULL;
+				parse_err("%s: %s", path, "expected TOKEN_RBRACE");
+				goto end;
 			}
 		}
 		else if (TOKEN_WHITESPACE == token.tok_type) {
@@ -270,19 +281,16 @@ parse(const char *path)
 		}
 		else if (TOKEN_EOF == token.tok_type) {
 			break;
-		} else {
-			err_msg = "expected TOKEN_RUN or TOKEN_INTERFACE token";
-			return NULL;
+		}
+		else {
+			parse_err("%s: %s", path, "expected TOKEN_INTERFACE or TOKEN_RUN");
+			goto end;
 		}
 	} while (true);
 
+end:
 	if (EOF == fclose(fstream))
-		err_msg = "fclose(3)";
-	return NULL;
-}
+		parse_err("%s: %s", "fclose(3)", strerror(errno));
 
-const char *
-parse_err(void)
-{
-	return err_msg;
+	return NULL;
 }

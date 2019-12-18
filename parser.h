@@ -14,6 +14,6 @@ struct ast {
 };
 
 struct ast *parse(const char *);
-const char *parse_err(void);
+extern char parser_error[];
 
 #endif /* PARSER_H */
