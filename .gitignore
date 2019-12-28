@@ -1,11 +1,18 @@
+# build output
 dyndnsd
 dyndnsd-test
-dyndnsd.core
-dyndnsd.conf
 *.o
-y.tab.h
-y.tab.c
-lex.yy.c
+*.d
+
+# dist output
 dyndnsd-*.tar.gz
 dyndnsd-*.tar.bz2
-dyndnsd.d
+
+# testing
+dyndnsd-test.c
+dyndnsd.conf
+gmon.out
+
+# errors
+dyndnsd.core
+dyndnsd-test.core
