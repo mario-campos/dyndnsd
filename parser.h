@@ -1,19 +1,25 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-struct ast_iface {
+#include <sys/queue.h>
+
+struct cst_domain {
+	char *domain;
+	SLIST_ENTRY(cst_domain) next;
+};
+
+struct cst_iface {
 	char *if_name;
-	size_t domain_len;
-	char *domain[];
+	SLIST_HEAD(, cst_domain) domains;
+	SLIST_ENTRY(cst_iface) next;
 };
 
-struct ast {
-	char *cmd;
-	size_t iface_len;
-	struct ast_iface *iface[];
+struct cst {
+	const char *cmd;
+	SLIST_HEAD(, cst_iface) ifaces;
 };
 
-struct ast *parse(const char *);
+struct cst *parse(const char *);
 extern char parser_error[];
 
 #endif /* PARSER_H */

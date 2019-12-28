@@ -1,48 +1,43 @@
 #include <errno.h>
 #include <fcntl.h>
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "parser.h"
 
 char parser_error[100];
-struct lexer lexer;
 
 enum tokentype {
-	TOKEN_RUN = 0,
-	TOKEN_INTERFACE,
-	TOKEN_DOMAIN,
-	TOKEN_STRING,
-	TOKEN_QUOTE,
-	TOKEN_WHITESPACE,
-	TOKEN_COMMENT, 
-	TOKEN_LBRACE,
-	TOKEN_RBRACE,
-	TOKEN_ERROR,
-	TOKEN_EOF
+	T_EOF = 0,
+	T_RUN,
+	T_INTERFACE,
+	T_DOMAIN,
+	T_LBRACE,
+	T_RBRACE,
+	T_LINEFEED,
+	T_SPACE,
+	T_QUOTE,
+	T_STRING
 };
 
 struct lexer {
+	const char *lex_path;
 	const char *lex_text;
 	size_t      lex_size;
 	size_t      lex_read;
 };
 
 struct token {
-	const char     *tok_text;
-	size_t		tok_size;
-	enum tokentype 	tok_type;
+	const char *tok_text;
+	size_t	    tok_size;
 };
-
-static bool
-consume(const char *s, size_t slen, const char *t, size_t tlen)
-{
-	return 0 == strncmp(s, t, tlen <= slen ? tlen : slen);
-}
 
 static size_t
 consume_ws(const char *s, size_t slen)
@@ -74,57 +69,60 @@ consume_string(const char *s, size_t slen)
 	} return i;
 }
 
-static void
-next_token(struct token *t)
+static enum tokentype
+next_token(struct lexer *lex, struct token *t)
 {
 	size_t delta;
 	const char *s;
+	enum tokentype type;
 
-	if (lexer.lex_read >= lexer.lex_size) {
-		t->tok_type = TOKEN_EOF;
-		return;
-	}
+	if (lex->lex_read >= lex->lex_size)
+		return T_EOF;
 
-	s = &lexer.lex_text[lexer.lex_read];
-	delta = lexer.lex_size - lexer.lex_read;
+	s = &lex->lex_text[lex->lex_read];
+	delta = lex->lex_size - lex->lex_read;
 
-	if (consume(s, delta, "run", strlen("run"))) {
+	if (delta >= strlen("run") && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
 		t->tok_size = strlen("run");
-		t->tok_type = TOKEN_RUN;
+		type = T_RUN;
 	}
-	else if (consume(s, delta, "interface", strlen("interface"))) {
+	else if (delta >= strlen("interface") && 0 == strncmp(s, "interface", strlen("interface"))) {
 		t->tok_size = strlen("interface");
-		t->tok_type = TOKEN_INTERFACE;
+		type = T_INTERFACE;
 	}
-	else if (consume(s, delta, "domain", strlen("domain"))) {
+	else if (delta >= strlen("domain") && 0 == strncmp(s, "domain", strlen("domain"))) {
 		t->tok_size = strlen("domain");
-		t->tok_type = TOKEN_DOMAIN;
+		type = T_DOMAIN;
 	}
 	else if (*s == '{') {
 		t->tok_size = 1;
-		t->tok_type = TOKEN_LBRACE;
+		type = T_LBRACE;
 	}
 	else if (*s == '}') {
 		t->tok_size = 1;
-		t->tok_type = TOKEN_RBRACE;
+		type = T_RBRACE;
 	}
-	else if (*s == ' ' || *s == '\t' || *s == '\n') {
+	else if (*s == '\n') {
+		t->tok_size = 1;
+		type = T_LINEFEED;
+	}
+	else if (*s == ' ' || *s == '\t') {
 		t->tok_size = consume_ws(s, delta);
-		t->tok_type = TOKEN_WHITESPACE;
+		type = T_SPACE;
 	}
 	else if (*s == '#') {
-		t->tok_size = consume_comment(s, delta);
-		t->tok_type = TOKEN_COMMENT;
+		lex->lex_read += consume_comment(s, delta);
+		return next_token(lex, t);
 	}
 	else if (*s == '"') {
 		size_t i;
 		for (i = 1; i <= delta; i++) {
 			if (s[i] == '"') {
-				t->tok_type = TOKEN_QUOTE;
+				type = T_QUOTE;
 				break;
 			}
 			if (s[i] == '\n') {
-				t->tok_type = TOKEN_ERROR;
+				type = T_STRING;
 				break;
 			}
 		}
@@ -132,165 +130,245 @@ next_token(struct token *t)
 	}
 	else {
 		t->tok_size = consume_string(s, delta);
-		t->tok_type = TOKEN_STRING;
+		type = T_STRING;
 	}
 
 	t->tok_text = s;
-	lexer.lex_read += t->tok_size;
-}
-
-static enum tokentype
-peek(void)
-{
-	size_t offset;
-	struct token token;
-
-	offset = lexer.lex_read;
-	next_token(&token);
-	lexer.lex_read = offset;
-	return token.tok_type;
-}
-
-static bool
-accept(enum tokentype t)
-{
-	if (peek() == t) {
-		struct token token;
-		next_token(&token);
-		return true;
-	}
-	return false;
+	lex->lex_read += t->tok_size;
+	return type;
 }
 
 static void
-parse_err(const char *fmt, ...)
+error(struct lexer *lex, const char *e)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsnprintf(parser_error, sizeof(parser_error), fmt, ap);
-	va_end(ap);
+	snprintf(parser_error, sizeof(parser_error),
+	    "%s:%zu: %s", lex->lex_path, lex->lex_read, e);		
 }
 
-struct ast *
+struct cst *
 parse(const char *path)
 {
 	int fd;
-	FILE *fstream;
-	struct stat stat;
-	struct token token;
-	const char *text;
+	struct stat st;
+	const char *text, *run_cmd = NULL;
+	struct lexer lex;
+	struct token tok;
+	struct cst_iface *cif;
+	struct cst_domain *cdo;
+	struct cst *cst;
+
+	// TODO: error handling
+	cst = malloc(sizeof(*cst));
+	SLIST_INIT(&cst->ifaces);
 
 	if (-1 == (fd = open(path, O_RDONLY|O_CLOEXEC))) {
-		parse_err("%s: %s", "open(2)", strerror(errno));
-		goto end;
+		snprintf(parser_error, sizeof(parser_error), "open(2): %s", strerror(errno));
+		return NULL;
 	}
 
-	if (NULL == (fstream = fdopen(fd, "r"))) {
-		parse_err("%s: %s", "fdopen(3)", strerror(errno));
-		goto end;
+	if (-1 == fstat(fd, &st)) {
+		snprintf(parser_error, sizeof(parser_error), "fstat(2): %s", strerror(errno));
+		close(fd);
+		return NULL;
 	}
 
-	if (-1 == fstat(fd, &stat)) {
-		parse_err("%s: %s", "fstat(2)", strerror(errno));
-		goto end;
+	if (MAP_FAILED == (text = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {
+		snprintf(parser_error, sizeof(parser_error), "mmap(2): %s", strerror(errno));
+		close(fd);
+		return NULL;
 	}
 
-	if (MAP_FAILED == (text = mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {
-		parse_err("%s: %s", "mmap(2)", strerror(errno));
-		goto end;
+	close(fd);
+
+	lex.lex_path = path;
+	lex.lex_text = text;
+	lex.lex_size = st.st_size;
+	lex.lex_read = 0;
+
+S_TOP:
+	switch (next_token(&lex, &tok)) {
+	case T_EOF: goto S_END;
+	case T_SPACE:
+	case T_LINEFEED: goto S_TOP;
+	case T_RUN: goto S_RUN;
+	case T_INTERFACE: goto S_INTERFACE;
+	default:
+		error(&lex, "expected 'run' or 'interface'");
+		goto S_ERROR;
 	}
 
-	lexer.lex_text = text;
-	lexer.lex_size = stat.st_size;
-	lexer.lex_read = 0;
+S_INTERFACE:
+	// TODO: error handling
+	cif = malloc(sizeof(*cif));
+	SLIST_INIT(&cif->domains);
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_INTERFACE_SPACE;
+	default:
+		error(&lex, "expected whitespace after 'interface'");
+		free(cif);
+		goto S_ERROR;
+	}
 
-	do {
-		next_token(&token);
-		if (TOKEN_RUN == token.tok_type) {
-			next_token(&token);
-			if (TOKEN_WHITESPACE != token.tok_type) {
-				parse_err("%s: %s", path, "expected TOKEN_WHITESPACE");
-				goto end;
-			}
+S_INTERFACE_SPACE:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_INTERFACE_SPACE;
+	case T_STRING:
+		cif->if_name = strndup(tok.tok_text, tok.tok_size);
+		goto S_INTERFACE_STRING;
+	case T_QUOTE:
+		cif->if_name = strndup(&tok.tok_text[1], tok.tok_size-2);
+		goto S_INTERFACE_STRING;
+	default:
+		error(&lex, "expected interface name");
+		free(cif->if_name); free(cif);
+		goto S_ERROR;
+	}
 
-			next_token(&token);
-			if (TOKEN_STRING != token.tok_type &&
-			    TOKEN_QUOTE != token.tok_type) {
-				parse_err("%s: %s", path, "expected STRING or QUOTE");
-				goto end;
-			}
+S_INTERFACE_STRING:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_INTERFACE_STRING;
+	case T_LBRACE: goto S_INTERFACE_LBRACE;
+	default:
+		error(&lex, "expected '{'");
+		free(cif->if_name); free(cif);
+		goto S_ERROR;
+	}
+
+S_INTERFACE_LBRACE:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_INTERFACE_LBRACE;
+	case T_DOMAIN:
+		// TODO: error handling
+		cdo = malloc(sizeof(*cdo));
+		goto S_DOMAIN;
+	default:
+		error(&lex, "expected 'domain'");
+		free(cif->if_name); free(cif);
+		goto S_ERROR;
+	}
+
+S_DOMAIN:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_DOMAIN_SPACE;
+	default:
+		error(&lex, "expected whitespace after 'domain'");
+		free(cif->if_name); free(cif); free(cdo);
+		goto S_ERROR;
+	}
+
+S_DOMAIN_SPACE:
+	switch (next_token(&lex, &tok)) {
+	case T_STRING:
+		// TODO: error handling
+		cdo->domain = strndup(tok.tok_text, tok.tok_size);
+		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
+		goto S_DOMAIN_STRING;
+	case T_QUOTE:
+		// TODO: error handling
+		cdo->domain = strndup(&tok.tok_text[1], tok.tok_size-2);
+		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
+		goto S_DOMAIN_STRING;
+	default:
+		error(&lex, "expected domain name");
+		free(cif->if_name); free(cif); free(cdo);
+		goto S_ERROR;
+	}
+
+S_DOMAIN_STRING:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_DOMAIN_STRING;
+	case T_DOMAIN: goto S_DOMAIN;
+	case T_RBRACE:
+		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
+		goto S_INTERFACE_RBRACE;
+	default:
+		error(&lex, "expected 'domain' or '}'");
+		while (!SLIST_EMPTY(&cif->domains)) {
+			cdo = SLIST_FIRST(&cif->domains);
+			SLIST_REMOVE_HEAD(&cif->domains, next);
+			free(cdo->domain);
+			free(cdo);
 		}
-		else if (TOKEN_INTERFACE == token.tok_type) {
-			next_token(&token);
-			if (TOKEN_WHITESPACE != token.tok_type) {
-				parse_err("%s: %s", path, "expected TOKEN_WHITESPACE");
-				goto end;
-			}
+		free(cif->if_name);
+		free(cif);
+		goto S_ERROR;
+	}
 
-			next_token(&token);
-			if (TOKEN_QUOTE != token.tok_type
-			&& TOKEN_STRING != token.tok_type) {
-				parse_err("%s: %s", path, "expected STRING or QUOTE");
-				goto end;
-			}
+S_INTERFACE_RBRACE:
+	switch (next_token(&lex, &tok)) {
+	case T_RUN: goto S_RUN;
+	case T_INTERFACE: goto S_INTERFACE;
+	case T_SPACE:
+	case T_LINEFEED: goto S_TOP;
+	case T_EOF: goto S_END;
+	default:
+		error(&lex, "expected whitespace, 'interface', or 'run'");
+		goto S_ERROR;
+	}
 
-			accept(TOKEN_WHITESPACE);
+S_RUN:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE: goto S_RUN_SPACE;
+	default:
+		error(&lex, "expected whitespace after 'run'");
+		goto S_ERROR;
+	}
 
-			next_token(&token);
-			if (TOKEN_LBRACE != token.tok_type) {
-				parse_err("%s: %s", path, "expected TOKEN_LBRACE");
-				goto end;
-			}
+S_RUN_SPACE:
+	switch (next_token(&lex, &tok)) {
+	case T_INTERFACE:
+	case T_DOMAIN:
+	case T_RUN:
+	case T_LBRACE:
+	case T_RBRACE:
+	case T_STRING:
+		run_cmd = tok.tok_text;
+		goto S_RUN_STRING;
+	case T_QUOTE:
+		run_cmd = strndup(&tok.tok_text[1], tok.tok_size-2);
+		goto S_RUN_QUOTE;
+	default:
+		error(&lex, "expected command after 'run'");
+	}
 
-			accept(TOKEN_WHITESPACE);
+S_RUN_QUOTE:
+	switch (next_token(&lex, &tok)) {
+	case T_EOF: goto S_END;
+	case T_SPACE: goto S_RUN_QUOTE;
+	case T_LINEFEED: goto S_TOP;
+	default:
+		error(&lex, "expected '\\n'");
+		goto S_ERROR;
+	}
 
-			do {
-				accept(TOKEN_WHITESPACE);
+S_RUN_STRING:
+	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_INTERFACE:
+	case T_DOMAIN:
+	case T_RUN:
+	case T_LBRACE:
+	case T_RBRACE:
+	case T_STRING:
+	case T_QUOTE: goto S_RUN_STRING;
+	case T_LINEFEED:
+		run_cmd = strndup(run_cmd, tok.tok_text - run_cmd);
+		goto S_TOP;
+	case T_EOF:
+		run_cmd = strndup(run_cmd, tok.tok_text - run_cmd);
+		goto S_END;
+	}
 
-				next_token(&token);
-				if (TOKEN_DOMAIN != token.tok_type) {
-					parse_err("%s: %s", path, "expected TOKEN_DOMAIN");
-					goto end;
-				}
+S_ERROR:
+	free((char*)run_cmd);
+	cst = NULL;
 
-				next_token(&token);
-				if (TOKEN_WHITESPACE != token.tok_type) {
-					parse_err("%s: %s", path, "expected TOKEN_WHITESPACE");
-					goto end;
-				}
-
-				next_token(&token);
-				if (TOKEN_QUOTE != token.tok_type
-				&& TOKEN_STRING != token.tok_type) {
-					parse_err("%s: %s", path, "expected STRING or QUOTE");
-					goto end;
-				}
-
-				accept(TOKEN_WHITESPACE);
-			} while (TOKEN_RBRACE != peek());
-
-			next_token(&token);
-			if (TOKEN_RBRACE != token.tok_type) {
-				parse_err("%s: %s", path, "expected TOKEN_RBRACE");
-				goto end;
-			}
-		}
-		else if (TOKEN_WHITESPACE == token.tok_type) {
-			continue;
-		}
-		else if (TOKEN_EOF == token.tok_type) {
-			break;
-		}
-		else {
-			parse_err("%s: %s", path, "expected TOKEN_INTERFACE or TOKEN_RUN");
-			goto end;
-		}
-	} while (true);
-
-end:
-	if (EOF == fclose(fstream))
-		parse_err("%s: %s", "fclose(3)", strerror(errno));
-
-	return NULL;
+S_END:
+	return cst;
 }
