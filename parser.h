@@ -5,8 +5,8 @@
 #include <sys/queue.h>
 
 struct cst_domain {
-	char *domain;
 	SLIST_ENTRY(cst_domain) next;
+	char domain[];
 };
 
 struct cst_iface {

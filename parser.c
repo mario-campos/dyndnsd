@@ -268,7 +268,6 @@ S_DOMAIN:
 		while (!SLIST_EMPTY(&cif->domains)) {
 			cdo = SLIST_FIRST(&cif->domains);
 			SLIST_REMOVE_HEAD(&cif->domains, next);
-			free(cdo->domain);
 			free(cdo);
 		}
 		free(cif);
@@ -279,16 +278,16 @@ S_DOMAIN_SPACE:
 	switch (next_token(&lex, &tok)) {
 	case T_STRING:
 		// TODO: error handling
-		cdo = malloc(sizeof(*cdo));
-		// TODO: error handling
-		cdo->domain = strndup(tok.tok_text, tok.tok_size);
+		cdo = malloc(sizeof(*cdo) + tok.tok_size + 1);
+		strncpy(cdo->domain, tok.tok_text, tok.tok_size);
+		cdo->domain[tok.tok_size] = '\0';
 		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
 		goto S_DOMAIN_STRING;
 	case T_QUOTE:
 		// TODO: error handling
-		cdo = malloc(sizeof(*cdo));
-		// TODO: error handling
-		cdo->domain = strndup(&tok.tok_text[1], tok.tok_size-2);
+		cdo = malloc(sizeof(*cdo) + tok.tok_size - 2 + 1);
+		strncpy(cdo->domain, &tok.tok_text[1], tok.tok_size - 2);
+		cdo->domain[tok.tok_size - 2] = '\0';
 		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
 		goto S_DOMAIN_STRING;
 	default:
@@ -296,7 +295,6 @@ S_DOMAIN_SPACE:
 		while (!SLIST_EMPTY(&cif->domains)) {
 			cdo = SLIST_FIRST(&cif->domains);
 			SLIST_REMOVE_HEAD(&cif->domains, next);
-			free(cdo->domain);
 			free(cdo);
 		}
 		free(cif);
@@ -316,7 +314,6 @@ S_DOMAIN_STRING:
 		while (!SLIST_EMPTY(&cif->domains)) {
 			cdo = SLIST_FIRST(&cif->domains);
 			SLIST_REMOVE_HEAD(&cif->domains, next);
-			free(cdo->domain);
 			free(cdo);
 		}
 		free(cif);
@@ -392,7 +389,6 @@ S_ERROR:
 		while (!SLIST_EMPTY(&cif->domains)) {
 			cdo = SLIST_FIRST(&cif->domains);
 			SLIST_REMOVE_HEAD(&cif->domains, next);
-			free(cdo->domain);
 			free(cdo);
 		}
 		SLIST_REMOVE_HEAD(&cst->ifaces, next);
