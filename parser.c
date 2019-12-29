@@ -381,11 +381,9 @@ S_RUN_STRING:
 	case T_STRING:
 	case T_QUOTE: goto S_RUN_STRING;
 	case T_LINEFEED:
-		run_cmd = strndup(run_cmd, tok.tok_text - run_cmd);
-		goto S_TOP;
 	case T_EOF:
 		run_cmd = strndup(run_cmd, tok.tok_text - run_cmd);
-		goto S_END;
+		goto S_TOP;
 	}
 
 S_ERROR:
