@@ -82,16 +82,18 @@ next_token(struct lexer *lex, struct token *t)
 	s = &lex->lex_text[lex->lex_read];
 	delta = lex->lex_size - lex->lex_read;
 
-	if (delta >= strlen("run") && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
-		t->tok_size = strlen("run");
+	if (delta >= 3 && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
+		t->tok_size = 3;
 		type = T_RUN;
 	}
-	else if (delta >= strlen("interface") && 0 == strncmp(s, "interface", strlen("interface"))) {
-		t->tok_size = strlen("interface");
+	else if (delta >= 9 && s[0] == 'i' && s[1] == 'n' && s[2] == 't' && s[3] == 'e'
+	    && s[4] == 'r' && s[5] == 'f' && s[6] == 'a' && s[7] == 'c' && s[8] == 'e') {
+		t->tok_size = 9;
 		type = T_INTERFACE;
 	}
-	else if (delta >= strlen("domain") && 0 == strncmp(s, "domain", strlen("domain"))) {
-		t->tok_size = strlen("domain");
+	else if (delta >= 6 && s[0] == 'd' && s[1] == 'o' &&
+	    s[2] == 'm' && s[3] == 'a' && s[4] == 'i' && s[5] == 'n') {
+		t->tok_size = 6;
 		type = T_DOMAIN;
 	}
 	else if (*s == '{') {
@@ -198,15 +200,11 @@ S_TOP:
 	}
 
 S_INTERFACE:
-	// TODO: error handling
-	cif = malloc(sizeof(*cif));
-	SLIST_INIT(&cif->domains);
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE:
 	case T_LINEFEED: goto S_INTERFACE_SPACE;
 	default:
 		error(&lex, "expected whitespace after 'interface'");
-		free(cif);
 		goto S_ERROR;
 	}
 
@@ -214,15 +212,28 @@ S_INTERFACE_SPACE:
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE:
 	case T_LINEFEED: goto S_INTERFACE_SPACE;
-	case T_STRING:
-		cif->if_name = strndup(tok.tok_text, tok.tok_size);
+	case T_STRING: {
+		// TODO: error handling
+		cif = malloc(sizeof(*cif));
+		SLIST_INIT(&cif->domains);
+		size_t count = sizeof(cif->if_name) <= tok.tok_size ?
+		    sizeof(cif->if_name) - 1 : tok.tok_size;
+		strncpy(cif->if_name, tok.tok_text, count);
+		cif->if_name[count] = '\0';
 		goto S_INTERFACE_STRING;
-	case T_QUOTE:
-		cif->if_name = strndup(&tok.tok_text[1], tok.tok_size-2);
+	}
+	case T_QUOTE: {
+		// TODO: error handling
+		cif = malloc(sizeof(*cif));
+		SLIST_INIT(&cif->domains);
+		size_t count = sizeof(cif->if_name) <= tok.tok_size-2 ?
+		    sizeof(cif->if_name) - 1 : tok.tok_size - 2;
+		strncpy(cif->if_name, &tok.tok_text[1], count);
+		cif->if_name[count] = '\0';
 		goto S_INTERFACE_STRING;
+	}
 	default:
 		error(&lex, "expected interface name");
-		free(cif->if_name); free(cif);
 		goto S_ERROR;
 	}
 
@@ -233,7 +244,7 @@ S_INTERFACE_STRING:
 	case T_LBRACE: goto S_INTERFACE_LBRACE;
 	default:
 		error(&lex, "expected '{'");
-		free(cif->if_name); free(cif);
+		free(cif);
 		goto S_ERROR;
 	}
 
@@ -241,13 +252,10 @@ S_INTERFACE_LBRACE:
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE:
 	case T_LINEFEED: goto S_INTERFACE_LBRACE;
-	case T_DOMAIN:
-		// TODO: error handling
-		cdo = malloc(sizeof(*cdo));
-		goto S_DOMAIN;
+	case T_DOMAIN: goto S_DOMAIN;
 	default:
 		error(&lex, "expected 'domain'");
-		free(cif->if_name); free(cif);
+		free(cif);
 		goto S_ERROR;
 	}
 
@@ -257,7 +265,13 @@ S_DOMAIN:
 	case T_LINEFEED: goto S_DOMAIN_SPACE;
 	default:
 		error(&lex, "expected whitespace after 'domain'");
-		free(cif->if_name); free(cif); free(cdo);
+		while (!SLIST_EMPTY(&cif->domains)) {
+			cdo = SLIST_FIRST(&cif->domains);
+			SLIST_REMOVE_HEAD(&cif->domains, next);
+			free(cdo->domain);
+			free(cdo);
+		}
+		free(cif);
 		goto S_ERROR;
 	}
 
@@ -265,17 +279,27 @@ S_DOMAIN_SPACE:
 	switch (next_token(&lex, &tok)) {
 	case T_STRING:
 		// TODO: error handling
+		cdo = malloc(sizeof(*cdo));
+		// TODO: error handling
 		cdo->domain = strndup(tok.tok_text, tok.tok_size);
 		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
 		goto S_DOMAIN_STRING;
 	case T_QUOTE:
+		// TODO: error handling
+		cdo = malloc(sizeof(*cdo));
 		// TODO: error handling
 		cdo->domain = strndup(&tok.tok_text[1], tok.tok_size-2);
 		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
 		goto S_DOMAIN_STRING;
 	default:
 		error(&lex, "expected domain name");
-		free(cif->if_name); free(cif); free(cdo);
+		while (!SLIST_EMPTY(&cif->domains)) {
+			cdo = SLIST_FIRST(&cif->domains);
+			SLIST_REMOVE_HEAD(&cif->domains, next);
+			free(cdo->domain);
+			free(cdo);
+		}
+		free(cif);
 		goto S_ERROR;
 	}
 
@@ -295,7 +319,6 @@ S_DOMAIN_STRING:
 			free(cdo->domain);
 			free(cdo);
 		}
-		free(cif->if_name);
 		free(cif);
 		goto S_ERROR;
 	}
@@ -366,8 +389,20 @@ S_RUN_STRING:
 	}
 
 S_ERROR:
+	while (!SLIST_EMPTY(&cst->ifaces)) {
+		cif = SLIST_FIRST(&cst->ifaces);
+		while (!SLIST_EMPTY(&cif->domains)) {
+			cdo = SLIST_FIRST(&cif->domains);
+			SLIST_REMOVE_HEAD(&cif->domains, next);
+			free(cdo->domain);
+			free(cdo);
+		}
+		SLIST_REMOVE_HEAD(&cst->ifaces, next);
+		free(cif);
+	}
+	free(cst);
 	free((char*)run_cmd);
-	cst = NULL;
+	return NULL;
 
 S_END:
 	return cst;

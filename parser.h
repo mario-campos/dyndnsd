@@ -1,6 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include <net/if.h>
 #include <sys/queue.h>
 
 struct cst_domain {
@@ -9,7 +10,7 @@ struct cst_domain {
 };
 
 struct cst_iface {
-	char *if_name;
+	char if_name[IFNAMSIZ];
 	SLIST_HEAD(, cst_domain) domains;
 	SLIST_ENTRY(cst_iface) next;
 };
