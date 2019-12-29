@@ -35,9 +35,9 @@ struct lexer {
 };
 
 struct token {
-	const char *tok_text;
-	size_t	    tok_size;
-	enum tokentype tok_type;
+	const char     *tok_text;
+	size_t	    	tok_size;
+	enum tokentype 	tok_type;
 };
 
 static size_t
@@ -195,7 +195,14 @@ S_TOP:
 	case T_SPACE:
 	case T_LINEFEED: goto S_TOP;
 	case T_RUN: goto S_RUN;
-	case T_INTERFACE: goto S_INTERFACE;
+	case T_INTERFACE:
+		if (NULL == (cif = malloc(sizeof(*cif)))) {
+			snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
+			goto S_ERROR;
+		}
+		SLIST_INIT(&cif->domains);
+		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
+		goto S_INTERFACE;
 	default:
 		error(&lex, "expected 'run' or 'interface'");
 		goto S_ERROR;
@@ -217,12 +224,8 @@ S_INTERFACE_SPACE:
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
+		/* fallthrough */
 	case T_STRING: {
-		if (NULL == (cif = malloc(sizeof(*cif)))) {
-			snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
-			goto S_ERROR;
-		}
-		SLIST_INIT(&cif->domains);
 		size_t count = tok.tok_size < sizeof(cif->if_name) ?
 		    tok.tok_size : sizeof(cif->if_name) - 1;
 		strncpy(cif->if_name, tok.tok_text, count);
@@ -241,7 +244,6 @@ S_INTERFACE_STRING:
 	case T_LBRACE: goto S_INTERFACE_LBRACE;
 	default:
 		error(&lex, "expected '{'");
-		free(cif);
 		goto S_ERROR;
 	}
 
@@ -252,7 +254,6 @@ S_INTERFACE_LBRACE:
 	case T_DOMAIN: goto S_DOMAIN;
 	default:
 		error(&lex, "expected 'domain'");
-		free(cif);
 		goto S_ERROR;
 	}
 
@@ -262,7 +263,6 @@ S_DOMAIN:
 	case T_LINEFEED: goto S_DOMAIN_SPACE;
 	default:
 		error(&lex, "expected whitespace after 'domain'");
-		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
 		goto S_ERROR;
 	}
 
@@ -271,11 +271,10 @@ S_DOMAIN_SPACE:
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
+		/* fallthrough */
 	case T_STRING:
 		if (NULL == (cdo = malloc(sizeof(*cdo) + tok.tok_size + 1))) {
-			// free cif->domains, cif
 			snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
-			SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
 			goto S_ERROR;
 		}
 		strncpy(cdo->domain, tok.tok_text, tok.tok_size);
@@ -284,7 +283,6 @@ S_DOMAIN_SPACE:
 		goto S_DOMAIN_STRING;
 	default:
 		error(&lex, "expected domain name");
-		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
 		goto S_ERROR;
 	}
 
@@ -293,12 +291,9 @@ S_DOMAIN_STRING:
 	case T_SPACE:
 	case T_LINEFEED: goto S_DOMAIN_STRING;
 	case T_DOMAIN: goto S_DOMAIN;
-	case T_RBRACE:
-		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
-		goto S_INTERFACE_RBRACE;
+	case T_RBRACE: goto S_INTERFACE_RBRACE;
 	default:
 		error(&lex, "expected 'domain' or '}'");
-		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
 		goto S_ERROR;
 	}
 
@@ -329,14 +324,15 @@ S_RUN_SPACE:
 	case T_RUN:
 	case T_LBRACE:
 	case T_RBRACE:
-	case T_STRING:
-		cst->cmd = tok.tok_text;
-		goto S_RUN_STRING;
 	case T_QUOTE:
 		cst->cmd = strndup(&tok.tok_text[1], tok.tok_size-2);
 		goto S_RUN_QUOTE;
+	case T_STRING:
+		cst->cmd = tok.tok_text;
+		goto S_RUN_STRING;
 	default:
 		error(&lex, "expected command after 'run'");
+		goto S_ERROR;
 	}
 
 S_RUN_QUOTE:
