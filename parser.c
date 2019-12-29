@@ -37,6 +37,7 @@ struct lexer {
 struct token {
 	const char *tok_text;
 	size_t	    tok_size;
+	enum tokentype tok_type;
 };
 
 static size_t
@@ -70,74 +71,74 @@ consume_string(const char *s, size_t slen)
 }
 
 static enum tokentype
-next_token(struct lexer *lex, struct token *t)
+next_token(struct lexer *lex, struct token *tok)
 {
 	size_t delta;
 	const char *s;
-	enum tokentype type;
-
-	if (lex->lex_read >= lex->lex_size)
-		return T_EOF;
 
 	s = &lex->lex_text[lex->lex_read];
 	delta = lex->lex_size - lex->lex_read;
 
-	if (delta >= 3 && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
-		t->tok_size = 3;
-		type = T_RUN;
+	if (lex->lex_read >= lex->lex_size) {
+		tok->tok_size = 0;
+		tok->tok_type = T_EOF;
+	}
+	else if (delta >= 3 && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
+		tok->tok_size = 3;
+		tok->tok_type = T_RUN;
 	}
 	else if (delta >= 9 && s[0] == 'i' && s[1] == 'n' && s[2] == 't' && s[3] == 'e'
 	    && s[4] == 'r' && s[5] == 'f' && s[6] == 'a' && s[7] == 'c' && s[8] == 'e') {
-		t->tok_size = 9;
-		type = T_INTERFACE;
+		tok->tok_size = 9;
+		tok->tok_type = T_INTERFACE;
 	}
 	else if (delta >= 6 && s[0] == 'd' && s[1] == 'o' &&
 	    s[2] == 'm' && s[3] == 'a' && s[4] == 'i' && s[5] == 'n') {
-		t->tok_size = 6;
-		type = T_DOMAIN;
+		tok->tok_size = 6;
+		tok->tok_type = T_DOMAIN;
 	}
 	else if (*s == '{') {
-		t->tok_size = 1;
-		type = T_LBRACE;
+		tok->tok_size = 1;
+		tok->tok_type = T_LBRACE;
 	}
 	else if (*s == '}') {
-		t->tok_size = 1;
-		type = T_RBRACE;
+		tok->tok_size = 1;
+		tok->tok_type = T_RBRACE;
 	}
 	else if (*s == '\n') {
-		t->tok_size = 1;
-		type = T_LINEFEED;
+		tok->tok_size = 1;
+		tok->tok_type = T_LINEFEED;
 	}
 	else if (*s == ' ' || *s == '\t') {
-		t->tok_size = consume_ws(s, delta);
-		type = T_SPACE;
+		tok->tok_size = consume_ws(s, delta);
+		tok->tok_type = T_SPACE;
 	}
 	else if (*s == '#') {
 		lex->lex_read += consume_comment(s, delta);
-		return next_token(lex, t);
+		return next_token(lex, tok);
 	}
 	else if (*s == '"') {
 		size_t i;
 		for (i = 1; i <= delta; i++) {
 			if (s[i] == '"') {
-				type = T_QUOTE;
+				tok->tok_type = T_QUOTE;
 				break;
 			}
 			if (s[i] == '\n') {
-				type = T_STRING;
+				tok->tok_type = T_STRING;
 				break;
 			}
 		}
-		t->tok_size = i + 1;
+		tok->tok_size = i + 1;
 	}
 	else {
-		t->tok_size = consume_string(s, delta);
-		type = T_STRING;
+		tok->tok_size = consume_string(s, delta);
+		tok->tok_type = T_STRING;
 	}
 
-	t->tok_text = s;
-	lex->lex_read += t->tok_size;
-	return type;
+	tok->tok_text = s;
+	lex->lex_read += tok->tok_size;
+	return tok->tok_type;
 }
 
 static void
@@ -212,23 +213,16 @@ S_INTERFACE_SPACE:
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE:
 	case T_LINEFEED: goto S_INTERFACE_SPACE;
+	case T_QUOTE:
+		tok.tok_text += 1;
+		tok.tok_size -= 2;
 	case T_STRING: {
 		// TODO: error handling
 		cif = malloc(sizeof(*cif));
 		SLIST_INIT(&cif->domains);
-		size_t count = sizeof(cif->if_name) <= tok.tok_size ?
-		    sizeof(cif->if_name) - 1 : tok.tok_size;
+		size_t count = tok.tok_size < sizeof(cif->if_name) ?
+		    tok.tok_size : sizeof(cif->if_name) - 1;
 		strncpy(cif->if_name, tok.tok_text, count);
-		cif->if_name[count] = '\0';
-		goto S_INTERFACE_STRING;
-	}
-	case T_QUOTE: {
-		// TODO: error handling
-		cif = malloc(sizeof(*cif));
-		SLIST_INIT(&cif->domains);
-		size_t count = sizeof(cif->if_name) <= tok.tok_size-2 ?
-		    sizeof(cif->if_name) - 1 : tok.tok_size - 2;
-		strncpy(cif->if_name, &tok.tok_text[1], count);
 		cif->if_name[count] = '\0';
 		goto S_INTERFACE_STRING;
 	}
@@ -276,18 +270,14 @@ S_DOMAIN:
 
 S_DOMAIN_SPACE:
 	switch (next_token(&lex, &tok)) {
+	case T_QUOTE:
+		tok.tok_text += 1;
+		tok.tok_size -= 2;
 	case T_STRING:
 		// TODO: error handling
 		cdo = malloc(sizeof(*cdo) + tok.tok_size + 1);
 		strncpy(cdo->domain, tok.tok_text, tok.tok_size);
 		cdo->domain[tok.tok_size] = '\0';
-		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
-		goto S_DOMAIN_STRING;
-	case T_QUOTE:
-		// TODO: error handling
-		cdo = malloc(sizeof(*cdo) + tok.tok_size - 2 + 1);
-		strncpy(cdo->domain, &tok.tok_text[1], tok.tok_size - 2);
-		cdo->domain[tok.tok_size - 2] = '\0';
 		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
 		goto S_DOMAIN_STRING;
 	default:
