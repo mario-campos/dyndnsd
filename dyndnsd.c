@@ -25,7 +25,7 @@ static void usage(void);
 static void sig_handler(int, short, void *);
 static void process_event(int, short, void *);
 static void drop_privilege(char *, char *);
-static pid_t spawn(char *, int, char *, char *, char *);
+static pid_t spawn(const char *, int, char *, char *, char *);
 
 int
 main(int argc, char *argv[])
@@ -110,20 +110,21 @@ static void
 process_event(int sig, short event, void *arg)
 {
 	pid_t pid;
-	struct ast_iface *aif;
+	struct ast_if *aif;
+	struct ast_dn *adn;
 	struct rtm_newaddr rtm;
 	struct dyndnsd *this = arg;
 
 	if (-1 == rtm_consume(this->routefd, &rtm))
 		return;
 
-	for (size_t j = 0; j < this->ast->iface_len; j++) {
-		aif = this->ast->iface[j];
-		if (strcmp(rtm.rtm_ifname, aif->if_name))
+	SLIST_FOREACH(aif, &this->ast->aif_head, next) {
+		aif = SLIST_FIRST(&this->ast->aif_head);
+		if (strcmp(rtm.rtm_ifname, aif->name))
 			continue;
-		for (size_t k = 0; k < aif->domain_len; k++) {
-			pid = spawn(this->ast->cmd, this->devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
-			syslog(LOG_INFO, "%s %s %s %u", aif->if_name, inet_ntoa(rtm.rtm_ifaddr), aif->domain[k], pid);
+		SLIST_FOREACH(adn, &aif->adn_head, next) {
+			pid = spawn(this->ast->run, this->devnull, adn->name, inet_ntoa(rtm.rtm_ifaddr), aif->name);
+			syslog(LOG_INFO, "%s %s %s %u", aif->name, inet_ntoa(rtm.rtm_ifaddr), adn->name, pid);
 		}
 	}
 }
@@ -169,7 +170,7 @@ drop_privilege(char *username, char *groupname)
 }
 
 static pid_t
-spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
+spawn(const char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 {
 	assert(cmd);
 	assert(fd >= 0);
