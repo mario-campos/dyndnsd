@@ -4,20 +4,20 @@
 #include <net/if.h>
 #include <sys/queue.h>
 
-struct ast_domain {
-	SLIST_ENTRY(ast_domain) next;
-	char domain[];
+struct ast_dn {
+	SLIST_ENTRY(ast_dn) next;
+	char name[];
 };
 
-struct ast_iface {
-	char if_name[IFNAMSIZ];
-	SLIST_HEAD(, ast_domain) domains;
-	SLIST_ENTRY(ast_iface) next;
+struct ast_if {
+	SLIST_ENTRY(ast_if) next;
+	SLIST_HEAD(, ast_dn) adn_head;
+	char name[IFNAMSIZ];
 };
 
 struct ast {
-	const char *cmd;
-	SLIST_HEAD(, ast_iface) ifaces;
+	const char *run;
+	SLIST_HEAD(, ast_if) aif_head;
 };
 
 struct ast *parse(const char *);

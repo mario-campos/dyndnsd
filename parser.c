@@ -156,8 +156,8 @@ parse(const char *path)
 	const char *text;
 	struct lexer lex;
 	struct token tok;
-	struct ast_iface *cif;
-	struct ast_domain *cdo;
+	struct ast_if *aif;
+	struct ast_dn *adn;
 	struct ast *ast;
 
 	if (NULL == (ast = malloc(sizeof(*ast)))) {
@@ -183,7 +183,7 @@ parse(const char *path)
 	}
 
 	close(fd);
-	SLIST_INIT(&ast->ifaces);
+	SLIST_INIT(&ast->aif_head);
 	lex.lex_path = path;
 	lex.lex_text = text;
 	lex.lex_size = st.st_size;
@@ -196,12 +196,12 @@ S_TOP:
 	case T_LINEFEED: goto S_TOP;
 	case T_RUN: goto S_RUN;
 	case T_INTERFACE:
-		if (NULL == (cif = malloc(sizeof(*cif)))) {
+		if (NULL == (aif = malloc(sizeof(*aif)))) {
 			snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
 			goto S_ERROR;
 		}
-		SLIST_INIT(&cif->domains);
-		SLIST_INSERT_HEAD(&ast->ifaces, cif, next);
+		SLIST_INIT(&aif->adn_head);
+		SLIST_INSERT_HEAD(&ast->aif_head, aif, next);
 		goto S_INTERFACE;
 	default:
 		error(&lex, "expected 'run' or 'interface'");
@@ -226,10 +226,10 @@ S_INTERFACE_SPACE:
 		tok.tok_size -= 2;
 		/* fallthrough */
 	case T_STRING: {
-		size_t count = tok.tok_size < sizeof(cif->if_name) ?
-		    tok.tok_size : sizeof(cif->if_name) - 1;
-		strncpy(cif->if_name, tok.tok_text, count);
-		cif->if_name[count] = '\0';
+		size_t count = tok.tok_size < sizeof(aif->name) ?
+		    tok.tok_size : sizeof(aif->name) - 1;
+		strncpy(aif->name, tok.tok_text, count);
+		aif->name[count] = '\0';
 		goto S_INTERFACE_STRING;
 	}
 	default:
@@ -273,13 +273,13 @@ S_DOMAIN_SPACE:
 		tok.tok_size -= 2;
 		/* fallthrough */
 	case T_STRING:
-		if (NULL == (cdo = malloc(sizeof(*cdo) + tok.tok_size + 1))) {
+		if (NULL == (adn = malloc(sizeof(*adn) + tok.tok_size + 1))) {
 			snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
 			goto S_ERROR;
 		}
-		strncpy(cdo->domain, tok.tok_text, tok.tok_size);
-		cdo->domain[tok.tok_size] = '\0';
-		SLIST_INSERT_HEAD(&cif->domains, cdo, next);
+		strncpy(adn->name, tok.tok_text, tok.tok_size);
+		adn->name[tok.tok_size] = '\0';
+		SLIST_INSERT_HEAD(&aif->adn_head, adn, next);
 		goto S_DOMAIN_STRING;
 	default:
 		error(&lex, "expected domain name");
@@ -325,10 +325,10 @@ S_RUN_SPACE:
 	case T_LBRACE:
 	case T_RBRACE:
 	case T_QUOTE:
-		ast->cmd = strndup(&tok.tok_text[1], tok.tok_size-2);
+		ast->run = strndup(&tok.tok_text[1], tok.tok_size-2);
 		goto S_RUN_QUOTE;
 	case T_STRING:
-		ast->cmd = tok.tok_text;
+		ast->run = tok.tok_text;
 		goto S_RUN_STRING;
 	default:
 		error(&lex, "expected command after 'run'");
@@ -357,23 +357,23 @@ S_RUN_STRING:
 	case T_QUOTE: goto S_RUN_STRING;
 	case T_LINEFEED:
 	case T_EOF:
-		ast->cmd = strndup(ast->cmd, tok.tok_text - ast->cmd);
+		ast->run = strndup(ast->run, tok.tok_text - ast->run);
 		goto S_TOP;
 	}
 
 S_ERROR:
 	// free that which was already parsed
-	while (!SLIST_EMPTY(&ast->ifaces)) {
-		cif = SLIST_FIRST(&ast->ifaces);
-		while (!SLIST_EMPTY(&cif->domains)) {
-			cdo = SLIST_FIRST(&cif->domains);
-			SLIST_REMOVE_HEAD(&cif->domains, next);
-			free(cdo);
+	while (!SLIST_EMPTY(&ast->aif_head)) {
+		aif = SLIST_FIRST(&ast->aif_head);
+		while (!SLIST_EMPTY(&aif->adn_head)) {
+			adn = SLIST_FIRST(&aif->adn_head);
+			SLIST_REMOVE_HEAD(&aif->adn_head, next);
+			free(adn);
 		}
-		SLIST_REMOVE_HEAD(&ast->ifaces, next);
-		free(cif);
+		SLIST_REMOVE_HEAD(&ast->aif_head, next);
+		free(aif);
 	}
-	free((char*)ast->cmd);
+	free((char*)ast->run);
 	free(ast);
 	return NULL;
 
