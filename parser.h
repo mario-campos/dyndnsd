@@ -4,23 +4,23 @@
 #include <net/if.h>
 #include <sys/queue.h>
 
-struct cst_domain {
-	SLIST_ENTRY(cst_domain) next;
+struct ast_domain {
+	SLIST_ENTRY(ast_domain) next;
 	char domain[];
 };
 
-struct cst_iface {
+struct ast_iface {
 	char if_name[IFNAMSIZ];
-	SLIST_HEAD(, cst_domain) domains;
-	SLIST_ENTRY(cst_iface) next;
+	SLIST_HEAD(, ast_domain) domains;
+	SLIST_ENTRY(ast_iface) next;
 };
 
-struct cst {
+struct ast {
 	const char *cmd;
-	SLIST_HEAD(, cst_iface) ifaces;
+	SLIST_HEAD(, ast_iface) ifaces;
 };
 
-struct cst *parse(const char *);
+struct ast *parse(const char *);
 extern char parser_error[];
 
 #endif /* PARSER_H */

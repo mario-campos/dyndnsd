@@ -148,7 +148,7 @@ error(struct lexer *lex, const char *e)
 	    "%s:%zu: %s", lex->lex_path, lex->lex_read, e);		
 }
 
-struct cst *
+struct ast *
 parse(const char *path)
 {
 	int fd;
@@ -156,11 +156,11 @@ parse(const char *path)
 	const char *text;
 	struct lexer lex;
 	struct token tok;
-	struct cst_iface *cif;
-	struct cst_domain *cdo;
-	struct cst *cst;
+	struct ast_iface *cif;
+	struct ast_domain *cdo;
+	struct ast *ast;
 
-	if (NULL == (cst = malloc(sizeof(*cst)))) {
+	if (NULL == (ast = malloc(sizeof(*ast)))) {
 		snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
 		return NULL;
 	}
@@ -183,7 +183,7 @@ parse(const char *path)
 	}
 
 	close(fd);
-	SLIST_INIT(&cst->ifaces);
+	SLIST_INIT(&ast->ifaces);
 	lex.lex_path = path;
 	lex.lex_text = text;
 	lex.lex_size = st.st_size;
@@ -201,7 +201,7 @@ S_TOP:
 			goto S_ERROR;
 		}
 		SLIST_INIT(&cif->domains);
-		SLIST_INSERT_HEAD(&cst->ifaces, cif, next);
+		SLIST_INSERT_HEAD(&ast->ifaces, cif, next);
 		goto S_INTERFACE;
 	default:
 		error(&lex, "expected 'run' or 'interface'");
@@ -325,10 +325,10 @@ S_RUN_SPACE:
 	case T_LBRACE:
 	case T_RBRACE:
 	case T_QUOTE:
-		cst->cmd = strndup(&tok.tok_text[1], tok.tok_size-2);
+		ast->cmd = strndup(&tok.tok_text[1], tok.tok_size-2);
 		goto S_RUN_QUOTE;
 	case T_STRING:
-		cst->cmd = tok.tok_text;
+		ast->cmd = tok.tok_text;
 		goto S_RUN_STRING;
 	default:
 		error(&lex, "expected command after 'run'");
@@ -357,26 +357,26 @@ S_RUN_STRING:
 	case T_QUOTE: goto S_RUN_STRING;
 	case T_LINEFEED:
 	case T_EOF:
-		cst->cmd = strndup(cst->cmd, tok.tok_text - cst->cmd);
+		ast->cmd = strndup(ast->cmd, tok.tok_text - ast->cmd);
 		goto S_TOP;
 	}
 
 S_ERROR:
 	// free that which was already parsed
-	while (!SLIST_EMPTY(&cst->ifaces)) {
-		cif = SLIST_FIRST(&cst->ifaces);
+	while (!SLIST_EMPTY(&ast->ifaces)) {
+		cif = SLIST_FIRST(&ast->ifaces);
 		while (!SLIST_EMPTY(&cif->domains)) {
 			cdo = SLIST_FIRST(&cif->domains);
 			SLIST_REMOVE_HEAD(&cif->domains, next);
 			free(cdo);
 		}
-		SLIST_REMOVE_HEAD(&cst->ifaces, next);
+		SLIST_REMOVE_HEAD(&ast->ifaces, next);
 		free(cif);
 	}
-	free((char*)cst->cmd);
-	free(cst);
+	free((char*)ast->cmd);
+	free(ast);
 	return NULL;
 
 S_END:
-	return cst;
+	return ast;
 }
