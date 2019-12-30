@@ -83,18 +83,18 @@ next_token(struct lexer *lex, struct token *tok)
 		tok->tok_size = 0;
 		tok->tok_type = T_EOF;
 	}
-	else if (delta >= 3 && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
-		tok->tok_size = 3;
+	else if (delta >= (sizeof("run")-1) && s[0] == 'r' && s[1] == 'u' && s[2] == 'n') {
+		tok->tok_size = sizeof("run") - 1;
 		tok->tok_type = T_RUN;
 	}
-	else if (delta >= 9 && s[0] == 'i' && s[1] == 'n' && s[2] == 't' && s[3] == 'e'
-	    && s[4] == 'r' && s[5] == 'f' && s[6] == 'a' && s[7] == 'c' && s[8] == 'e') {
-		tok->tok_size = 9;
+	else if (delta >= (sizeof("interface")-1) && s[0] == 'i' && s[1] == 'n' && s[2] == 't'
+	    && s[3] == 'e' && s[4] == 'r' && s[5] == 'f' && s[6] == 'a' && s[7] == 'c' && s[8] == 'e') {
+		tok->tok_size = sizeof("interface") - 1;
 		tok->tok_type = T_INTERFACE;
 	}
-	else if (delta >= 6 && s[0] == 'd' && s[1] == 'o' &&
+	else if (delta >= (sizeof("domain")-1) && s[0] == 'd' && s[1] == 'o' &&
 	    s[2] == 'm' && s[3] == 'a' && s[4] == 'i' && s[5] == 'n') {
-		tok->tok_size = 6;
+		tok->tok_size = sizeof("domain") - 1;
 		tok->tok_type = T_DOMAIN;
 	}
 	else if (*s == '{') {
