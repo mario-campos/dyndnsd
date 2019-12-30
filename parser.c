@@ -159,11 +159,6 @@ parse(const char *path)
 	struct ast_dn *adn;
 	struct ast *ast;
 
-	if (NULL == (ast = malloc(sizeof(*ast)))) {
-		snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
-		return NULL;
-	}
-
 	if (-1 == (fd = open(path, O_RDONLY|O_CLOEXEC))) {
 		snprintf(parser_error, sizeof(parser_error), "open(2): %s", strerror(errno));
 		return NULL;
@@ -178,6 +173,11 @@ parse(const char *path)
 	if (MAP_FAILED == (text = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {
 		snprintf(parser_error, sizeof(parser_error), "mmap(2): %s", strerror(errno));
 		close(fd);
+		return NULL;
+	}
+
+	if (NULL == (ast = malloc(sizeof(*ast)))) {
+		snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
 		return NULL;
 	}
 

@@ -50,4 +50,4 @@ make CONF_PATH=/etc/dyndnsd.conf USER=nobody GROUP=nobody
 
 - [ ] Fuzz Testing
 - [x] Valgrind
-- [ ] Other Static Analyzers 
+- [x] cppcheck
