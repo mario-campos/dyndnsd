@@ -29,6 +29,8 @@ enum tokentype {
 struct lexer {
 	const char *lex_path;
 	const char *lex_text;
+	const char *lex_lptr;
+	int         lex_lnum;
 	size_t      lex_size;
 	size_t      lex_read;
 };
@@ -107,6 +109,8 @@ next_token(struct lexer *lex, struct token *tok)
 	else if (*s == '\n') {
 		tok->tok_size = 1;
 		tok->tok_type = T_LINEFEED;
+		lex->lex_lptr = s;
+		lex->lex_lnum++;
 	}
 	else if (*s == ' ' || *s == '\t') {
 		tok->tok_size = consume_ws(s, delta);
@@ -141,10 +145,10 @@ next_token(struct lexer *lex, struct token *tok)
 }
 
 static void
-error(struct lexer *lex, const char *e)
+error(struct lexer *lex, struct token *tok, const char *e)
 {
-	snprintf(parser_error, sizeof(parser_error),
-	    "%s:%zu: %s", lex->lex_path, lex->lex_read, e);		
+	snprintf(parser_error, sizeof(parser_error), "%s:%d:%zu: %s",
+	    lex->lex_path, lex->lex_lnum, tok->tok_text - lex->lex_lptr, e);
 }
 
 struct ast *
@@ -185,8 +189,10 @@ parse(const char *path)
 	SLIST_INIT(&ast->aif_head);
 	lex.lex_path = path;
 	lex.lex_text = text;
+	lex.lex_lptr = text;
 	lex.lex_size = st.st_size;
 	lex.lex_read = 0;
+	lex.lex_lnum = 1;
 
 S_TOP:
 	switch (next_token(&lex, &tok)) {
@@ -203,7 +209,7 @@ S_TOP:
 		SLIST_INSERT_HEAD(&ast->aif_head, aif, next);
 		goto S_INTERFACE;
 	default:
-		error(&lex, "expected 'run' or 'interface'");
+		error(&lex, &tok, "invalid syntax: expected 'run', 'interface', EOF, or whitespace");
 		goto S_ERROR;
 	}
 
@@ -212,7 +218,7 @@ S_INTERFACE:
 	case T_SPACE:
 	case T_LINEFEED: goto S_INTERFACE_SPACE;
 	default:
-		error(&lex, "expected whitespace after 'interface'");
+		error(&lex, &tok, "invalid syntax: expected whitespace after 'interface'");
 		goto S_ERROR;
 	}
 
@@ -232,7 +238,7 @@ S_INTERFACE_SPACE:
 		goto S_INTERFACE_STRING;
 	}
 	default:
-		error(&lex, "expected interface name");
+		error(&lex, &tok, "invalid syntax: expected interface name");
 		goto S_ERROR;
 	}
 
@@ -242,7 +248,7 @@ S_INTERFACE_STRING:
 	case T_LINEFEED: goto S_INTERFACE_STRING;
 	case T_LBRACE: goto S_INTERFACE_LBRACE;
 	default:
-		error(&lex, "expected '{'");
+		error(&lex, &tok, "invalid syntax: expected '{' or whitespace");
 		goto S_ERROR;
 	}
 
@@ -252,7 +258,7 @@ S_INTERFACE_LBRACE:
 	case T_LINEFEED: goto S_INTERFACE_LBRACE;
 	case T_DOMAIN: goto S_DOMAIN;
 	default:
-		error(&lex, "expected 'domain'");
+		error(&lex, &tok, "invalid syntax: expected 'domain' or whitespace");
 		goto S_ERROR;
 	}
 
@@ -261,7 +267,7 @@ S_DOMAIN:
 	case T_SPACE:
 	case T_LINEFEED: goto S_DOMAIN_SPACE;
 	default:
-		error(&lex, "expected whitespace after 'domain'");
+		error(&lex, &tok, "invalid syntax: expected whitespace after 'domain'");
 		goto S_ERROR;
 	}
 
@@ -281,7 +287,7 @@ S_DOMAIN_SPACE:
 		SLIST_INSERT_HEAD(&aif->adn_head, adn, next);
 		goto S_DOMAIN_STRING;
 	default:
-		error(&lex, "expected domain name");
+		error(&lex, &tok, "invalid syntax: expected domain name");
 		goto S_ERROR;
 	}
 
@@ -292,7 +298,7 @@ S_DOMAIN_STRING:
 	case T_DOMAIN: goto S_DOMAIN;
 	case T_RBRACE: goto S_INTERFACE_RBRACE;
 	default:
-		error(&lex, "expected 'domain' or '}'");
+		error(&lex, &tok, "invalid syntax: expected 'domain', '}', or whitespace");
 		goto S_ERROR;
 	}
 
@@ -304,7 +310,7 @@ S_INTERFACE_RBRACE:
 	case T_LINEFEED: goto S_TOP;
 	case T_EOF: goto S_END;
 	default:
-		error(&lex, "expected whitespace, 'interface', or 'run'");
+		error(&lex, &tok, "invalid syntax: expected 'interface', 'run', EOF, or whitespace");
 		goto S_ERROR;
 	}
 
@@ -312,7 +318,7 @@ S_RUN:
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE: goto S_RUN_SPACE;
 	default:
-		error(&lex, "expected whitespace after 'run'");
+		error(&lex, &tok, "invalid syntax: expected whitespace after 'run'");
 		goto S_ERROR;
 	}
 
@@ -330,7 +336,7 @@ S_RUN_SPACE:
 		ast->run = tok.tok_text;
 		goto S_RUN_STRING;
 	default:
-		error(&lex, "expected command after 'run'");
+		error(&lex, &tok, "invalid syntax: expected command after 'run'");
 		goto S_ERROR;
 	}
 
@@ -340,7 +346,7 @@ S_RUN_QUOTE:
 	case T_SPACE: goto S_RUN_QUOTE;
 	case T_LINEFEED: goto S_TOP;
 	default:
-		error(&lex, "expected '\\n'");
+		error(&lex, &tok, "invalid syntax: expected '\\n' or EOF");
 		goto S_ERROR;
 	}
 
