@@ -187,6 +187,8 @@ parse(const char *path)
 
 	close(fd);
 	SLIST_INIT(&ast->aif_head);
+	madvise((void*)text, st.st_size, MADV_SEQUENTIAL);
+
 	lex.lex_path = path;
 	lex.lex_text = text;
 	lex.lex_lptr = text;
@@ -380,8 +382,9 @@ S_ERROR:
 	}
 	free((char*)ast->run);
 	free(ast);
-	return NULL;
+	ast = NULL;
 
 S_END:
+	munmap((void*)lex.lex_text, lex.lex_size);
 	return ast;
 }
