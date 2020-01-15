@@ -1,5 +1,6 @@
+#include <sys/cdefs.h>
+#include <sys/queue.h>
 #include <arpa/inet.h>
-#include <net/if.h>
 
 #include <assert.h>
 #include <err.h>
@@ -9,7 +10,6 @@
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

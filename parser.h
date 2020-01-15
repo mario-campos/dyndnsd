@@ -1,8 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <net/if.h>
 #include <sys/queue.h>
+#include <net/if.h>
 
 struct ast_dn {
 	SLIST_ENTRY(ast_dn) next;

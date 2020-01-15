@@ -1,9 +1,11 @@
+#include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <netinet/in.h>
 
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
