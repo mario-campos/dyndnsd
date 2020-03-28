@@ -224,46 +224,21 @@ S_RUN:
 
 S_RUN_SPACE:
 	switch (next_token(&lex, &tok)) {
+	case T_QUOTE:
+		tok.tok_text += 1;
+		tok.tok_size -= 2;
+		/* fallthrough */
 	case T_INTERFACE:
 	case T_DOMAIN:
 	case T_RUN:
 	case T_LBRACE:
 	case T_RBRACE:
-	case T_QUOTE:
-		ast->run = strndup(&tok.tok_text[1], tok.tok_size-2);
-		goto S_RUN_QUOTE;
 	case T_STRING:
-		ast->run = tok.tok_text;
-		goto S_RUN_STRING;
+		ast->run = strndup(&tok.tok_text[0], tok.tok_size);
+		goto S_TOP;
 	default:
 		error(&lex, &tok, "invalid syntax: expected command after 'run'");
 		goto S_ERROR;
-	}
-
-S_RUN_QUOTE:
-	switch (next_token(&lex, &tok)) {
-	case T_EOF: goto S_END;
-	case T_SPACE: goto S_RUN_QUOTE;
-	case T_LINEFEED: goto S_TOP;
-	default:
-		error(&lex, &tok, "invalid syntax: expected '\\n' or EOF");
-		goto S_ERROR;
-	}
-
-S_RUN_STRING:
-	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_INTERFACE:
-	case T_DOMAIN:
-	case T_RUN:
-	case T_LBRACE:
-	case T_RBRACE:
-	case T_STRING:
-	case T_QUOTE: goto S_RUN_STRING;
-	case T_LINEFEED:
-	case T_EOF:
-		ast->run = strndup(ast->run, tok.tok_text - ast->run);
-		goto S_TOP;
 	}
 
 S_INTERFACE:
