@@ -147,7 +147,7 @@ static void
 error(struct lexer *lex, struct token *tok, const char *e)
 {
 	snprintf(parser_error, sizeof(parser_error), "%s:%d:%zu: %s",
-	    lex->lex_path, lex->lex_lnum, tok->tok_text - lex->lex_lptr, e);
+	    lex->lex_path, lex->lex_lnum, 1 + tok->tok_text - lex->lex_lptr, e);
 }
 
 struct ast *
