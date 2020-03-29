@@ -210,7 +210,7 @@ S_TOP:
 		SLIST_INSERT_HEAD(&ast->aif_head, aif, next);
 		goto S_INTERFACE;
 	default:
-		error(&lex, &tok, "invalid syntax: expected 'run', 'interface', EOF, or whitespace");
+		error(&lex, &tok, "invalid syntax: expected 'run' or 'interface'");
 		goto S_ERROR;
 	}
 
@@ -276,7 +276,7 @@ S_INTERFACE_STRING:
 	case T_LINEFEED: goto S_INTERFACE_STRING;
 	case T_LBRACE: goto S_INTERFACE_LBRACE;
 	default:
-		error(&lex, &tok, "invalid syntax: expected '{' or whitespace");
+		error(&lex, &tok, "invalid syntax: expected '{'");
 		goto S_ERROR;
 	}
 
@@ -286,7 +286,7 @@ S_INTERFACE_LBRACE:
 	case T_LINEFEED: goto S_INTERFACE_LBRACE;
 	case T_DOMAIN: goto S_DOMAIN;
 	default:
-		error(&lex, &tok, "invalid syntax: expected 'domain' or whitespace");
+		error(&lex, &tok, "invalid syntax: expected 'domain'");
 		goto S_ERROR;
 	}
 
@@ -326,7 +326,7 @@ S_DOMAIN_STRING:
 	case T_DOMAIN: goto S_DOMAIN;
 	case T_RBRACE: goto S_INTERFACE_RBRACE;
 	default:
-		error(&lex, &tok, "invalid syntax: expected 'domain', '}', or whitespace");
+		error(&lex, &tok, "invalid syntax: expected 'domain' or '}'");
 		goto S_ERROR;
 	}
 
@@ -338,7 +338,7 @@ S_INTERFACE_RBRACE:
 	case T_LINEFEED: goto S_TOP;
 	case T_EOF: goto S_END;
 	default:
-		error(&lex, &tok, "invalid syntax: expected 'interface', 'run', EOF, or whitespace");
+		error(&lex, &tok, "invalid syntax: expected 'run' or 'interface'");
 		goto S_ERROR;
 	}
 
