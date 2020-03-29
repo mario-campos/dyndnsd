@@ -218,14 +218,8 @@ S_TOP:
 
 S_RUN:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE: goto S_RUN_SPACE;
-	default:
-		error(&lex, &tok, "invalid syntax: expected whitespace after 'run'");
-		goto S_ERROR;
-	}
-
-S_RUN_SPACE:
-	switch (next_token(&lex, &tok)) {
+	case T_SPACE:
+	case T_LINEFEED: goto S_RUN;
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
@@ -246,16 +240,7 @@ S_RUN_SPACE:
 S_INTERFACE:
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE:
-	case T_LINEFEED: goto S_INTERFACE_SPACE;
-	default:
-		error(&lex, &tok, "invalid syntax: expected whitespace after 'interface'");
-		goto S_ERROR;
-	}
-
-S_INTERFACE_SPACE:
-	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_INTERFACE_SPACE;
+	case T_LINEFEED: goto S_INTERFACE;
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
@@ -295,14 +280,7 @@ S_INTERFACE_LBRACE:
 S_DOMAIN:
 	switch (next_token(&lex, &tok)) {
 	case T_SPACE:
-	case T_LINEFEED: goto S_DOMAIN_SPACE;
-	default:
-		error(&lex, &tok, "invalid syntax: expected whitespace after 'domain'");
-		goto S_ERROR;
-	}
-
-S_DOMAIN_SPACE:
-	switch (next_token(&lex, &tok)) {
+	case T_LINEFEED: goto S_DOMAIN;
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
