@@ -1,6 +1,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -45,7 +46,7 @@ consume_ws(const char *s, size_t slen)
 {
 	size_t i;
 	for (i = 0; i < slen; i++)
-		if (s[i] != ' ' && s[i] != '\t' && s[i] != '\n')
+		if (!isblank(s[i]) && s[i] != '\n')
 			break;
 	return i;
 }
@@ -111,7 +112,8 @@ next_token(struct lexer *lex, struct token *tok)
 		lex->lex_lptr = s;
 		lex->lex_lnum++;
 	}
-	else if (*s == ' ' || *s == '\t') {
+	else if (isblank(*s)) {
+
 		tok->tok_size = consume_ws(s, delta);
 		tok->tok_type = T_SPACE;
 	}
