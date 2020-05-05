@@ -6,7 +6,7 @@ dyndnsd is a dynamic DNS daemon for OpenBSD. It is minimal, lightweight, intuiti
 First, create the configuration file, */etc/dyndnsd.conf*:
 
 ```
-run curl https://www.duckdns.org/update?domains=${DYNDNSD_FQDN}&token=sometoken&ip=${DYNDNSD_IPADDR}
+run "curl https://www.duckdns.org/update?domains=${DYNDNSD_FQDN}&token=sometoken&ip=${DYNDNSD_IPADDR}"
 
 interface em0 {
 	domain www.example.com
