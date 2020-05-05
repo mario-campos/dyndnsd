@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,33 +43,15 @@ struct token {
 };
 
 static size_t
-consume_ws(const char *s, size_t slen)
-{
-	size_t i;
-	for (i = 0; i < slen; i++)
-		if (!isblank(s[i]) && s[i] != '\n')
-			break;
-	return i;
-}
-
-static size_t
-consume_comment(const char *s, size_t slen)
-{
-	size_t i;
-	for (i = 0; i < slen; i++)
-		if (s[i] == '\n') break;
-	return i;
-}
-
-static size_t
 consume_string(const char *s, size_t slen)
 {
 	size_t i;
 	for (i = 0; i < slen; i++) {
-		if (s[i] == '{' || s[i] == '}' || s[i] == '#' || s[i] == '"' ||
+		if (s[i] == '{' || s[i] == '}' || s[i] == '#' ||
 		    s[i] == ' ' || s[i] == '\t' || s[i] == '\n')
 			break;
-	} return i;
+	}
+	return i;
 }
 
 static enum tokentype
@@ -76,6 +59,34 @@ next_token(struct lexer *lex, struct token *tok)
 {
 	size_t delta;
 	const char *s;
+
+	s = &lex->lex_text[lex->lex_read];
+	delta = lex->lex_size - lex->lex_read;
+
+	if (lex->lex_read >= lex->lex_size) {
+		tok->tok_size = 0;
+		tok->tok_type = T_EOF;
+	}
+
+	bool in_comment = false;
+	for (size_t i = 0; i <= delta; i++) {
+		if (s[i] == '\n') {
+			in_comment = false;
+			lex->lex_lptr = s;
+			lex->lex_lnum++;
+			continue;
+		}
+		if (s[i] == '#') {
+			in_comment = true;
+			continue;
+		}
+		if (isblank(s[i]))
+			continue;
+		if (in_comment)
+			continue;
+		lex->lex_read += i;
+		break;
+	}
 
 	s = &lex->lex_text[lex->lex_read];
 	delta = lex->lex_size - lex->lex_read;
@@ -105,21 +116,6 @@ next_token(struct lexer *lex, struct token *tok)
 	else if (*s == '}') {
 		tok->tok_size = 1;
 		tok->tok_type = T_RBRACE;
-	}
-	else if (*s == '\n') {
-		tok->tok_size = 1;
-		tok->tok_type = T_LINEFEED;
-		lex->lex_lptr = s;
-		lex->lex_lnum++;
-	}
-	else if (isblank(*s)) {
-
-		tok->tok_size = consume_ws(s, delta);
-		tok->tok_type = T_SPACE;
-	}
-	else if (*s == '#') {
-		lex->lex_read += consume_comment(s, delta);
-		return next_token(lex, tok);
 	}
 	else if (*s == '"') {
 		size_t i;
@@ -200,8 +196,6 @@ parse(const char *path)
 S_TOP:
 	switch (next_token(&lex, &tok)) {
 	case T_EOF: goto S_END;
-	case T_SPACE:
-	case T_LINEFEED: goto S_TOP;
 	case T_RUN: goto S_RUN;
 	case T_INTERFACE:
 		if (NULL == (aif = malloc(sizeof(*aif)))) {
@@ -218,12 +212,10 @@ S_TOP:
 
 S_RUN:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_RUN;
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
-		/* fallthrough */
+		/* fall through */
 	case T_INTERFACE:
 	case T_DOMAIN:
 	case T_RUN:
@@ -239,12 +231,10 @@ S_RUN:
 
 S_INTERFACE:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_INTERFACE;
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
-		/* fallthrough */
+		/* fall through */
 	case T_STRING: {
 		size_t count = tok.tok_size < sizeof(aif->name) ?
 		    tok.tok_size : sizeof(aif->name) - 1;
@@ -259,8 +249,6 @@ S_INTERFACE:
 
 S_INTERFACE_STRING:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_INTERFACE_STRING;
 	case T_LBRACE: goto S_INTERFACE_LBRACE;
 	default:
 		error(&lex, &tok, "invalid syntax: expected '{'");
@@ -269,8 +257,6 @@ S_INTERFACE_STRING:
 
 S_INTERFACE_LBRACE:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_INTERFACE_LBRACE;
 	case T_DOMAIN: goto S_DOMAIN;
 	default:
 		error(&lex, &tok, "invalid syntax: expected 'domain'");
@@ -279,12 +265,10 @@ S_INTERFACE_LBRACE:
 
 S_DOMAIN:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_DOMAIN;
 	case T_QUOTE:
 		tok.tok_text += 1;
 		tok.tok_size -= 2;
-		/* fallthrough */
+		/* fall through */
 	case T_STRING:
 		if (NULL == (adn = malloc(sizeof(*adn) + tok.tok_size + 1))) {
 			snprintf(parser_error, sizeof(parser_error), "malloc(3): %s", strerror(errno));
@@ -301,8 +285,6 @@ S_DOMAIN:
 
 S_DOMAIN_STRING:
 	switch (next_token(&lex, &tok)) {
-	case T_SPACE:
-	case T_LINEFEED: goto S_DOMAIN_STRING;
 	case T_DOMAIN: goto S_DOMAIN;
 	case T_RBRACE: goto S_INTERFACE_RBRACE;
 	default:
@@ -314,8 +296,6 @@ S_INTERFACE_RBRACE:
 	switch (next_token(&lex, &tok)) {
 	case T_RUN: goto S_RUN;
 	case T_INTERFACE: goto S_INTERFACE;
-	case T_SPACE:
-	case T_LINEFEED: goto S_TOP;
 	case T_EOF: goto S_END;
 	default:
 		error(&lex, &tok, "invalid syntax: expected 'run' or 'interface'");
