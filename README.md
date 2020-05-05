@@ -49,5 +49,5 @@ make CONF_PATH=/etc/dyndnsd.conf USER=nobody GROUP=nobody
 ### Code Quality
 
 - [ ] Fuzz Testing
-- [ ] Valgrind
-- [ ] Other Static Analyzers 
+- [x] Valgrind
+- [x] cppcheck

@@ -1,5 +1,6 @@
+#include <sys/cdefs.h>
+#include <sys/queue.h>
 #include <arpa/inet.h>
-#include <net/if.h>
 
 #include <assert.h>
 #include <err.h>
@@ -9,7 +10,6 @@
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,31 +17,25 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "ast.h"
 #include "dyndnsd.h"
+#include "parser.h"
 #include "rtm.h"
-
-extern FILE *yyin;
-extern int   yyparse();
 
 static void usage(void);
 static void sig_handler(int, short, void *);
 static void process_event(int, short, void *);
 static void drop_privilege(char *, char *);
-static pid_t spawn(char *, int, char *, char *, char *);
-
-char *filename;
-struct ast_root *ast;
+static pid_t spawn(const char *, int, char *, char *, char *);
 
 int
 main(int argc, char *argv[])
 {
 	int 		opt;
 	unsigned 	opts;
+	char           *filename;
 	struct event	ev_route, ev_signal;
 	struct dyndnsd	this;
 
-	ast = NULL;
 	opts = 0;
 	filename = DYNDNSD_CONF_PATH;
 
@@ -78,21 +72,11 @@ main(int argc, char *argv[])
 		}
 	}
 
-	this.devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC);
-	if (-1 == this.devnull)
+	if (-1 == (this.devnull = open(_PATH_DEVNULL, O_WRONLY|O_CLOEXEC)))
 		err(EX_OSFILE, "open");
 
-	this.etcfd = open(filename, O_RDONLY|O_CLOEXEC);
-	if (-1 == this.etcfd)
-		err(EX_OSFILE, "open");
-
-	this.etcfstream = fdopen(this.etcfd, "r");
-	if (NULL == this.etcfstream)
-		err(EX_OSFILE, "fdopen");
-
-	yyin = this.etcfstream;
-	if (1 == yyparse())
-		exit(EX_DATAERR);
+	if (NULL == (this.ast = parse(filename)))
+		errx(EX_DATAERR, "%s\n", parser_error);
 
 	if (opts & DYNDNSD_VALID_MODE)
 		exit(EX_OK);
@@ -126,20 +110,21 @@ static void
 process_event(int sig, short event, void *arg)
 {
 	pid_t pid;
-	struct ast_iface *aif;
+	struct ast_if *aif;
+	struct ast_dn *adn;
 	struct rtm_newaddr rtm;
 	struct dyndnsd *this = arg;
 
 	if (-1 == rtm_consume(this->routefd, &rtm))
 		return;
 
-	for (size_t j = 0; j < ast->iface_len; j++) {
-		aif = ast->iface[j];
-		if (strcmp(rtm.rtm_ifname, aif->if_name))
+	SLIST_FOREACH(aif, &this->ast->aif_head, next) {
+		aif = SLIST_FIRST(&this->ast->aif_head);
+		if (strcmp(rtm.rtm_ifname, aif->name))
 			continue;
-		for (size_t k = 0; k < aif->domain_len; k++) {
-			pid = spawn(ast->cmd, this->devnull, aif->domain[k], inet_ntoa(rtm.rtm_ifaddr), aif->if_name);
-			syslog(LOG_INFO, "%s %s %s %u", aif->if_name, inet_ntoa(rtm.rtm_ifaddr), aif->domain[k], pid);
+		SLIST_FOREACH(adn, &aif->adn_head, next) {
+			pid = spawn(this->ast->run, this->devnull, adn->name, inet_ntoa(rtm.rtm_ifaddr), aif->name);
+			syslog(LOG_INFO, "%s %s %s %u", aif->name, inet_ntoa(rtm.rtm_ifaddr), adn->name, pid);
 		}
 	}
 }
@@ -157,7 +142,6 @@ sig_handler(int sig, short event, void *arg)
 
 	struct dyndnsd *this = arg;
 
-	fclose(this->etcfstream);
 	close(this->devnull);
 	close(this->routefd);
 	closelog();
@@ -186,7 +170,7 @@ drop_privilege(char *username, char *groupname)
 }
 
 static pid_t
-spawn(char *cmd, int fd, char *domain, char *ipaddr, char *iface)
+spawn(const char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 {
 	assert(cmd);
 	assert(fd >= 0);

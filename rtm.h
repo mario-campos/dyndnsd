@@ -1,6 +1,8 @@
 #ifndef RTM_H
 #define RTM_H
 
+#include <sys/types.h>
+#include <net/if.h>
 #include <netinet/in.h>
 
 struct rtm_newaddr {
