@@ -21,6 +21,7 @@
 #include "parser.h"
 #include "rtm.h"
 
+inline static void _free(char **);
 static void usage(void);
 static void sig_handler(int, short, void *);
 static void process_event(int, short, void *);
@@ -106,6 +107,12 @@ main(int argc, char *argv[])
 	event_dispatch();
 }
 
+inline static void
+_free(char **p)
+{
+	free(*p);
+}
+
 static void
 process_event(int sig, short event, void *arg)
 {
@@ -179,13 +186,16 @@ spawn(const char *cmd, int fd, char *domain, char *ipaddr, char *iface)
 	assert(iface);
 
 	pid_t pid;
-	char envvar0[2 + strlen("DYNDNSD_DOMAIN") + strlen(domain)]; // +2 bytes for '=', '\0'
-	char envvar1[2 + strlen("DYNDNSD_IPADDR") + strlen(ipaddr)];
-	char envvar2[2 + strlen("DYNDNSD_INTERFACE") + strlen(iface)];
+	char *envvar0 __attribute__((cleanup(_free)));
+	char *envvar1 __attribute__((cleanup(_free)));
+	char *envvar2 __attribute__((cleanup(_free)));
 
-	snprintf(envvar0, sizeof(envvar0), "DYNDNSD_DOMAIN=%s", domain);
-	snprintf(envvar1, sizeof(envvar1), "DYNDNSD_IPADDR=%s", ipaddr);
-	snprintf(envvar2, sizeof(envvar2), "DYNDNSD_INTERFACE=%s", iface);
+	if (-1 == asprintf(&envvar0, "DYNDNSD_DOMAIN=%s", domain) ||
+	    -1 == asprintf(&envvar1, "DYNDNSD_IPADDR=%s", ipaddr) ||
+	    -1 == asprintf(&envvar2, "DYNDNSD_INTERFACE=%s", iface)) {
+		syslog(LOG_DEBUG, "asprintf: %m");
+		return -1;
+	}
 
 	pid = fork();
 	if (-1 == pid) {
