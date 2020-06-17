@@ -93,6 +93,8 @@ main(int argc, char *argv[])
 		exit(EX_OSERR);
 	}
 
+	syslog(LOG_DEBUG, "pledge: stdio proc exec");
+
 	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL))
 		syslog(LOG_WARNING, "sigaction: %m");
 
