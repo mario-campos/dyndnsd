@@ -33,8 +33,16 @@ $
 
 ## Build
 
+dyndnsd compiles with some configurations, such as the default configuration-file path and the user/group to which to drop privilege. The build command below will compile dyndnsd with the default configuration-file path */etc/dyndnsd.conf* and unprivileged user/group *nobody*:
+
 ```bash
-make CONF_PATH=/etc/dyndnsd.conf USER=nobody GROUP=nobody
+make
+```
+
+To set the the default configuration-file path and unprivileged user/group, modify the build command below as necessary:
+
+```bash
+make CPPFLAGS='CONF_PATH=\"/path/to/dyndnsd.conf\" USER=\"foo\" GROUP=\"foo\"'
 ```
 
 ## TODO
