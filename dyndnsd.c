@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include <sys/queue.h>
+#include <sys/wait.h>
 #include <arpa/inet.h>
 
 #include <assert.h>
@@ -23,7 +24,8 @@
 
 inline static void _free(char **);
 static void usage(void);
-static void sig_handler(int, short, void *);
+static void handle_sigterm(int, short, void *);
+static void handle_sigchld(int, short, void *);
 static void process_event(int, short, void *);
 static void drop_privilege(char *, char *);
 static pid_t spawn(const char *, int, char *, char *, char *);
@@ -95,15 +97,13 @@ main(int argc, char *argv[])
 
 	syslog(LOG_DEBUG, "pledge: stdio proc exec");
 
-	if (-1 == sigaction(SIGCHLD, &(struct sigaction){SIG_IGN, 0, SA_NOCLDWAIT}, NULL))
-		syslog(LOG_WARNING, "sigaction: %m");
-
 	event_init();
 
 	event_set(&ev_route, this.routefd, EV_READ|EV_PERSIST, process_event, &this);
 	event_add(&ev_route, NULL);
 
-	signal_set(&ev_signal, SIGTERM, sig_handler, &this);
+	signal_set(&ev_signal, SIGTERM, handle_sigterm, &this);
+	signal_set(&ev_signal, SIGCHLD, handle_sigchld, NULL);
 	signal_add(&ev_signal, NULL);
 
 	event_dispatch();
@@ -145,7 +145,7 @@ usage(void)
 }
 
 static void __dead
-sig_handler(int sig, short event, void *arg)
+handle_sigterm(int sig, short event, void *arg)
 {
 	assert(arg);
 
@@ -155,6 +155,12 @@ sig_handler(int sig, short event, void *arg)
 	close(this->routefd);
 	closelog();
 	exit(EX_OK);
+}
+
+static void
+handle_sigchld(int sig, short event, void *arg)
+{
+	wait(NULL);
 }
 
 static void
