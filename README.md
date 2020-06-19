@@ -41,8 +41,8 @@ make
 
 To set the the default configuration-file path and unprivileged user/group, modify the build command below as necessary:
 
-```bash
-make CPPFLAGS='CONF_PATH=\"/path/to/dyndnsd.conf\" USER=\"foo\" GROUP=\"foo\"'
+```shell
+make CPPFLAGS='DYNDNSD_CONF_PATH=\"/path/to/dyndnsd.conf\" DYNDNSD_USER=\"foo\" DYNDNSD_GROUP=\"foo\"'
 ```
 
 ## TODO
