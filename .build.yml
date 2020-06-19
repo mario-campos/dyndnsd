@@ -1,4 +1,4 @@
-image: openbsd/6.6
+image: openbsd/6.7
 sources:
 - https://github.com/mario-campos/dyndnsd.git
 tasks:
