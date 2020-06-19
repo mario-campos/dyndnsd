@@ -19,14 +19,14 @@ interface em1 {
 
 Test the configuration file:
 
-```bash
+```shell
 $ dyndnsd -n
 $
 ```
 
 Then, start the daemon:
 
-```bash
+```shell
 $ dyndnsd
 $
 ```
@@ -35,7 +35,7 @@ $
 
 dyndnsd compiles with some configurations, such as the default configuration-file path and the user/group to which to drop privilege. The build command below will compile dyndnsd with the default configuration-file path */etc/dyndnsd.conf* and unprivileged user/group *nobody*:
 
-```bash
+```shell
 make
 ```
 
