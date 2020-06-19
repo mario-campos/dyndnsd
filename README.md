@@ -1,5 +1,5 @@
 # dyndnsd [![builds.sr.ht status](https://builds.sr.ht/~mariocampos/dyndnsd.svg)](https://builds.sr.ht/~mariocampos/dyndnsd?) [![code-inspector-status](https://www.code-inspector.com/project/1616/score/svg)](https://www.code-inspector.com/public/project/1616/dyndnsd/dashboard)
-dyndnsd is a dynamic DNS daemon for OpenBSD. It is minimal, lightweight, intuitive, and generic/extensible enough to support any dynamic-dns provider.
+dyndnsd is a Dynamic-DNS daemon for OpenBSD. It is minimal, lightweight, intuitive, and generic/extensible enough to support any Dynamic-DNS provider.
 
 ## Example
 
