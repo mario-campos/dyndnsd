@@ -39,7 +39,7 @@ dyndnsd compiles with some configurations, such as the default configuration-fil
 make
 ```
 
-To set the the default configuration-file path and unprivileged user/group, modify the build command below as necessary:
+To set the the default configuration-file path and/or the unprivileged user/group, modify the build command below as necessary:
 
 ```shell
 make CPPFLAGS='DYNDNSD_CONF_PATH=\"/path/to/dyndnsd.conf\" DYNDNSD_USER=\"foo\" DYNDNSD_GROUP=\"foo\"'
