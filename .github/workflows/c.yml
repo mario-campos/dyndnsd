@@ -14,6 +14,6 @@ jobs:
       with:
         operating-system: openbsd-6.9
     - name: Checkout repository
-      run: git clone https://github.com/mario-campos/dyndnsd.git
+      run: git clone --depth 1 https://github.com/mario-campos/dyndnsd.git
     - name: Build
       run: cd dyndnsd && make
