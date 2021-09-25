@@ -9,10 +9,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ openbsd-6.9, freebsd-13.0, netbsd-9.2, dragonflybsd-5.2.0 ]
     steps:
-    - uses: mario-campos/emulate@main
+    - name: Bootstrap ${{ matrix.os }}
+      uses: mario-campos/emulate@main
       with:
-        operating-system: openbsd-6.9
+        operating-system: ${{ matrix.os }}
     - name: Checkout repository
       run: git clone --depth 1 https://github.com/mario-campos/dyndnsd.git
     - name: Build
