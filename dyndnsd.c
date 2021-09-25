@@ -49,8 +49,10 @@ main(int argc, char *argv[])
 	if (-1 == this.routefd)
 		errx(EX_UNAVAILABLE, "cannot create route(4) socket");
 
+#ifdef __OpenBSD__
 	if (-1 == pledge("stdio rpath proc exec id getpw inet", NULL))
 		err(EX_OSERR, "pledge");
+#endif
 
 	while (-1 != (opt = getopt(argc, argv, "hdnvf:"))) {
 		switch (opt) {
@@ -90,12 +92,13 @@ main(int argc, char *argv[])
 	if (!(opts & DYNDNSD_DEBUG_MODE) && -1 == daemon(0, 0))
 		err(EX_OSERR, "daemon");
 
+#ifdef __OpenBSD__
 	if (-1 == pledge("stdio proc exec", NULL)) {
 		syslog(LOG_ERR, "pledge: %m");
 		exit(EX_OSERR);
 	}
-
 	syslog(LOG_DEBUG, "pledge: stdio proc exec");
+#endif
 
 	event_init();
 
