@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ openbsd-6.9, freebsd-13.0, netbsd-9.2, dragonflybsd-5.2.0 ]
+        os: [ openbsd-7.0 ]
     steps:
     - name: Bootstrap ${{ matrix.os }}
       uses: mario-campos/emulate@main
