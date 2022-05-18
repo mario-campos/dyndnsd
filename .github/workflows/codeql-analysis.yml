@@ -39,9 +39,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: mario-campos/stubcc
+        path: ${{ runner.temp }}/stubcc
         
     - name: Build stubcc
-      working-directory: stubcc
+      working-directory: ${{ runner.temp }}/stubcc
       run: |
         cargo build
         sudo install -m 755 -o root -g root target/debug/stubcc /usr/local/bin/gcc
