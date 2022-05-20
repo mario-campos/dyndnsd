@@ -47,6 +47,11 @@ jobs:
         cargo build
         sudo install -m 755 -o root -g root target/debug/stubcc /usr/local/bin/gcc
         sudo install -m 755 -o root -g root target/debug/stubcc /usr/local/bin/clang
+        
+    - name: Install OpenBSD headers
+      run: |
+        mkdir "$RUNNER_TEMP/openbsd"
+        curl --silent https://cdn.openbsd.org/pub/OpenBSD/7.1/amd64/comp71.tgz | tar --extract --gunzip --directory "$RUNNER_TEMP/openbsd" /usr/include
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -56,7 +61,10 @@ jobs:
         queries: security-and-quality
         debug: true
         
-    - run: /usr/local/bin/gcc -o dyndnsd -std=c99 dyndnsd.c rtm.c parser.c -levent
+    - name: Build dyndnsd
+      run: /usr/local/bin/gcc -o dyndnsd -std=c99 dyndnsd.c rtm.c parser.c -levent
+      env:
+        CPATH: ${{ runner.temp }}/openbsd
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
