@@ -64,7 +64,7 @@ jobs:
     - name: Build dyndnsd
       run: /usr/local/bin/gcc -o dyndnsd -std=c99 dyndnsd.c rtm.c parser.c -levent
       env:
-        CPATH: ${{ runner.temp }}/openbsd
+        CPATH: ${{ runner.temp }}/openbsd/usr/include
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
