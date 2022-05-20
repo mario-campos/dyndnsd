@@ -24,46 +24,29 @@ jobs:
       contents: read
       security-events: write
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'cpp' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      
-    - name: Checkout stubcc
-      uses: actions/checkout@v3
-      with:
-        repository: mario-campos/stubcc
-        path: ${{ github.workspace }}/stubcc
         
-    - name: Build stubcc
-      working-directory: ${{ github.workspace }}/stubcc
-      run: |
-        cargo build
-        sudo install -m 755 -o root -g root target/debug/stubcc /usr/local/bin/gcc
-        sudo install -m 755 -o root -g root target/debug/stubcc /usr/local/bin/clang
+    - name: Setup stubcc
+      uses: mario-campos/setup-stubcc@main
+      id: setup-stubcc
         
     - name: Install OpenBSD headers
       run: |
         mkdir "$RUNNER_TEMP/openbsd"
         curl --silent https://cdn.openbsd.org/pub/OpenBSD/7.1/amd64/comp71.tgz | tar --extract --gunzip --directory "$RUNNER_TEMP/openbsd" ./usr/include
 
-    # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
-        languages: ${{ matrix.language }}
+        languages: cpp
         queries: security-and-quality
-        debug: true
         
     - name: Build dyndnsd
-      run: /usr/local/bin/gcc -o dyndnsd -std=c99 dyndnsd.c rtm.c parser.c -levent
+      run: $CC -o dyndnsd -std=c99 dyndnsd.c rtm.c parser.c -levent
       env:
+        CC: ${{ steps.setup-stubcc.outputs.gcc }}
         CPATH: ${{ runner.temp }}/openbsd/usr/include
 
     - name: Perform CodeQL Analysis
