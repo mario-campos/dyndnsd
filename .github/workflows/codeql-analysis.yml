@@ -21,8 +21,9 @@ jobs:
       uses: mario-campos/setup-stubcc@main
       id: setup-stubcc
         
-    - id: get-openbsd-comp
-      uses: mario-campos/get-openbsd-comp@main
+    - name: Download OpenBSD headers
+      id: get-openbsd-comp
+      uses: mario-campos/get-openbsd-comp@v1
       with:
         arch: amd64
         release: 7.1
