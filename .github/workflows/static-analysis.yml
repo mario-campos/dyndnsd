@@ -1,0 +1,84 @@
+name: Static Analysis
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - '.github/workflows/*'
+    - '**.[ch]'
+    - Makefile
+  pull_request:
+    branches: [ master ]
+    paths:
+    - '.github/workflows/*'
+    - '**.[ch]'
+    - Makefile
+  schedule:
+    - cron: '29 15 * * 2'
+  workflow_dispatch:
+
+jobs:
+  CodeQL:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install BSD make
+      run: sudo apt update && sudo apt install bmake
+
+    - id: setup-stubcc
+      uses: mario-campos/setup-stubcc@v1
+
+    - id: download-openbsd
+      uses: mario-campos/download-openbsd@v1
+      with:
+        arch: amd64
+        version: 7.1
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: cpp
+        queries: security-and-quality
+
+    - name: Build dyndnsd
+      run: bmake -I "${OPENBSD_ROOT}/usr/share/mk"
+      env:
+        CC: ${{ steps.setup-stubcc.outputs.gcc }}
+        CPATH: ${{ steps.download-openbsd.outputs.root }}/usr/include
+        OPENBSD_ROOT: ${{ steps.download-openbsd.outputs.root }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  CppCheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install CppCheck
+      run: sudo apt update && sudo apt install cppcheck
+
+    - id: download-openbsd
+      uses: mario-campos/download-openbsd@v1
+      with:
+        arch: amd64
+        version: 7.1
+  
+    - name: Run CppCheck
+      env:
+        OPENBSD_ROOT: ${{ steps.download-openbsd.outputs.root }}
+      run: >
+        cppcheck --force --quiet
+        --error-exitcode=1 --std=c99 --enable=all "-I${OPENBSD_ROOT}/usr/include"
+        --suppress=syntaxError:parser.h:14
+        --suppress=unusedFunction:dyndnsd.c:113
+        .
+          
