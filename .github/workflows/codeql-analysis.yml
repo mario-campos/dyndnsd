@@ -1,14 +1,3 @@
-# For most projects, this workflow file will not need changing; you simply need
-# to commit it to your repository.
-#
-# You may wish to alter this file to override the set of languages analyzed,
-# or to provide custom queries or build logic.
-#
-# ******** NOTE ********
-# We have attempted to detect the languages in your repository. Please check
-# the `language` matrix defined below to confirm you have the correct set of
-# supported CodeQL languages.
-#
 name: "CodeQL"
 
 on:
@@ -32,10 +21,11 @@ jobs:
       uses: mario-campos/setup-stubcc@main
       id: setup-stubcc
         
-    - name: Install OpenBSD headers
-      run: |
-        mkdir "$RUNNER_TEMP/openbsd"
-        curl --silent https://cdn.openbsd.org/pub/OpenBSD/7.1/amd64/comp71.tgz | tar --extract --gunzip --directory "$RUNNER_TEMP/openbsd" ./usr/include
+    - id: get-openbsd-comp
+      uses: mario-campos/get-openbsd-comp@main
+      with:
+        arch: amd64
+        release: 7.1
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
@@ -47,7 +37,7 @@ jobs:
       run: $CC -o dyndnsd -std=c99 dyndnsd.c rtm.c parser.c -levent
       env:
         CC: ${{ steps.setup-stubcc.outputs.gcc }}
-        CPATH: ${{ runner.temp }}/openbsd/usr/include
+        CPATH: ${{ steps.get-openbsd-comp.outputs.cpath }}
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
