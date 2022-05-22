@@ -80,5 +80,7 @@ jobs:
         --error-exitcode=1 --std=c99 --enable=all "-I${OPENBSD_ROOT}/usr/include"
         --suppress=syntaxError:parser.h:14
         --suppress=unusedFunction:dyndnsd.c:113
+        --suppress=unusedFunction:rtm.c:40
+        --suppress=unusedFunction:rtm.c:20
         .
           
