@@ -49,11 +49,11 @@ jobs:
         debug: true
 
     - name: Build dyndnsd
-      run: bmake -n -I "${OPENBSD_ROOT}/usr/share/mk"
+      run: bmake
       env:
         CC: ${{ steps.setup-stubcc.outputs.clang }}
         CPATH: ${{ steps.download-openbsd.outputs.root }}/usr/include
-        OPENBSD_ROOT: ${{ steps.download-openbsd.outputs.root }}
+        MAKEFLAGS: -I${{ steps.download-openbsd.outputs.root }}/usr/share/mk
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
