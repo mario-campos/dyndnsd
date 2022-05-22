@@ -48,7 +48,7 @@ jobs:
         queries: security-and-quality
 
     - name: Build dyndnsd
-      run: bmake -I "{{ steps.download-openbsd.outputs.root }}/usr/share/mk"
+      run: bmake
       env:
         CC: ${{ steps.setup-stubcc.outputs.clang }}
         CPATH: ${{ steps.download-openbsd.outputs.root }}/usr/include
