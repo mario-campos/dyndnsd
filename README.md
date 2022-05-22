@@ -33,16 +33,10 @@ $
 
 ## Build
 
-dyndnsd compiles with some configurations, such as the default configuration-file path and the user/group to which to drop privilege. The build command below will compile dyndnsd with the default configuration-file path */etc/dyndnsd.conf* and unprivileged user/group *nobody*:
+dyndnsd has no external dependencies&mdash;it's only dependency is libevent, but that's included in OpenBSD base&mdash;on so compiling dyndnsd is straightforward:
 
 ```shell
 make
-```
-
-To set the the default configuration-file path and/or the unprivileged user/group, modify the build command below as necessary:
-
-```shell
-make CPPFLAGS='-DDYNDNSD_CONF_PATH=\"/path/to/dyndnsd.conf\" -DDYNDNSD_USER=\"foo\" -DDYNDNSD_GROUP=\"foo\"'
 ```
 
 ## TODO
