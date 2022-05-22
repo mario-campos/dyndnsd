@@ -46,6 +46,7 @@ jobs:
       with:
         languages: cpp
         queries: security-and-quality
+        debug: true
 
     - name: Build dyndnsd
       run: bmake -I "${OPENBSD_ROOT}/usr/share/mk"
