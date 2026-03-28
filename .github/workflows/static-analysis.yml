@@ -42,7 +42,7 @@ jobs:
         version: 7.1
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v4
       with:
         languages: cpp
         queries: security-and-quality
@@ -54,7 +54,7 @@ jobs:
         CPATH: ${{ steps.download-openbsd.outputs.root }}/usr/include
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v4
 
   CppCheck:
     runs-on: ubuntu-latest
